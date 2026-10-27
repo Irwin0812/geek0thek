@@ -429,12 +429,20 @@ function cleanComic(body) {
 }
 
 /**
- * Détermine la couverture finale :
+ * Détermine la couverture du TOME — traitement STRICTEMENT INDEPENDANT de
+ * l'image de série (`series_image`), jamais les unes de l'autres :
  * - fichier téléversé (field "cover")        -> /uploads/comics/<fichier>
  * - field "coverRemoteUrl" (http...)         -> téléchargement et stockage local
- * - field "coverRemoteUrl" = chemin local existant (aucune nouvelle couverture)
- *   -> undefined : l'appelant conserve la couverture existante
- * - rien (null)                               -> null / aucune couverture
+ * - field "coverRemoteUrl" = chemin LOCAL identique à la couverture courante
+ *   (aucune nouvelle couverture demandée)    -> undefined : on conserve celle d'avant
+ * - field "coverRemoteUrl" = AUTRE chemin LOCAL inconnu (≠ couverture courante,
+ *   non http/https — ex. le repli générique "/img/no_title.jpg" poussé en guise
+ *   de « valeur courante ») -> null : ce n'est NI une jaquette NI une URL à
+ *   télécharger ; l'appelant conserve alors la couverture d'avant (jamais cette
+ *   valeur, jamais null — d'où l'ancienne « image qui disparaît après
+ *   enregistrement »)
+ * - rien (null/absent)                        -> undefined : on conserve celle
+ *   d'avant (jamais l'image de série, jamais null par défaillance)
  *
  * @returns {Promise<string|null|undefined>}
  *   - chemin "/uploads/comics/<fichier>" (nouvelle couverture)
@@ -472,16 +480,24 @@ async function resolveComicCover(req, existingCover = null) {
   if (!remoteUrl) {
     return undefined; // pas de nouvelle couverture demandée
   }
-  // Chemin local existant renvoyé tel quel par le frontend lors d'une
-  // modification sans changement de couverture (éventuellement préfixé par
-  // l'origine) : on ne télécharge rien et on conserve la couverture actuelle
-  // (downloadCoverImage ne renverrait que null pour une URL qui n'est pas
-  // http/https, ce qui viderait la colonne cover_url — d'où l'erreur
-  // « image qui ne s'affiche plus »).
-  if (!/^https?:\/\//i.test(remoteUrl) || remoteUrl === normalizeStoredCoverPath(existingCover)) {
-    return undefined;
+  if (/^https?:\/\//i.test(remoteUrl)) {
+    // URL distante http/https : téléchargement + stockage local. Un échec
+    // renvoie null -> l'appelant CONSERVE la couverture d'avant (aucun
+    // rechargement silencieux, jamais la valeur de l'image de SÉRIE).
+    return downloadCoverImage(remoteUrl);
   }
-  return downloadCoverImage(remoteUrl);
+  // Chemin LOCAL (/uploads/… ou /img/…) — DISSOCIATION SÉRIE/TOME : aucun chemin
+  // de série n'est jamais traité ici. Ce que le frontend renvoie comme
+  // « couverture courante » ne peut être exploité que s'il EST la couverture du
+  // TOME en base ; toute autre valeur locale (notamment un repli générique
+  // type /img/no_title.jpg poussé avec un état obsolète) n'est ni jaquette à
+  // écrire, ni URL à télécharger :
+  //   - identique à la couverture courante -> « sans changement » : undefined —
+  //     on ne télécharge rien et l'appelant conserve la colonne en base ;
+  //   - autre valeur inconnue -> null : l'appelant de mise à jour retombe alors
+  //     sur la couverture d'avant (jamais cette valeur, jamais null — c'est ce
+  //     qui causait l'image qui « disparaît / s'écrase » après enregistrement).
+  return remoteUrl === normalizeStoredCoverPath(existingCover || null) ? undefined : null;
 }
 
 function isLocalVinylCoverPath(value) {

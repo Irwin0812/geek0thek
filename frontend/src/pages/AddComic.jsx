@@ -67,6 +67,19 @@ function imgKey(value) {
   return s.replace(/^https?:\/\/[^/]+/i, '')
 }
 
+// Chemin LOCAL STOCKÉ en base (/uploads/…) d'une image portée par le state :
+// unique « valeur courante » jamais renvoyée au backend comme coverRemoteUrl /
+// seriesImageRemoteUrl. Tout ce qui n'est PAS un chemin local stocké (URL
+// distante saisie, emblème par défaut /img/no_title.jpg, vide) renvoie '' :
+// le backend applique alors sa propre règle (conservation de la valeur en base
+// — jamais d'écrasement par null, jamais de re-téléchargement inutile). C'est
+// ce qui garantit l'INDÉPENDANCE TOTALE couverture du tome ↔ image de série :
+// aucune des deux colonnes n'est « conservée » via l'autre.
+function storedLocalPath(value) {
+  const p = imgKey(value)
+  return p.startsWith('/uploads/') ? p : ''
+}
+
 // DISSOCIATION SÉRIE ↔ TOME — garde stricte du formulaire : indique si une
 // valeur « image de série » est EN FAIT la couverture du volume (celle en
 // base ou celle soumise). Une telle valeur est INTERDITE à deux endroits :
@@ -409,11 +422,14 @@ export default function AddComic() {
           fd.append('remove_cover', 'true')
         } else if (file) {
           fd.append('cover', file)
-        } else if (isEdit && existingCover) {
+        } else if (isEdit && storedLocalPath(existingCover)) {
           // Pas de nouvelle couverture mais image de série en fichier : la
-          // couverture courante est reprise via coverRemoteUrl (chemin local
-          // connu — resolveComicCover le détecte et conserve celle d'avant).
-          fd.append('coverRemoteUrl', existingCover)
+          // couverture courante est reprise via coverRemoteUrl, UNIQUEMENT si
+          // elle EST un chemin local stocké (/uploads/…) — jamais l'emblème par
+          // défaut ni une URL distante. Le backend détecte alors « sans
+          // changement » et conserve EXACTEMENT la colonne cover_url en base
+          // (l'image de SÉRIE n'y joue AUCUN rôle — dissociation stricte).
+          fd.append('coverRemoteUrl', storedLocalPath(existingCover))
         }
         if (removeSeriesImage) {
           // SUPPRESSION EXPLICITE (bouton « Retirer le fichier ») : drapeau de
@@ -426,13 +442,17 @@ export default function AddComic() {
           fd.append('remove_series_image', 'true')
         } else if (seriesFile) {
           // Image / logo de la SÉRIE téléversée manuellement : elle remplace
-          // l'image de la série (entité + TOUS les tomes du même nom).
+          // l'image de la série (entité + TOUS les tomes du même nom). Son écriture
+          // ne touche JAMAIS cover_url (le backend traite les deux colonnes par
+          // des branches strictement séparées).
           fd.append('seriesImage', seriesFile)
-        } else if (isEdit && existingSeriesImage) {
-          // Série existante, aucun nouveau fichier choisi : on renvoie le
-          // chemin stocké tel quel — resolveComicSeriesImage le reconnaît et
-          // ne télécharge rien (l'image courante est conservée).
-          fd.append('seriesImageRemoteUrl', existingSeriesImage)
+        } else if (isEdit && storedLocalPath(existingSeriesImage)) {
+          // Série existante, aucun nouveau fichier choisi : on renvoie le chemin
+          // local STOCKÉ tel quel (/uploads/… uniquement) —
+          // resolveComicSeriesImage le reconnaît et ne télécharge rien (l'image
+          // courante est conservée). Un état obsolète (emblème/vide/URL distante)
+          // n'est pas resubmi : le backend conserve alors la valeur en base.
+          fd.append('seriesImageRemoteUrl', storedLocalPath(existingSeriesImage))
         }
         const fields = {
           title: form.title,
@@ -481,21 +501,23 @@ export default function AddComic() {
           // drapeau de purge — le backend ÉCRASE cover_url par NULL. Jamais de
           // repli sur un chemin ci-dessous quand la suppression est armée.
           remove_cover: removeCover ? true : undefined,
-          // Jamais le fallback « existingCover » quand la couverture vient d'être
-          // retirée explicitement (le drapeau porte l'intention) ; URL distante
-          // saisie prioritaire sinon.
+          // COUVERTURE DU TOME (colonne cover_url) : URL distante SAISIE prioritaire ;
+          // sinon (édition) UNIQUEMENT le chemin local stocké en base — jamais un état
+          // obsolète ni l'image de série. Le backend applique alors la règle « sans
+          // changement » : cover_url conservée à l'identique. Les deux colonnes ne se
+          // servent mutuellement jamais de « valeur courante » (indépendance totale).
           coverRemoteUrl: removeCover
             ? null
-            : remoteUrl || (isEdit ? existingCover : '') || null,
-          // Image de SÉRIE (mode JSON, aucun fichier) : URL distante saisie ou,
-          // en édition sans changement, le chemin stocké repassé tel quel (le
-          // backend reconnaît alors qu'il n'y a rien à télécharger).
-          // SUPPRESSION EXPLICITE armée : le drapeau prime — jamais de repassage
-          // du chemin (le backend ÉCRASE la colonne series_image par NULL ;
-          // l'affichage retombe sur l'image de secours locale img/no_title.jpg).
+            : remoteUrl || ((isEdit && storedLocalPath(existingCover)) || null),
+          // IMAGE DE SÉRIE (colonne series_image, mode JSON) : en édition sans
+          // nouveau fichier, le chemin local STOCKÉ est repassé tel quel (le backend
+          // reconnaît qu'il n'y a rien à télécharger et conserve la valeur en base).
+          // SUPPRESSION EXPLICITE armée : le drapeau prime — jamais de repassage du
+          // chemin (le backend ÉCRASE series_image par NULL — couverture du tome
+          // strictement intacte, dissociation stricte).
           ...(removeSeriesImage
             ? { remove_series_image: true }
-            : { seriesImageRemoteUrl: isEdit ? existingSeriesImage || null : null }),
+            : { seriesImageRemoteUrl: isEdit ? storedLocalPath(existingSeriesImage) || null : null }),
         }
         result = isEdit ? await api.comics.update(id, payload) : await api.comics.create(payload)
       }
