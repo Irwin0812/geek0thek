@@ -289,16 +289,22 @@ export default function Dashboard() {
 }
 
 /**
- * Tuile compteur de collection (Disques, Artistes / Groupes, Genres, BD …).
+ * Tuile compteur de collection — bloc SUPERIEUR du dashboard uniquement
+ * (Disques, Artistes / Groupes, Genres, BD, Auteurs BD, Séries).
+ * CONTENU CENTRÉ horizontalement ET verticalement : `flex flex-col
+ * items-center justify-center text-center` sur le conteneur (libellé,
+ * chiffre et éventuel sous-libellé se présentent au milieu de la tuile).
  * `accent` : bordure dorée pour les deux compteurs « totaux » (total de la
- * bibliothèque, jamais le dérivé). `size` : 'md' — grande tuile de la grille
- * du dashboard (texte 3xl) ; 'sm' — variante compacte conservée pour d'autres
- * usages. Chaque colonne du dashboard empile trois tuiles verticalement.
+ * bibliothèque, jamais le dérivé). `size` : 'md' — tuile du bloc supérieur
+ * (texte 3xl) ; 'sm' — variante compacte conservée. Chaque colonne empile
+ * trois tuiles verticalement. Les cartes de la section « Derniers ajouts »
+ * (jaquettes / couvertures ci-dessous) sont des composants distincts,
+ * NON concernés par ce centrage.
  */
 function StatCard({ label, value, sub, accent = false, size = 'md' }) {
   const compact = size === 'sm'
   return (
-    <div className={`card ${compact ? 'p-3' : 'p-4'} ${accent ? 'border-gold-500/30' : ''}`}>
+    <div className={`card ${compact ? 'p-3' : 'p-4'} ${accent ? 'border-gold-500/30' : ''} flex flex-col items-center justify-center text-center`}>
       <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
       <p className={`mt-1 font-extrabold ${compact ? 'text-2xl' : 'text-3xl'} ${accent ? 'text-gold-400' : 'text-white'}`}>{value}</p>
       {sub && <p className="mt-0.5 text-xs text-slate-500 truncate">{sub}</p>}
@@ -308,34 +314,41 @@ function StatCard({ label, value, sub, accent = false, size = 'md' }) {
 
 /**
  * TUILE « DERNIER AJOUT » — grande tuile de la TROISIÈME COLONNE du
- * dashboard, tous médias confondus (Disque, BD, et à venir Livres,
- * Jeux de Rôle/Plateaux, Jeux vidéo).
+ * dashboard (bloc supérieur), tous médias confondus (Disque, BD, et à venir
+ * Livres, Jeux de Rôle/Plateaux, Jeux vidéo).
  *
- * Structure D'HAUT EN BAS, chaque bloc séparé par un ESPACE VERTICAL
- * explicite — conteneur `space-y-4` (margin-bottom de 1rem entre les blocs) :
- *   1. EN-TÊTE        le titre de la tuile « Dernier ajout » ;
- *      (marge verticale space-y-4)
+ * CENTRAGE : contenu centré horizontalement ET verticalement dans la tuile —
+ * `flex flex-col items-center justify-center text-center` sur le conteneur.
+ *
+ * Structure D'HAUT EN BAS, chaque bloc séparé par un ESPACE VERTICAL explicite
+ * (`space-y-4`, 1rem) ; TYPOGRAPHIE ÉLARGIE pour un rendu imposant / lisible :
+ *   1. EN-TÊTE        « Dernier ajout »                — text-sm ;
+ *      (espace vertical space-y-4)
  *   2. NOM / ENTITÉ   Groupe / Artiste, Auteurs, Maison d'édition
- *                     (Jeux de Rôle/Plateaux) ou Plateforme (Jeux vidéo) ;
- *      (marge verticale space-y-4)
- *   3. TITRE          titre de l'album, du livre ou du jeu ;
- *      (marge verticale space-y-4)
+ *                     (Jeux de Rôle/Plateaux) ou Plateforme (Jeux vidéo) — text-xl ;
+ *      (espace vertical space-y-4)
+ *   3. TITRE          titre de l'album, du livre ou du jeu — text-2xl ;
+ *      (espace vertical space-y-4)
  *   4. TYPE DE MÉDIA  badge — Disque / BD / Livre / Jeu de Rôle/Plateaux /
  *                     Jeu vidéo (clés i18n books/boardGames/videoGames déjà
- *                     présentes — les futurs types s'affichent sans code) ;
- *      (marge verticale space-y-4)
- *   5. DATE D'AJOUT   date métier au format JJ/MM/AAAA.
- * En l'absence de média (collection vide) : état propre « aucun ».
+ *                     présentes — les futurs types s'affichent sans code) — text-xs ;
+ *      (espace vertical space-y-4)
+ *   5. DATE D'AJOUT   date métier JJ/MM/AAAA           — text-sm.
+ * En l'absence de média (collection vide) : état propre « aucun » centré.
  * Cliquer (média connu) ouvre la fiche via `onOpen`. Le TYPE DE MÉDIA se lit
- * dans un badge doré, visible immédiatement.
+ * dans un badge doré, visible immédiatement. Les cartes de la section basse
+ * « Derniers ajouts » (jaquettes / couvertures) ne sont PAS concernées.
  */
 function LatestAddCard({ name = null, title = null, mediaTypeLabel = null, addedDate = null, empty, href, onOpen }) {
   const { t } = useTranslation()
   const hasMedia = Boolean(title || name)
   const clickable = hasMedia && href && href !== '#'
   return (
+    // CENTRAGE GLOBAL H+V de la tuile (flex col + items-center justify-center)
+    // — en-tête, nom, titre, badge et date sont centrés verticalement et
+    // horizontalement dans la carte.
     <div
-      className="card p-6 flex flex-col border-gold-500/30"
+      className="card p-6 flex flex-col items-center justify-center border-gold-500/30"
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
       title={clickable ? t('dashboard.latestAddTitle') : undefined}
@@ -351,44 +364,43 @@ function LatestAddCard({ name = null, title = null, mediaTypeLabel = null, added
           : undefined
       }
     >
-      {/* Espace vertical explicite entre chaque bloc du contenu : `space-y-4`
-          impose un margin-top de 1rem (0.25 × 4) à tout élément suivant
-          l'en-tête, le nom, le titre et le badge — l'espacement demandé est
-          donc garanti par cette classe seule, indépendante du padding card. */}
-      <div className="flex flex-col space-y-4 grow">
-        {/* 1. EN-TÊTE — titre de la tuile */}
-        <p className="text-xs uppercase tracking-wider text-slate-500">{t('dashboard.latestAdd')}</p>
+      {/* Espace vertical entre chaque bloc du contenu : `space-y-4` (1rem) +
+          `items-center text-center` — chaque bloc est CENTRÉ horizontalement,
+          et toute la pile est centrée VERTICALEMENT par le justify-center du
+          conteneur — indépendant du padding de la card. */}
+      <div className="flex w-full flex-col items-center space-y-4 text-center">
+        {/* 1. EN-TÊTE — titre de la tuile (typographie élargie : text-sm) */}
+        <p className="text-sm uppercase tracking-wider text-slate-500">{t('dashboard.latestAdd')}</p>
 
         {hasMedia ? (
           <>
-            {/* Espace / marge verticale (space-y-4) entre en-tête et nom.
-                NOM — Groupe/Artiste, Auteurs / Maison d'édition / Plateforme. */}
+            {/* Espace vertical (space-y-4). NOM / ENTITÉ — Groupe/Artiste,
+                Auteurs, Maison d'édition, Plateforme (élargi : text-xl). */}
             <p
-              className={`text-lg font-bold truncate ${clickable ? 'cursor-pointer text-white hover:text-gold-300' : 'text-white'}`}
+              className={`text-xl font-bold break-words ${clickable ? 'cursor-pointer text-white hover:text-gold-300' : 'text-white'}`}
               title={name}
             >
               {name || '—'}
             </p>
-            {/* ESPACE VERTICAL — même espace entre le nom et le titre.
-                TITRE — album, livre ou jeu (Tome N géré par latestTitle). */}
-            <p className="text-base font-semibold text-gold-400" title={title}>
+            {/* ESPACE VERTICAL — TITRE — album, livre ou jeu (Tome N géré par
+                latestTitle) élargi : text-2xl. */}
+            <p className="text-2xl font-bold break-words text-gold-400" title={title}>
               {title}
             </p>
-            {/* ESPACE VERTICAL — entre le titre et le type de média.
-                TYPE DE MÉDIA — badge doré (Disque / BD / Livre / Jeu… ; futures
-                clés books/boardGames/videoGames déjà présentes dans l'i18n). */}
-            <span className="inline-block self-start rounded bg-gold-500/15 px-2 py-1 text-[11px] uppercase tracking-wide text-gold-400">
+            {/* ESPACE VERTICAL — TYPE DE MÉDIA — badge doré (Disque / BD / Livre /
+                Jeu… ; futures clés déjà présentes dans l'i18n), élargi : text-xs. */}
+            <span className="inline-block rounded bg-gold-500/15 px-3 py-1.5 text-xs uppercase tracking-wide text-gold-400">
               {mediaTypeLabel}
             </span>
           </>
         ) : (
-          <p className="text-sm text-slate-500">{empty}</p>
+          <p className="text-base text-slate-500">{empty}</p>
         )}
 
-        {/* ESPACE VERTICAL — entre le type de média et la date.
-            DATE D'AJOUT métier — JJ/MM/AAAA, en bas de tuile. */}
+        {/* ESPACE VERTICAL — DATE D'AJOUT métier — JJ/MM/AAAA, en bas de la pile
+            (typographie élargie : text-sm). */}
         {hasMedia && (
-          <p className="text-xs text-slate-400">
+          <p className="text-sm text-slate-400">
             <span className="inline-block text-gold-400">·</span> {addedDate || '—'}
           </p>
         )}
