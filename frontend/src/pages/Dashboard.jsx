@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
@@ -7,7 +7,7 @@ import VinylCard, { EmptyState } from '../components/VinylCard.jsx'
 import ComicCard from '../components/ComicCard.jsx'
 import ItemDetailModal from '../components/ItemDetailModal.jsx'
 import { useDisplay } from '../services/display.jsx'
-import { addedDateValue, addedDateFr } from '../components/cards.js'
+import { addedDateValue } from '../components/cards.js'
 import { useDismiss } from '../components/hooks.js'
 
 export default function Dashboard() {
@@ -17,9 +17,6 @@ export default function Dashboard() {
   const { settings } = useDisplay()
   const [vinyls, setVinyls] = useState([])
   const [comics, setComics] = useState([])
-  // Tuile UNIQUE « Dernier ajout » (tous médias confondus) : renvoyée par
-  // GET /api/dashboard — { counts, lastAdd: { id, mediaType, title, addedDate, item } }.
-  const [latestAdd, setLatestAdd] = useState(null)
   const [detailVinyl, setDetailVinyl] = useState(null)
   const [detailComic, setDetailComic] = useState(null)
   const [loadError, setLoadError] = useState('')
@@ -34,13 +31,6 @@ export default function Dashboard() {
     } catch (err) {
       setLoadError(err.message)
     }
-    // Tuile UNIQUE « Dernier ajout » GLOBAL — chargée en PARALLÈLE, et sa
-    // défaite n'empêche JAMAIS le reste du dashboard (état vide propre :
-    // « Aucun média… ») ; l'agrégat est non bloquant côté backend.
-    api.dashboard
-      .latest()
-      .then((d) => setLatestAdd(d.lastAdd || null))
-      .catch(() => setLatestAdd(null))
   }
   useEffect(() => { load() }, [])
 
@@ -76,76 +66,6 @@ export default function Dashboard() {
     }
   }, [vinyls, comics])
 
-  /**
-   * Champ « NOM / ENTITÉ » de la grande tuile « Dernier ajout », déduit du
-   * type de médias (clé = registre MEDIA_SOURCES backend) et de son DTO
-   * normalisé — aligné sur la spec colonne 3 :
-   *  - Disque            -> Groupe / Artiste        (item.artist, vinyl DTO)
-   *  - BD                -> Auteurs                 (item.authors, premier
-   *                                séparateur ; reste en infobulle)
-   *  - Futures tables    -> « Nom » unique attendu par convention backend :
-   *      books       (Livres)              -> item.author    (Auteur)
-   *      boardGames  (Jeux de Rôle/Plateaux) -> item.publisher (Maison d'édition / éditeur)
-   *      videoGames  (Jeux vidéo)          -> item.platform  (Plateforme)
-   * Le default reste TOLÉRANT (chaîne de repli author→publisher→platform→
-   * artist) : un nouveau type s'affiche sans modification dès que son DTO
-   * expose l'un de ces champs — aucune ligne ne disparaît.
-   */
-  const latestName = useMemo(() => {
-    if (!latestAdd) return null
-    const item = latestAdd.item || {}
-    switch (latestAdd.mediaType) {
-      case 'vinyls':
-        // Disque -> Groupe / Artiste (harmonisé « artist » du DTO vinyl).
-        return String(item.artist || '').trim() || null
-      case 'comics':
-        // BD -> Auteurs : séparateur / — premier auteur affiché, reste en infobulle.
-        return String(item.authors || '').split('/')[0].trim() || null
-      default:
-        // Livres / Jeux de Rôle/Plateaux / Jeux vidéo (futures bibliothèques,
-        // décommentées dans MEDIA_SOURCES) : chaîne de repli des champs « Nom »
-        // attendu — author / publisher / platform — et l'harmonisé artist du
-        // DTO vinyl en dernier recours.
-        return (
-          String(item.author || item.publisher || item.platform || item.artist || '').trim() || null
-        )
-    }
-  }, [latestAdd])
-
-  /** Titre de la tuile : BD sans série -> « Tome N » si le titre n'est qu'un numéro. */
-  const latestTitle = useMemo(() => {
-    if (!latestAdd) return null
-    const title = String(latestAdd.title || '').trim()
-    if (latestAdd.mediaType === 'comics' && !((latestAdd.item || {}).series || '').trim()) {
-      return /^\d{1,3}$/.test(title) ? t('dashboard.volume', { number: title }) : title
-    }
-    return title || null
-  }, [latestAdd, t])
-
-  /** Lien de détail : la page d'édition du type d'origine, ou '#' (aucun). */
-  const latestPath = useMemo(() => {
-    if (!latestAdd) return ''
-    switch (latestAdd.mediaType) {
-      case 'vinyls':
-        return `/vinyles/${latestAdd.id}`
-      case 'comics':
-        return `/comics/${latestAdd.id}`
-      default:
-        // Bibliothèques futures (books / boardGames / videoGames) : les pages
-        // d'édition n'existent pas encore -> tuile non-cliquable ('#'), le
-        // DTO et la structure de la tuile restent prêts.
-        return '#'
-    }
-  }, [latestAdd])
-
-  /** Ouverture de la fiche du dernier ajout (clic sur la tuile unique). */
-  const openLatest = (e) => {
-    if (!latestAdd || latestPath === '#') return
-    e.preventDefault()
-    if (latestAdd.mediaType === 'vinyls') setDetailVinyl(latestAdd.item)
-    else if (latestAdd.mediaType === 'comics') setDetailComic(latestAdd.item)
-  }
-
   return (
     // Espacement resserré en Full HD : les couvertures plafonnées à max-h-56
     // + un espace inter-sections réduit tiennent sans scroll excessif.
@@ -169,46 +89,43 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* Statistiques — GRILLE DU DASHBOARD en 3 COLONNES (spec) :
+      {/* Statistiques — GRILLE DU DASHBOARD en 3 COLONNES × 3 TUILES (spec) :
           Colonne 1 (gauche)  : DISQUES / ARTISTES-GROUPES / GENRES
           Colonne 2 (milieu)  : BANDES DESSINÉES / AUTEURS BD / SÉRIES
-          Colonne 3 (droite)  : GRANDE tuile « DERNIER AJOUT » — tous médias
-          confondus, renvoyée par GET /api/dashboard (l'élément de la
-          collection portant la DATE D'AJOUT métier la plus récente).
+          Colonne 3 (droite)  : JEUX VIDÉO / JEUX DE RÔLE-PLATEAU / LIVRES-MAGAZINES
+                                — bases de données NON MIGRÉES : valeur textuelle
+                                « À venir » en GRIS CLAIR, à remplacer par les
+                                vrais compteurs dès l'ouverture des collections.
+          Les 9 tuiles partagent le MÊME composant StatCard : même format et
+          même style (centrage H+V), et la même hauteur stricte (flex-1).
           Mobile : grille mono-colonne, les tuiles s'empilent dans l'ordre
-          CSS ci-dessous (colonne 1, colonne 2, tuile Dernier ajout en fin). */}
+          CSS ci-dessous (colonne 1, puis colonne 2, puis colonne 3). */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Colonne 1 (gauche) — disques : empilées verticalement. */}
-        <div className="flex flex-col gap-4">
+        {/* Colonne 1 (gauche) — disques : 3 tuiles empilées verticalement.
+            h-full sur la colonne + flex-1 sur chaque StatCard = hauteurs
+            STRICTEMENT identiques des 9 tuiles, quel que soit le contenu. */}
+        <div className="flex h-full flex-col gap-4">
           <StatCard label={t('dashboard.stats.vinyls')} value={stats.total} accent />
           <StatCard label={t('dashboard.stats.artists')} value={stats.artists} />
           <StatCard label={t('dashboard.stats.genres')} value={stats.genres} />
         </div>
-        {/* Colonne 2 (milieu) — bandes dessinées : empilées verticalement. */}
-        <div className="flex flex-col gap-4">
+        {/* Colonne 2 (milieu) — bandes dessinées : 3 tuiles empilées verticalement. */}
+        <div className="flex h-full flex-col gap-4">
           <StatCard label={t('dashboard.stats.comics')} value={stats.comics.total} accent />
           <StatCard label={t('dashboard.stats.comicAuthors')} value={stats.comics.authors} />
           <StatCard label={t('dashboard.stats.series')} value={stats.comics.series} />
         </div>
-        {/* Colonne 3 (droite) — GRANDE TUILE « Dernier Ajout » :
-            EN-TÊTE / NOM / TITRE / TYPE DE MÉDIA (badge) / DATE D'AJOUT,
-            chaque bloc séparé par une MARGE VERTICALE explicite (space-y-4).
-            Cliquer ouvre la fiche du média. Conventions NOM par type —
-            disque : item.artist (Groupe/Artiste), BD : item.authors
-            (Auteurs), futures bibliothèques (MEDIA_SOURCES backend) :
-            books->author (Auteur), boardGames->publisher (Maison d'édition),
-            videoGames->platform (Plateforme). La date affichée est la DATE
-            D'AJOUT métier (acquired_date / added_date, JJ/MM/AAAA) — jamais
-            l'horodatage technique created_at. */}
-        <LatestAddCard
-          name={latestName}
-          title={latestTitle}
-          mediaTypeLabel={latestAdd ? t(`dashboard.mediaTypes.${latestAdd.mediaType}`, { defaultValue: latestAdd.mediaType }) : null}
-          addedDate={latestAdd ? addedDateFr(latestAdd.addedDate) : null}
-          empty={t('dashboard.noLatestAdd')}
-          href={latestPath}
-          onOpen={openLatest}
-        />
+        {/* Colonne 3 (droite) — futures bibliothèques (MEDIA_SOURCES backend,
+            tables non migrées) : MÊMES StatCard que les colonnes 1 et 2, avec
+            une valeur textuelle « À venir » en GRIS CLAIR (prop `muted`) à la
+            place du compteur numérique.
+            Quand chaque collection ouvrira : passer le vrai number dans
+            `value` et retirer `muted` — rien d'autre à changer. */}
+        <div className="flex h-full flex-col gap-4">
+          <StatCard label={t('dashboard.stats.videoGames')} value={t('dashboard.addMedia.soon')} muted />
+          <StatCard label={t('dashboard.stats.boardGames')} value={t('dashboard.addMedia.soon')} muted />
+          <StatCard label={t('dashboard.stats.books')} value={t('dashboard.addMedia.soon')} muted />
+        </div>
       </section>
 
       {/* Derniers ajouts */}
@@ -289,122 +206,25 @@ export default function Dashboard() {
 }
 
 /**
- * Tuile compteur de collection — bloc SUPERIEUR du dashboard uniquement
- * (Disques, Artistes / Groupes, Genres, BD, Auteurs BD, Séries).
- * CONTENU CENTRÉ horizontalement ET verticalement : `flex flex-col
- * items-center justify-center text-center` sur le conteneur (libellé,
- * chiffre et éventuel sous-libellé se présentent au milieu de la tuile).
- * `accent` : bordure dorée pour les deux compteurs « totaux » (total de la
- * bibliothèque, jamais le dérivé). `size` : 'md' — tuile du bloc supérieur
- * (texte 3xl) ; 'sm' — variante compacte conservée. Chaque colonne empile
- * trois tuiles verticalement. Les cartes de la section « Derniers ajouts »
- * (jaquettes / couvertures ci-dessous) sont des composants distincts,
- * NON concernés par ce centrage.
- */
-function StatCard({ label, value, sub, accent = false, size = 'md' }) {
-  const compact = size === 'sm'
-  return (
-    <div className={`card ${compact ? 'p-3' : 'p-4'} ${accent ? 'border-gold-500/30' : ''} flex flex-col items-center justify-center text-center`}>
-      <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
-      <p className={`mt-1 font-extrabold ${compact ? 'text-2xl' : 'text-3xl'} ${accent ? 'text-gold-400' : 'text-white'}`}>{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-slate-500 truncate">{sub}</p>}
-    </div>
-  )
-}
-
-/**
- * TUILE « DERNIER AJOUT » — grande tuile de la TROISIÈME COLONNE du
- * dashboard (bloc supérieur), tous médias confondus (Disque, BD, et à venir
- * Livres, Jeux de Rôle/Plateaux, Jeux vidéo).
- *
+ * TUILE COMPTEUR DU DASHBOARD — bloc SUPERIEUR en GRILLE 3 COLONNES × 3 TUILES
+ * (spec) : 6 compteurs actifs (Disques, Artistes/Groupes, Genres, BD, Auteurs
+ * BD, Séries) + 3 tuiles « À venir » grises dans la colonne de droite (Jeux
+ * vidéo, Jeux de Rôle-Plateau, Livres-Magazines — bases non migrées).
  * CENTRAGE : contenu centré horizontalement ET verticalement dans la tuile —
  * `flex flex-col items-center justify-center text-center` sur le conteneur.
- *
- * Structure D'HAUT EN BAS, chaque bloc séparé par un ESPACE VERTICAL explicite
- * (`space-y-4`, 1rem) ; TYPOGRAPHIE ÉLARGIE pour un rendu imposant / lisible :
- *   1. EN-TÊTE        « Dernier ajout »                — text-sm ;
- *      (espace vertical space-y-4)
- *   2. NOM / ENTITÉ   Groupe / Artiste, Auteurs, Maison d'édition
- *                     (Jeux de Rôle/Plateaux) ou Plateforme (Jeux vidéo) — text-xl ;
- *      (espace vertical space-y-4)
- *   3. TITRE          titre de l'album, du livre ou du jeu — text-2xl ;
- *      (espace vertical space-y-4)
- *   4. TYPE DE MÉDIA  badge — Disque / BD / Livre / Jeu de Rôle/Plateaux /
- *                     Jeu vidéo (clés i18n books/boardGames/videoGames déjà
- *                     présentes — les futurs types s'affichent sans code) — text-xs ;
- *      (espace vertical space-y-4)
- *   5. DATE D'AJOUT   date métier JJ/MM/AAAA           — text-sm.
- * En l'absence de média (collection vide) : état propre « aucun » centré.
- * Cliquer (média connu) ouvre la fiche via `onOpen`. Le TYPE DE MÉDIA se lit
- * dans un badge doré, visible immédiatement. Les cartes de la section basse
- * « Derniers ajouts » (jaquettes / couvertures) ne sont PAS concernées.
+ * `accent` : bordure/texte doré pour les deux « TOTAUX » (Disques, BD) ;
+ * `muted` : valeur textuelle en GRIS CLAIR à la place du compteur (tuiles « à
+ * venir », en prévision des futures bases de données). Toutes les 9 tuiles
+ * partagent CE composant : même format, même style et même hauteur stricte
+ * (flex-1) au sein de chaque colonne. Les cartes de la section basse « Derniers
+ * ajouts » (jaquettes / couvertures) sont des composants distincts, NON
+ * concernés par ce centrage.
  */
-function LatestAddCard({ name = null, title = null, mediaTypeLabel = null, addedDate = null, empty, href, onOpen }) {
-  const { t } = useTranslation()
-  const hasMedia = Boolean(title || name)
-  const clickable = hasMedia && href && href !== '#'
+function StatCard({ label, value, accent = false, muted = false }) {
   return (
-    // CENTRAGE GLOBAL H+V de la tuile (flex col + items-center justify-center)
-    // — en-tête, nom, titre, badge et date sont centrés verticalement et
-    // horizontalement dans la carte.
-    <div
-      className="card p-6 flex flex-col items-center justify-center border-gold-500/30"
-      role={clickable ? 'button' : undefined}
-      tabIndex={clickable ? 0 : undefined}
-      title={clickable ? t('dashboard.latestAddTitle') : undefined}
-      onClick={clickable ? onOpen : undefined}
-      onKeyDown={
-        clickable
-          ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onOpen && onOpen(e)
-              }
-            }
-          : undefined
-      }
-    >
-      {/* Espace vertical entre chaque bloc du contenu : `space-y-4` (1rem) +
-          `items-center text-center` — chaque bloc est CENTRÉ horizontalement,
-          et toute la pile est centrée VERTICALEMENT par le justify-center du
-          conteneur — indépendant du padding de la card. */}
-      <div className="flex w-full flex-col items-center space-y-4 text-center">
-        {/* 1. EN-TÊTE — titre de la tuile (typographie élargie : text-sm) */}
-        <p className="text-sm uppercase tracking-wider text-slate-500">{t('dashboard.latestAdd')}</p>
-
-        {hasMedia ? (
-          <>
-            {/* Espace vertical (space-y-4). NOM / ENTITÉ — Groupe/Artiste,
-                Auteurs, Maison d'édition, Plateforme (élargi : text-xl). */}
-            <p
-              className={`text-xl font-bold break-words ${clickable ? 'cursor-pointer text-white hover:text-gold-300' : 'text-white'}`}
-              title={name}
-            >
-              {name || '—'}
-            </p>
-            {/* ESPACE VERTICAL — TITRE — album, livre ou jeu (Tome N géré par
-                latestTitle) élargi : text-2xl. */}
-            <p className="text-2xl font-bold break-words text-gold-400" title={title}>
-              {title}
-            </p>
-            {/* ESPACE VERTICAL — TYPE DE MÉDIA — badge doré (Disque / BD / Livre /
-                Jeu… ; futures clés déjà présentes dans l'i18n), élargi : text-xs. */}
-            <span className="inline-block rounded bg-gold-500/15 px-3 py-1.5 text-xs uppercase tracking-wide text-gold-400">
-              {mediaTypeLabel}
-            </span>
-          </>
-        ) : (
-          <p className="text-base text-slate-500">{empty}</p>
-        )}
-
-        {/* ESPACE VERTICAL — DATE D'AJOUT métier — JJ/MM/AAAA, en bas de la pile
-            (typographie élargie : text-sm). */}
-        {hasMedia && (
-          <p className="text-sm text-slate-400">
-            <span className="inline-block text-gold-400">·</span> {addedDate || '—'}
-          </p>
-        )}
-      </div>
+    <div className={`card p-4 flex-1 flex flex-col items-center justify-center text-center ${accent ? 'border-gold-500/30' : ''}`}>
+      <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
+      <p className={`mt-1 text-3xl font-extrabold ${muted ? 'text-slate-500' : accent ? 'text-gold-400' : 'text-white'}`}>{value}</p>
     </div>
   )
 }

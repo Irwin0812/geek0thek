@@ -47,7 +47,10 @@
       "genres": "Genres",
       "comics": "Strips",
       "series": "Series",
-      "comicAuthors": "Stripauteurs"
+      "comicAuthors": "Stripauteurs",
+      "videoGames": "Videospellen",
+      "boardGames": "Rol- / bordspellen",
+      "books": "Boeken / Magazines"
     },
     "mediaTypes": {
       "vinyls": "Plaat",

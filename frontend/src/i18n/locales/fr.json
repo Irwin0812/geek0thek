@@ -47,7 +47,10 @@
       "genres": "Genres",
       "comics": "Bandes dessinées",
       "series": "Séries",
-      "comicAuthors": "Auteurs BD"
+      "comicAuthors": "Auteurs BD",
+      "videoGames": "Jeux vidéo",
+      "boardGames": "Jeux de Rôle / Plateau",
+      "books": "Livres / Magazines"
     },
     "mediaTypes": {
       "vinyls": "Disque",

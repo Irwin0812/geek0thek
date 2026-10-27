@@ -47,7 +47,10 @@
       "genres": "Genres",
       "comics": "Comics",
       "series": "Series",
-      "comicAuthors": "Comic authors"
+      "comicAuthors": "Comic authors",
+      "videoGames": "Video games",
+      "boardGames": "Role / Board games",
+      "books": "Books / Magazines"
     },
     "mediaTypes": {
       "vinyls": "Vinyl",
