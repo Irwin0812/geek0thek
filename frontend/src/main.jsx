@@ -1,0 +1,32 @@
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import { switchTheme } from './services/theme.js'
+import App from './App.jsx'
+import './i18n/i18n.js'
+import './index.css'
+/* ------------------------------------------------------------
+   Thèmes visuels : les 6 palettes partagent le même index de
+   variables CSS (cf. src/services/theme.js) ; l'ordre d'import est
+   indifférent (sélecteurs [data-theme=…]) mais « dark » reste le
+   point de référence des classes utilitaires (night-* / gold-*).
+   ------------------------------------------------------------ */
+import './themes/dark.css'
+import './themes/library.css' // ex-« light » — thème « Médiathèque » (fond photo)
+import './themes/vinyl.css'
+import './themes/comic.css'
+import './themes/cartoon.css'
+import './themes/pastel.css'
+
+// Applique la préférence conservée (localStorage) AVANT le premier rendu :
+// sans cet appel, l'attribut data-theme ne serait posé qu'après l'API
+// /users/me (App.jsx) et une page light/cartoon… clignoterait « sombre ».
+switchTheme()
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>,
+)

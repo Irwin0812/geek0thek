@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-night-950 text-slate-200 antialiased;
+    background-image:
+      radial-gradient(1200px 600px at 80% -10%, rgba(212, 162, 78, 0.08), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(80, 120, 220, 0.07), transparent 60%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    @apply bg-gold-500/30 text-white;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-night-500/70 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-night-500;
+  }
+}
+
+@layer components {
+  .input {
+    @apply w-full rounded-lg bg-night-800 border border-night-600 px-3 py-2 text-sm
+      text-slate-100 placeholder-slate-500 outline-none transition
+      focus:border-gold-500/60 focus:ring-2 focus:ring-gold-500/20;
+  }
+
+  .label {
+    @apply block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold
+      transition focus:outline-none focus:ring-2 focus:ring-gold-500/30 disabled:opacity-50
+      disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-gold-500 text-night-950 hover:bg-gold-400 shadow-lg shadow-gold-500/10;
+  }
+
+  .btn-ghost {
+    @apply btn bg-night-700/60 text-slate-200 border border-night-500 hover:bg-night-600;
+  }
+
+  .btn-danger {
+    @apply btn bg-rose-600/90 text-white hover:bg-rose-500;
+  }
+
+  .card {
+    @apply bg-night-800/80 border border-night-600/60 rounded-2xl backdrop-blur-sm;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .icon-btn {
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400
+      transition hover:bg-night-600 hover:text-white focus:outline-none
+      focus:ring-2 focus:ring-gold-500/30;
+  }
+
+  /*
+   * Marquee du champ de recherche des collections (survol) :
+   * déroulement horizontal vers la gauche, pause, puis retour à la position
+   * initiale. La distance à parcourir et la durée sont injectées par
+   * CollectionSearch via les custom properties --marquee-distance /
+   * --marquee-duration (calculées au survol, uniquement si le texte est
+   * réellement tronqué).
+   */
+  @keyframes search-marquee {
+    0% {
+      transform: translateX(0);
+    }
+    42% {
+      transform: translateX(calc(-1 * var(--marquee-distance, 100px)));
+    }
+    58% {
+      transform: translateX(calc(-1 * var(--marquee-distance, 100px)));
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+
+  .animate-marquee {
+    animation: search-marquee var(--marquee-duration, 6s) linear both;
+    will-change: transform;
+  }
+}

@@ -1,0 +1,161 @@
+/* ============================================================
+   Geek0thek — Thème « Disquaire »
+   Ambiance chaleureuse et rétro : tons bois et cuir chauds,
+   galette de disque, accent ambre cuivré, serif typographique.
+   Même logique de variables que les thèmes sombre / moderne
+   (cf. index couleurs de theme.js).
+   ============================================================ */
+
+[data-theme='vinyl'] {
+  --bg-app: #1a1108;
+  --bg-surface: #231810;
+  --bg-elevated: #2c1f13;
+  --bg-raised: #362618;
+  --bg-hover: #412e1c;
+  --border-subtle: #4b3722;
+  --border-default: #6b5334;
+  --text-primary: #f7ecd9;
+  --text-secondary: #ecdcbc;
+  --text-muted: #c9ad85;
+  --text-subtle: #a6875c;
+  --text-faint: #7f6a4e;
+  --accent-soft: #eec287; /* texte accent (ambre clair) */
+  --accent: #e0a558; /* survol accent, logo */
+  --accent-strong: #d18a3e; /* boutons, focus, ring */
+  --accent-deep: #b26f2c;
+  --accent-dark: #8f5520;
+  --accent-contrast: #1a1108; /* texte sur un bouton accent */
+  --ring: rgba(209, 138, 62, 0.22);
+  --shadow-color: rgba(0, 0, 0, 0.55);
+  --card-radius: 0.75rem; /* angles plus carrés : vibe boîtier de disques */
+  --app-font: 'Georgia', 'Times New Roman', ui-serif, serif;
+  --body-font-weight: 400;
+  --body-letter-spacing: 0.01em;
+  --input-bg: #2c1f13;
+  --input-border: #6b5334;
+  --input-focus-border: rgba(209, 138, 62, 0.65);
+  --scrollbar-thumb: rgba(107, 83, 52, 0.7);
+  --scrollbar-thumb-hover: #6b5334;
+  --ghost-bg: rgba(65, 46, 28, 0.6);
+  --ghost-hover: #412e1c;
+  --ghost-border: #6b5334;
+  --ghost-text: #ecdcbc;
+  --selection-bg: rgba(209, 138, 62, 0.32);
+  --selection-text: #fff8ec;
+  --danger: rgba(186, 62, 40, 0.92);
+  --danger-hover: #e0503a;
+  --menu-pop-bg: #231810;
+  --menu-pop-shadow: rgba(0, 0, 0, 0.55);
+  --card-bg: rgba(44, 31, 19, 0.85);
+  --card-border: rgba(107, 83, 52, 0.6);
+  --card-blur: 3px;
+}
+
+[data-theme='vinyl'] {
+  color-scheme: dark;
+}
+
+[data-theme='vinyl'] body {
+  background: var(--bg-app);
+  color: var(--text-secondary);
+  font-family: var(--app-font);
+  font-weight: var(--body-font-weight);
+  letter-spacing: var(--body-letter-spacing);
+  background-image:
+    radial-gradient(1100px 560px at 82% -10%, rgba(209, 138, 62, 0.1), transparent 60%),
+    radial-gradient(900px 520px at -10% 110%, rgba(178, 111, 44, 0.08), transparent 60%),
+    /* fines stries « bois » verticales, très discrètes */
+    repeating-linear-gradient(90deg, rgba(255, 235, 200, 0.012) 0 2px, transparent 2px 9px);
+  background-attachment: fixed;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+[data-theme='vinyl'] ::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+[data-theme='vinyl'] .input {
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-primary);
+}
+
+[data-theme='vinyl'] .input::placeholder {
+  color: var(--text-subtle);
+}
+
+[data-theme='vinyl'] .input:focus {
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+[data-theme='vinyl'] .label {
+  color: var(--text-muted);
+  font-family: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-theme='vinyl'] .btn {
+  --tw-ring-offset: transparent;
+  font-family: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-theme='vinyl'] .btn-primary {
+  background: var(--accent-strong);
+  color: var(--accent-contrast);
+  box-shadow: 0 10px 15px -3px var(--ring), 0 4px 6px -4px var(--ring);
+}
+
+[data-theme='vinyl'] .btn-primary:hover {
+  background: var(--accent);
+}
+
+[data-theme='vinyl'] .btn-ghost {
+  background: var(--ghost-bg);
+  color: var(--ghost-text);
+  border-color: var(--ghost-border);
+}
+
+[data-theme='vinyl'] .btn-ghost:hover {
+  background: var(--ghost-hover);
+}
+
+[data-theme='vinyl'] .btn-danger {
+  background: var(--danger);
+}
+
+[data-theme='vinyl'] .btn-danger:hover {
+  background: var(--danger-hover);
+}
+
+[data-theme='vinyl'] .card {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+  border-radius: var(--card-radius);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
+}
+
+[data-theme='vinyl'] .badge {
+  background: rgba(107, 83, 52, 0.45);
+  color: var(--text-secondary);
+}
+
+[data-theme='vinyl'] .icon-btn {
+  color: var(--text-muted);
+}
+
+[data-theme='vinyl'] .icon-btn:hover {
+  background: var(--bg-hover);
+  color: #fff8ec;
+}
+
+[data-theme='vinyl'] ::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+
+[data-theme='vinyl'] ::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}

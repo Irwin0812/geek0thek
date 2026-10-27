@@ -1,0 +1,163 @@
+/* ============================================================
+   Geek0thek — Thème « Pastel »
+   Coloré mais pas trop vif : teintes pastel harmonieuses
+   (crème abricot, rose poudré, menthe sage), douces pour les
+   yeux. Accent terracotta doux ; aucun blanc cassé de cartes.
+   Même logique de variables que les autres thèmes.
+   ============================================================ */
+
+[data-theme='pastel'] {
+  --bg-app: #f7efe3; /* crème abricot douce */
+  --bg-surface: #f1e7d8;
+  --bg-elevated: #fffbf4; /* cartes / champs : blanc crème */
+  --bg-raised: #f9f1e6;
+  --bg-hover: #efe3d2;
+  --border-subtle: #e8dcc9;
+  --border-default: #d6c3ab;
+  --text-primary: #4a4238; /* brun taupe, jamais noir franc */
+  --text-secondary: #5d5347;
+  --text-muted: #7d7161;
+  --text-subtle: #998c7b;
+  --text-faint: #b3a693;
+  --accent-soft: #a4552e; /* texte accent terracotta lisible */
+  --accent: #bd6b41;
+  --accent-strong: #a4552e; /* boutons terracotta doux */
+  --accent-deep: #8d4826;
+  --accent-dark: #6f391e;
+  --accent-contrast: #fff8f1;
+  --ring: rgba(164, 85, 46, 0.24);
+  --shadow-color: rgba(122, 96, 70, 0.14);
+  --card-radius: 1rem;
+  --app-font: 'Georgia', 'Times New Roman', ui-serif, serif;
+  --body-font-weight: 400;
+  --body-letter-spacing: 0.01em;
+  --input-bg: #fffbf4;
+  --input-border: #d6c3ab;
+  --input-focus-border: rgba(164, 85, 46, 0.55);
+  --scrollbar-thumb: rgba(214, 195, 171, 0.8);
+  --scrollbar-thumb-hover: #c9b49b;
+  --ghost-bg: rgba(255, 251, 244, 0.85);
+  --ghost-hover: #efe3d2;
+  --ghost-border: #d6c3ab;
+  --ghost-text: #5d5347;
+  --selection-bg: rgba(189, 107, 65, 0.26);
+  --selection-text: #4a4238;
+  --danger: rgba(190, 60, 60, 0.9); /* rouge doux, jamais vif */
+  --danger-hover: #c24545;
+  --menu-pop-bg: #fffbf4;
+  --menu-pop-shadow: rgba(122, 96, 70, 0.22);
+  --card-bg: #fffbf4;
+  --card-border: #eaddc9;
+  --card-blur: 0px;
+  --card-shadow: 0 1px 2px rgba(122, 96, 70, 0.05), 0 8px 22px rgba(122, 96, 70, 0.08);
+}
+
+[data-theme='pastel'] {
+  color-scheme: light;
+}
+
+[data-theme='pastel'] body {
+  background: var(--bg-app);
+  color: var(--text-secondary);
+  font-family: var(--app-font);
+  font-weight: var(--body-font-weight);
+  letter-spacing: var(--body-letter-spacing);
+  /* halos pastel harmonieux : rose poudré + menthe sage, très doux */
+  background-image:
+    radial-gradient(1000px 520px at 85% -10%, rgba(214, 158, 168, 0.22), transparent 60%),
+    radial-gradient(850px 500px at -10% 110%, rgba(148, 184, 166, 0.2), transparent 60%),
+    radial-gradient(700px 400px at 105% 60%, rgba(196, 178, 216, 0.16), transparent 60%);
+  background-attachment: fixed;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+[data-theme='pastel'] ::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+[data-theme='pastel'] .input {
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-primary);
+}
+
+[data-theme='pastel'] .input::placeholder {
+  color: var(--text-subtle);
+}
+
+[data-theme='pastel'] .input:focus {
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+[data-theme='pastel'] .label {
+  color: var(--text-muted);
+  font-family: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-theme='pastel'] .btn {
+  --tw-ring-offset: transparent;
+  font-family: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-theme='pastel'] .btn-primary {
+  background: var(--accent-strong);
+  color: var(--accent-contrast);
+  box-shadow: 0 8px 18px -8px var(--ring);
+}
+
+[data-theme='pastel'] .btn-primary:hover {
+  background: var(--accent);
+}
+
+[data-theme='pastel'] .btn-ghost {
+  background: var(--ghost-bg);
+  color: var(--ghost-text);
+  border-color: var(--ghost-border);
+}
+
+[data-theme='pastel'] .btn-ghost:hover {
+  background: var(--ghost-hover);
+}
+
+[data-theme='pastel'] .btn-danger {
+  background: var(--danger);
+}
+
+[data-theme='pastel'] .btn-danger:hover {
+  background: var(--danger-hover);
+}
+
+[data-theme='pastel'] .card {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+  border-radius: var(--card-radius);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: var(--card-shadow);
+}
+
+[data-theme='pastel'] .badge {
+  background: var(--bg-raised);
+  color: var(--text-muted);
+}
+
+[data-theme='pastel'] .icon-btn {
+  color: var(--text-subtle);
+}
+
+[data-theme='pastel'] .icon-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+[data-theme='pastel'] ::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+
+[data-theme='pastel'] ::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}

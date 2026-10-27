@@ -1,0 +1,163 @@
+/* ============================================================
+   Geek0thek — Thème « Cartoon »
+   Couleurs ludiques et douces : fond lavande tendre, cartes
+   blanches à coins très arrondis, accent turquoise bonbon,
+   pastille corail pour le danger. Douceur avant tout.
+   Même logique de variables que les autres thèmes.
+   ============================================================ */
+
+[data-theme='cartoon'] {
+  --bg-app: #e7e2f8; /* lavande tendre */
+  --bg-surface: #ddd6f4;
+  --bg-elevated: #ffffff; /* cartes / champs : blanc doux */
+  --bg-raised: #f3f0fc;
+  --bg-hover: #d3c9f2;
+  --border-subtle: #cfc5ee;
+  --border-default: #b9a9ea;
+  --text-primary: #332d52; /* encre violette douce */
+  --text-secondary: #453e66;
+  --text-muted: #6d6592;
+  --text-subtle: #8c84ab;
+  --text-faint: #aaa3c8;
+  --accent-soft: #0e7490; /* texte accent (teal foncé, lisible) */
+  --accent: #0d9488;
+  --accent-strong: #0f766e; /* boutons turquoise bonbon */
+  --accent-deep: #0b5d56;
+  --accent-dark: #084b46;
+  --accent-contrast: #ffffff;
+  --ring: rgba(13, 148, 136, 0.28);
+  --shadow-color: rgba(83, 68, 145, 0.16);
+  --card-radius: 1.5rem; /* coins très arrondis : look cartoon */
+  --app-font: 'Trebuchet MS', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+  --body-font-weight: 500;
+  --body-letter-spacing: 0;
+  --input-bg: #ffffff;
+  --input-border: #b9a9ea;
+  --input-focus-border: rgba(15, 118, 110, 0.7);
+  --scrollbar-thumb: rgba(185, 169, 234, 0.7);
+  --scrollbar-thumb-hover: #b9a9ea;
+  --ghost-bg: rgba(243, 240, 252, 0.8);
+  --ghost-hover: #d3c9f2;
+  --ghost-border: #b9a9ea;
+  --ghost-text: #453e66;
+  --selection-bg: rgba(13, 148, 136, 0.28);
+  --selection-text: #173f3b;
+  --danger: rgba(244, 63, 94, 0.92); /* pastille corail */
+  --danger-hover: #f43f5e;
+  --menu-pop-bg: #ffffff;
+  --menu-pop-shadow: rgba(83, 68, 145, 0.28);
+  --card-bg: #ffffff;
+  --card-border: #e2dafa;
+  --card-blur: 0px;
+  --card-shadow: 0 1px 2px rgba(83, 68, 145, 0.06), 0 10px 28px rgba(83, 68, 145, 0.1);
+}
+
+[data-theme='cartoon'] {
+  color-scheme: light;
+}
+
+[data-theme='cartoon'] body {
+  background: var(--bg-app);
+  color: var(--text-secondary);
+  font-family: var(--app-font);
+  font-weight: var(--body-font-weight);
+  letter-spacing: var(--body-letter-spacing);
+  /* nuages pastel discrets en haut de page */
+  background-image:
+    radial-gradient(620px 320px at 12% -8%, rgba(255, 255, 255, 0.55), transparent 65%),
+    radial-gradient(720px 360px at 88% -12%, rgba(13, 148, 136, 0.08), transparent 60%);
+  background-attachment: fixed;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+[data-theme='cartoon'] ::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+[data-theme='cartoon'] .input {
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-primary);
+  border-radius: 1rem; /* champs arrondis comme le reste du thème */
+}
+
+[data-theme='cartoon'] .input::placeholder {
+  color: var(--text-subtle);
+}
+
+[data-theme='cartoon'] .input:focus {
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+[data-theme='cartoon'] .label {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+[data-theme='cartoon'] .btn {
+  --tw-ring-offset: transparent;
+  border-radius: 1rem; /* boutons « bonbon » */
+}
+
+[data-theme='cartoon'] .btn-primary {
+  background: var(--accent-strong);
+  color: var(--accent-contrast);
+  box-shadow: 0 8px 18px -8px var(--ring);
+}
+
+[data-theme='cartoon'] .btn-primary:hover {
+  background: var(--accent);
+}
+
+[data-theme='cartoon'] .btn-ghost {
+  background: var(--ghost-bg);
+  color: var(--ghost-text);
+  border-color: var(--ghost-border);
+}
+
+[data-theme='cartoon'] .btn-ghost:hover {
+  background: var(--ghost-hover);
+}
+
+[data-theme='cartoon'] .btn-danger {
+  background: var(--danger);
+}
+
+[data-theme='cartoon'] .btn-danger:hover {
+  background: var(--danger-hover);
+}
+
+[data-theme='cartoon'] .card {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+  border-radius: var(--card-radius);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: var(--card-shadow);
+}
+
+[data-theme='cartoon'] .badge {
+  background: var(--bg-raised);
+  color: var(--text-muted);
+}
+
+[data-theme='cartoon'] .icon-btn {
+  color: var(--text-subtle);
+}
+
+[data-theme='cartoon'] .icon-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+[data-theme='cartoon'] ::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+
+[data-theme='cartoon'] ::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}

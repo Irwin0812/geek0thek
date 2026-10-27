@@ -1,0 +1,613 @@
+# 💿📚 Geek0thek — Médiathèque Personnelle
+
+Application web full-stack conteneurisée pour la gestion de collections de
+**Vinyles** et de **Bandes Dessinées** (BD / Mangas / Comics) : thème sombre
+natif, UI soignée, stockage local des couvertures.
+
+| Couche | Technologie |
+|---|---|
+| Backend | **Node.js 22** + **Express** (API REST, JWT, Helmet, CORS, Multer) |
+| Frontend | **React 18** (Vite) + **Tailwind CSS 3** |
+| Base de données | **PostgreSQL 16** (persistance locale via volume Docker) |
+| Stockage images | Dossier local `./uploads` monté dans le conteneur backend (sous-dossiers `vinyls/` et `comics/`) |
+| APIs vinyles | **MusicBrainz** + **Cover Art Archive** (sans clé API) **+ Discogs** (jeton `DISCOGS_TOKEN` requis) — import par **code-barres (EAN/UPC)** |
+| APIs BD | **Google Books** + **Open Library** (pré-remplissage automatique par **ISBN**, sans clé API) |
+| Déploiement | **Docker Compose** — cible **Debian 12**, IP `172.16.2.75`, reverse-proxy friendly |
+
+Fonctionnalités clés :
+
+- Authentification **login + mot de passe (bcrypt)** avec JWT, rôles `admin` / `user`.
+- Admin unique créé à l'initialisation : `Admirwin`.
+- **Vinyles** : import par **code-barres (EAN/UPC)** interrogeant **MusicBrainz**
+  (fiche de référence : titre, artiste, date, label, tracklist, MBID)
+  **+ Discogs en complément** (si jeton configuré : date, label, genre,
+  miniature, id de la release + URL de la fiche), ou saisie manuelle complète.
+- **BDs** : pré-remplissage par **ISBN** (Google Books, Open Library en secours) ou
+  saisie manuelle complète (série, tome, auteurs, illustrateurs, éditeur…).
+- **Visibilité publique/privée** de chaque collection (toggle dans le tableau de bord),
+  appliquée aux vinyles **et** aux BDs.
+- **Stockage local des couvertures** sur le disque de la VM hôte
+  (`./uploads/vinyls` et `./uploads/comics`) — les images distantes
+  (MusicBrainz / Cover Art Archive, **Discogs**, Google Books, Open Library)
+  sont **téléchargées et ré-hébergées localement**.
+- Pages **Collections publiques** (lecture seule, sans compte) : vinyles + BDs.
+- Compatible **reverse proxy externe** (`X-Forwarded-For`, `X-Forwarded-Proto`, WebSocket).
+
+---
+
+## 📂 Arborescence du projet
+
+```text
+geek0thek/
+├── .env.example               # Variables d'environnement (template)
+├── docker-compose.yml         # Orchestration : db + backend + frontend
+├── README.md
+├── database/
+│   └── init.sql               # Schéma (users, vinyls, comics, vues) + seed de l'admin (bcrypt coût 12)
+├── uploads/                   # Volume local des couvertures (disque de la VM hôte)
+│   ├── vinyls/                # Jaquettes de disques (créé automatiquement au 1er démarrage)
+│   └── comics/                # Couvertures de BD (créé automatiquement au 1er démarrage)
+├── backend/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── src/
+│       ├── server.js          # App Express, statique /uploads, proxy trust, routes
+│       ├── config/
+│       │   ├── db.js          # Pool PostgreSQL (pg)
+│       │   └── env.js         # Configuration centralisée (env)
+│       ├── middlewares/
+│       │   ├── auth.js        # JWT (authenticate) + requireAdmin
+│       │   └── upload.js      # Multer -> /app/uploads/vinyls | /app/uploads/comics (noms aléatoires)
+│       ├── controllers/
+│       │   ├── authController.js
+│       │   ├── userController.js
+│       │   ├── vinylController.js
+│       │   ├── musicBrainzController.js
+│       │   ├── discogsController.js
+│       │   ├── comicController.js
+│       │   └── isbnController.js
+│       ├── routes/
+│       │   ├── authRoutes.js
+│       │   ├── userRoutes.js
+│       │   ├── vinylRoutes.js
+│       │   ├── musicBrainzRoutes.js
+│       │   ├── discogsRoutes.js
+│       │   ├── comicRoutes.js
+│       │   └── isbnRoutes.js
+│       └── utils/
+│           ├── musicBrainzClient.js # MusicBrainz + Cover Art Archive : recherche par barcode + téléchargement local
+│           ├── discogsClient.js     # Discogs : recherche par code-barres (jeton requis) + identifiants release
+│           └── isbnClient.js      # Google Books / Open Library par ISBN + téléchargement local
+└── frontend/
+    ├── Dockerfile             # Build Vite multi-étapes -> nginx alpine
+    ├── nginx.conf             # SPA + proxy /api & /uploads (headers X-Forwarded-*)
+    ├── package.json
+    ├── tailwind.config.js
+    └── src/
+        ├── App.jsx            # Routage + contexte d'authentification
+        ├── index.css          # Thème sombre (Tailwind, palette "night"/"gold")
+        ├── main.jsx
+        ├── components/
+        │   ├── Navbar.jsx
+        │   ├── ProtectedRoute.jsx
+        │   ├── VinylCard.jsx
+        │   ├── BarcodeModal.jsx
+        │   ├── ComicCard.jsx
+        │   └── IsbnModal.jsx
+        ├── pages/
+        │   ├── Login.jsx
+        │   ├── Dashboard.jsx
+        │   ├── Collection.jsx         # Vinyles de l'utilisateur
+        │   ├── ComicCollection.jsx    # BDs de l'utilisateur
+        │   ├── PublicCollection.jsx   # Collections publiques (vinyles + BDs)
+        │   ├── AddVinyl.jsx
+        │   ├── AddComic.jsx
+        │   └── AdminUsers.jsx
+        └── services/
+            └── api.js         # Client REST (JWT, multipart, gestion 401)
+```
+
+---
+
+## 🚀 Installation pas à pas (Debian 12 — VM `172.16.2.75`)
+
+### 1. Prérequis sur la VM
+
+```bash
+# Mettre à jour le système
+sudo apt update && sudo apt upgrade -y
+
+# Installer Docker Engine + Compose (répositoire officiel Docker)
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER        # puis se reconnecter pour le groupe docker
+```
+
+Vérifications :
+
+```bash
+docker --version
+docker compose version
+```
+
+Conseil Debian 12 : la VM doit avoir l'IP **`172.16.2.75`** sur son interface
+(`ip addr`). Le port **80** doit être accessible (pare-feu local `iptables`/`nftables`
+et pare-feu du réseau si nécessaire).
+
+### 2. Déployer les fichiers du projet
+
+```bash
+sudo mkdir -p /opt && cd /opt
+sudo git clone <depot-git> geek0thek     # ou copier l'arborescence complète
+cd /opt/geek0thek
+```
+
+### 3. Préparer l'environnement & le secret JWT
+
+```bash
+cp .env.example .env
+```
+
+Éditez `.env` :
+
+```env
+# Secret JWT : générer une longue chaîne aléatoire
+openssl rand -hex 64
+#   puis coller la valeur dans JWT_SECRET=...
+
+# (Optionnel) User-Agent identifié envoyé à MusicBrainz :
+MUSICBRAINZ_USER_AGENT=Geek0thek/1.0.0 (contact@example.com)
+# Options : CORS_ORIGIN=http://172.16.2.75  (à ajuster si reverse proxy https)
+```
+
+### 4. Permissions du dossier `uploads` (important)
+
+Les conteneurs s'exécutent en utilisateur `node` (uid 1000) côté backend.
+Le serveur crée les sous-dossiers s'ils manquent, mais pour éviter tout
+problème sur le disque hôte :
+
+```bash
+cd /opt/geek0thek
+sudo mkdir -p uploads/vinyls uploads/comics
+sudo chown -R 1000:1000 uploads        # uid 1000 = utilisateur "node" dans l'image
+sudo chmod 775 uploads uploads/vinyls uploads/comics
+ls -laR uploads
+```
+
+> Le volume `./uploads:/app/uploads` garantit que les couvertures (fichiers
+> téléversés **et** téléchargées depuis MusicBrainz / Cover Art Archive,
+> Discogs, Google Books / Open Library)
+> sont stockées **sur le disque de la VM hôte** :
+> - `/opt/geek0thek/uploads/vinyls/` → jaquettes de disques
+> - `/opt/geek0thek/uploads/comics/` → couvertures de BD
+>
+> Multer route automatiquement chaque upload vers le bon sous-dossier selon
+> la route concernée (`/api/vinyls/*` → `vinyls/`, `/api/comics/*` → `comics/`).
+> La base de données est de même persistée dans `/opt/geek0thek/data`.
+
+### 5. API MusicBrainz (aucune clé requise)
+
+L'import par code-barres s'appuie sur **MusicBrainz** (métadonnées : titre,
+artiste, date, label) et **Cover Art Archive** (jaquette). **Aucune clé API ni
+compte n'est requis** : le backend identifie l'application via l'en-tête
+`User-Agent` (`Geek0thek/1.0.0 (contact@example.com)` par défaut).
+
+Vous pouvez personnaliser ce User-Agent dans `.env` (recommandé : indiquer un
+contact valide, exigé par MusicBrainz) :
+
+```env
+MUSICBRAINZ_USER_AGENT=Geek0thek/1.0.0 (contact@example.com)
+```
+
+Sans paramètre configuré, l'endpoint
+`GET /api/musicbrainz/status` renvoie toujours `configured: true` (l'API ne
+dépend d'aucune clé) et la recherche par code-barres fonctionne immédiatement.
+
+> **Quota** : MusicBrainz autorise **1 requête/seconde** maximum.
+> L'application ne fait qu'une seule requête de recherche par import
+> (+ une récupération de jaquette sur Cover Art Archive).
+
+> **BD / ISBN** : les recherches par ISBN s'appuient sur **Google Books API**
+> puis **Open Library** en secours. **Aucune clé API n'est requise** et aucun
+> paramètre `.env` n'est nécessaire — le backend effectue la recherche côté
+> serveur et télécharge la couverture localement (ré-hébergement).
+
+### 6. API Discogs — jeton personnel (`DISCOGS_TOKEN`)
+
+**Discogs complète MusicBrainz** dans la recherche par code-barres : en plus
+de la fiche de référence MusicBrainz (titre, artiste, date, label, tracklist,
+MBID), Discogs apporte la **date, le label et le genre manquants**, la **miniature**,
+et les **identifiants de la release**
+(`discogs_release_id` + `discogs_url`, persistés avec le vinyle).
+
+Discogs **exige** un **jeton personnel** + un `User-Agent` identifié. Sans
+`DISCOGS_TOKEN`, la recherche Discogs est simplement **désactivée** :
+l'application fonctionne alors avec MusicBrainz seul, sans erreur.
+
+**Obtenir un jeton Discogs** (compte gratuit requis) :
+
+1. Se connecter sur <https://www.discogs.com>
+2. Ouvrir <https://www.discogs.com/settings/developers>
+3. Cliquer sur **« Create New Token »** et donner un nom (ex. `Geek0thek`)
+4. Laisser les **permissions par défaut** (la lecture seule suffit)
+5. Copier le jeton généré dans `.env` :
+
+```env
+# Jeton Discogs (obligatoire pour activer le complément Discogs)
+DISCOGS_TOKEN=votre-jeton-discogs-ici
+
+# (Optionnel) User-Agent identifié envoyé à Discogs (recommandé) :
+DISCOGS_USER_AGENT=Geek0thek/1.0.0 (contact@example.com)
+
+# (Optionnel) Nombre de requêtes Discogs autorisées par minute (défaut 25, max 250) :
+DISCOGS_RATE_LIMIT_PER_MINUTE=25
+```
+
+> **Quota** : Discogs autorise par défaut **25 requêtes/min** par jeton.
+> L'application limite d'elle-même le débit (limiteurs internes) et ne fait
+> qu'une requête de recherche par code-barres.
+> `GET /api/discogs/status` renvoie `configured: true` uniquement si
+> `DISCOGS_TOKEN` est renseigné et valide.
+
+**Endpoint combiné d'import par code-barres**
+
+`GET /api/musicbrainz/barcode/:code` (JWT requis, EAN/UPC : 8 à 14 chiffres)
+interroge **MusicBrainz et Discogs en parallèle**, puis **fusionne** les
+fiches : MusicBrainz est la référence (tracklist, MBID) ; Discogs ne
+complète que ce qui manque + ses identifiants. Les deux sources sont
+indépendantes :
+
+- **Discogs non configuré** → aucune erreur, fiche MusicBrainz seule
+  (`providers.discogs: "not-configured"`).
+- **Source absente d'un disque (404)** → non bloquant, l'autre source est renvoyée.
+- **Échec d'infrastructure (502/429/401)** → signalé dans `warnings` si l'autre
+  source a trouvé la fiche ; sinon statut de la 1ʳᵉ erreur renvoyé (429 ou 502).
+
+Réponse `200` :
+
+```json
+{
+  "success": true,
+  "data": {
+    "barcode": "0123456789012",
+    "artist": "Artiste",
+    "title": "Titre",
+    "label": "Label",
+    "genre": "Rock",
+    "release_date": "1995-06-01",
+    "tracklist": "Titre 1\nTitre 2",
+    "track_count": 2,
+    "cover_image": "/uploads/…",
+    "mbid": "uuid",
+    "discogs_release_id": 123456,
+    "discogs_url": "https://www.discogs.com/release/123456",
+    "source": "musicbrainz+discogs"
+  },
+  "providers": { "musicbrainz": "found", "discogs": "found" },
+  "warnings": []
+}
+```
+
+- `source` : `"musicbrainz"` / `"discogs"` / `"musicbrainz+discogs"`.
+- `providers.<src>` : `"found"` | `"not-found"` | `"not-configured"` (discogs) | `"unavailable"`.
+- `discogs_release_id` / `discogs_url` sont `null` si Discogs n'a pas reconnu le disque
+  (ou n'est pas configuré) ; ils sont **persistés avec le vinyle** à la création.
+- Aucune des deux sources ne connaît le code → **`404`** (saisie manuelle conseillée).
+
+L'endpoint Discogs seul (pour débogage) est aussi exposé :
+`GET /api/discogs/status` et `GET /api/discogs/barcode/:code`.
+
+### 7. Lancer l'application
+
+```bash
+cd /opt/geek0thek
+docker compose up -d --build
+```
+
+Suivi des journaux :
+
+```bash
+docker compose logs -f
+docker compose ps
+```
+
+La base PostgreSQL exécute automatiquement `database/init.sql` **à la toute
+première création** du volume `./data` : le schéma complet (tables `users`,
+`vinyls`, `comics` + vues publiques) est mis en place et
+**l'admin par défaut est créé** (`Admirwin`, mot de passe hashé bcrypt).
+
+L'application est alors joignable à l'URL **`http://172.16.2.75`**.
+
+---
+
+## 🔑 Comptes par défaut
+
+| Login | Mot de passe | Rôle |
+|---|---|---|
+| `Admirwin` | `IR@08515#Ger!` | `admin` (unique, seedé dans `init.sql`) |
+
+- Seul un **admin** peut créer / modifier / supprimer des comptes
+  (section *Utilisateurs*).
+- Le mot de passe est stocké **hashé bcrypt** (coût 12 en base / 10 pour les
+  comptes créés via l'UI) ; jamais en clair.
+- **Changez ce mot de passe à la première connexion** (bouton *Modifier* dans
+  la liste des utilisateurs, ou via API).
+
+---
+
+## 🖥️ Configuration d'un reverse proxy externe
+
+Le frontend (nginx interne) et le backend (Express `trust proxy = 1`) sont
+déjà câblés pour recevoir les en-têtes `X-Forwarded-*`. Exemple **nginx** pour
+un reverse proxy sur la VM (domaine `vinyle.exemple.fr`) :
+
+```nginx
+server {
+    listen 80;
+    server_name vinyle.exemple.fr;
+    # Redirection http -> https
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name vinyle.exemple.fr;
+
+    ssl_certificate     /etc/letsencrypt/live/vinyle.exemple.fr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/vinyle.exemple.fr/privkey.pem;
+
+    # Uploads volumineux (jaquettes / couvertures BD)
+    client_max_body_size 15m;
+
+    # En-têtes de proxy attendus par Express + nginx interne
+    location / {
+        proxy_pass http://172.16.2.75:80;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+        proxy_set_header X-Forwarded-Port  $server_port;
+
+        # Support WebSocket (si besoin en amont de l'API)
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        "upgrade";
+    }
+}
+```
+
+Et ajuster dans `.env` (puis `docker compose up -d`) :
+
+```env
+CORS_ORIGIN=https://vinyle.exemple.fr
+```
+
+> L'application fonctionne **sans** reverse proxy (HTTP port 80) ; le proxy
+> n'est nécessaire que pour HTTPS/SNI ou un domaine public.
+
+---
+
+## 🐳 Commandes Docker Compose utiles
+
+```bash
+# Démarrer tout (build si besoin)
+docker compose up -d --build
+
+# Arrêter tout (les volumes restent : données + uploads)
+docker compose down
+
+# Arrêter et SUPPRIMER les volumes (⚠️ EFFACE base de données)
+docker compose down -v
+
+# Suivi des journaux
+docker compose logs -f
+docker compose logs -f backend
+
+# Statut
+docker compose ps
+
+# Entrer dans un conteneur
+docker compose exec backend sh
+docker compose exec db psql -U vinyl -d geek0thek
+
+# Recréer l'admin après un "down -v" (déjà fait par init.sql au 1er boot)
+docker compose up -d db
+
+# Sauvegarde rapide de la base
+docker compose exec db pg_dump -U vinyl -Fc vinyl > backup-$(date +%F).dump
+# Restauration :
+docker compose exec -T db pg_restore -U vinyl -d geek0thek --clean < backup.dump
+```
+
+---
+
+## 🔒 Sécurité & bonnes pratiques
+
+- **JWT** signé (HS256) avec `JWT_SECRET` à longue valeur aléatoire ; expiration `7d`.
+- **bcrypt** pour tous les mots de passe (jamais en clair, ni en log).
+- **Helmet** (en-têtes sécurité) + **CORS** restreint aux origines autorisées.
+- **Express `trust proxy = 1`** pour lire correctement `X-Forwarded-For`.
+- Couvertures servies statiquement (`/uploads/...`) : noms de fichiers
+  **aléatoires** (`cover-<hex>`), filtrage MIME (JPG/PNG/WEBP/GIF),
+  limite `MAX_UPLOAD_MB` (10 Mo par défaut), 1 fichier par import.
+- **PostgreSQL** n'expose rien : le port 5432 reste **interne au réseau Docker**
+  (non publié sur l'hôte) ; seul le backend y accède.
+- Le compte `node` (uid 1000, non-root) exécute le backend.
+- Les couvertures **téléchargées depuis MusicBrainz / Cover Art Archive,
+  Discogs, Google Books / Open Library**
+  sont **ré-hébergées localement** (le champ `cover_url` stocke toujours un
+  chemin `/uploads/vinyls/...` ou `/uploads/comics/...`, ou une URL distante
+  validée) pour ne pas dépendre des CDN tiers.
+- **Jeton Discogs** : stocké dans `.env`, **jamais exposé** par l'API ni loggé
+  (le statut `GET /api/discogs/status` ne renvoie qu'un booléen `configured`).
+- ISBN des BDs **unique** en base (contrainte `UNIQUE`) pour éviter les doublons.
+
+---
+
+## 🧩 Schéma de base de données (résumé)
+
+```sql
+users      (id, last_name, first_name, email UNIQUE, login UNIQUE, password_hash,
+            role [admin|user], phone, bio, is_public BOOLEAN, created_at, updated_at)
+
+vinyls     (id, user_id FK->users ON DELETE CASCADE, cover_url TEXT NOT NULL,
+            artist, title, track_count, tracklist, genre, label, release_date,
+            barcode UNIQUE,
+            mbid VARCHAR(40),             -- MBID MusicBrainz (release UUID)
+            discogs_release_id BIGINT,   -- id de la release Discogs (recherche code-barres)
+            discogs_url TEXT,            -- URL de la fiche release Discogs
+            acquired_date DATE, notes,
+            is_special_edition BOOL,     -- « Édition spéciale » (case à cocher)
+            is_picture_disc BOOL,        -- « Picture Disc » (select Oui/Non)
+            discs_count INT 1→5,         -- « Nombre de vinyls » (select 1 → 5, défaut 1)
+            color VARCHAR(50),           -- « Couleur » de la galette (défaut 'Noir')
+            created_at, updated_at)
+
+comics     (id, user_id FK->users ON DELETE CASCADE, cover_url TEXT,
+            title VARCHAR(255) NOT NULL, series VARCHAR(255), tome_number,
+            authors VARCHAR(255) NOT NULL, illustrators, publisher NOT NULL,
+            release_date, genre, isbn UNIQUE, synopsis,
+            condition (défaut 'Bon état'), is_special_edition BOOL,
+            created_at, updated_at)
+
+public_vinyls  -- vue : vinyles des collections is_public = TRUE
+public_comics  -- vue : BDs des collections is_public = TRUE
+```
+
+Triggers `updated_at` automatiques sur les trois tables.
+
+#### Table `vinyls` — détail des colonnes
+
+| Colonne | Type | Contraintes | Description |
+|---|---|---|---|
+| `id` | `BIGSERIAL` | PK | Identifiant unique du vinyle |
+| `user_id` | `BIGINT` | FK→`users(id)` `ON DELETE CASCADE`, NOT NULL | Propriétaire de la fiche |
+| `cover_url` | `TEXT` | NOT NULL | Jaquette : `/uploads/vinyls/…` (locale) ou URL distante |
+| `artist` | `VARCHAR(255)` | NOT NULL | Artiste (principal) |
+| `title` | `VARCHAR(255)` | NOT NULL | Titre de l'album / single |
+| `track_count` | `INTEGER` | `>= 0`, défaut `0` | Nombre de titres |
+| `tracklist` | `TEXT` | — | Liste des titres (1 titre par ligne) |
+| `genre` | `VARCHAR(120)` | — | Genre musical |
+| `label` | `VARCHAR(255)` | — | Label discographique |
+| `release_date` | `DATE` | — | Date de parution |
+| `barcode` | `VARCHAR(64)` | UNIQUE | Code-barres EAN/UPC (clé d'import) |
+| `mbid` | `VARCHAR(40)` | — | MBID MusicBrainz (UUID de la release) |
+| `discogs_release_id` | `BIGINT` | 🆕 | **Id de la release Discogs** (recherche par code-barres) |
+| `discogs_url` | `TEXT` | 🆕 | **URL de la fiche release Discogs** |
+| `acquired_date` | `DATE` | NOT NULL, défaut `CURRENT_DATE` | Date d'ajout du vinyle à la collection (remplace « année d'acquisition ») |
+| `notes` | `TEXT` | — | Notes libres |
+| `is_special_edition` | `BOOLEAN` | 🆕 NOT NULL, défaut `FALSE` | **Édition spéciale** (case à cocher du formulaire) |
+| `is_picture_disc` | `BOOLEAN` | 🆕 NOT NULL, défaut `FALSE` | **Picture Disc** (select Oui/Non du formulaire) |
+| `discs_count` | `INTEGER` | 🆕 NOT NULL, défaut `1`, `BETWEEN 1 AND 5` | **Nombre de vinyls** (select 1 → 5, défaut 1 — borne resserrée par la migration 006) |
+| `color` | `VARCHAR(50)` | 🆕 NOT NULL, défaut `'Noir'` | **Couleur** de la galette (Noir, Blanc, Rouge, Bleu…, Or, Argent, Cuivre, Bronze, Marbré, Splatter…) |
+| `created_at` / `updated_at` | `TIMESTAMPTZ` | NOT NULL, défaut `now()` | Horodatage (auto via trigger) |
+
+> Les colonnes **`discogs_release_id`** et **`discogs_url`** sont ajoutées
+> automatiquement par la migration idempotente `vinyls.discogs` au démarrage
+> de l'API (`backend/src/config/db.js`) et présentes dans `database/init.sql`.
+> Elles sont renseignées lors d'un import combiné MusicBrainz + Discogs.
+> Idem pour **`is_special_edition`**, **`is_picture_disc`**, **`discs_count`** et
+> **`color`** (migration `vinyls.options`, cf. `database/migrations/005_add_vinyl_options.sql`).
+> La borne du CHECK **`discs_count`** est resserrée de 1 → 20 à 1 → 5 par la suite
+> de migrations `vinyls.discs-count-1-to-5` (`database/migrations/006_vinyls_discs_count_1_to_5.sql`) :
+> les valeurs existantes hors plage sont d'abord resserrées aux bornes, puis la contrainte est remplacée.
+
+Index : `users(role)` ; `vinyls(user_id, artist, title, genre, release_date, barcode,
+mbid, discogs_release_id)` ; `comics(user_id, isbn, title, authors, publisher)`.
+
+---
+
+## 📡 API REST (référence)
+
+| Méthode | Endpoint | Accès | Description |
+|---|---|---|---|
+| `POST` | `/api/auth/login` | public | `login`/`login or email` + `password` → `{ token, user }` |
+| `GET`  | `/api/auth/me` | auth | Profil courant |
+| `GET`  | `/api/users` | admin | Liste des comptes (+ nb de vinyles / BDs) |
+| `POST` | `/api/users` | admin | Créer un compte (rôle `user`) |
+| `PUT`  | `/api/users/me` | auth | Modifier son profil / mot de passe |
+| `PUT`  | `/api/users/:id` | admin | Modifier un compte |
+| `DELETE` | `/api/users/:id` | admin | Supprimer un compte (+ vinyles et BDs) |
+| `GET`  | `/api/vinyls` | auth | Ma collection (`?q=` recherche) |
+| `POST` | `/api/vinyls` | auth | Créer (multipart `cover` ou `coverRemoteUrl`) |
+| `GET`  | `/api/vinyls/:id` | auth (owner) | Détail d'un vinyle |
+| `PUT`  | `/api/vinyls/:id` | auth (owner) | Modifier |
+| `DELETE` | `/api/vinyls/:id` | auth (owner) | Supprimer (+ fichier local) |
+| `GET`  | `/api/vinyls/public` | public | Collections publiques (`?q=&genre=&label=`) |
+| `GET`  | `/api/musicbrainz/status` | auth | `{ configured, provider, discogs: { configured } }` — état MusicBrainz + Discogs |
+| `GET`  | `/api/musicbrainz/barcode/:code` | auth | **Import combiné par code-barres (8 à 14 chiffres)** : MusicBrainz (réf.) **+ Discogs** si `DISCOGS_TOKEN` configuré → fiche fusionnée `{ data, providers, warnings? }` |
+| `GET`  | `/api/discogs/status` | auth | `{ configured, provider: "discogs" }` — `true` si `DISCOGS_TOKEN` renseigné |
+| `GET`  | `/api/discogs/barcode/:code` | auth | Recherche Discogs seule par code-barres (8 à 14 chiffres) (débogage) |
+| `GET`  | `/api/comics` | auth | Ma collection BD (`?q=` recherche) |
+| `POST` | `/api/comics` | auth | Créer (multipart `cover` ou `coverRemoteUrl`) |
+| `GET`  | `/api/comics/:id` | auth (owner) | Détail d'une BD |
+| `PUT`  | `/api/comics/:id` | auth (owner) | Modifier |
+| `DELETE` | `/api/comics/:id` | auth (owner ou admin) | Supprimer (+ fichier local) |
+| `GET`  | `/api/comics/public/user/:userId` | public | BDs d'une collection publique (sans auth) |
+| `GET`  | `/api/isbn/lookup/:isbn` | auth | Pré-remplissage BD : Google Books, Open Library en secours |
+| `GET`  | `/api/health` | public | Sonde de santé (base incluse) |
+
+---
+
+## 🩺 Dépannage
+
+| Symptôme | Cause probable / solution |
+|---|---|
+| Pages vides après login (navbar visible, aucun bouton *Ajouter*, aucune liste) | `ProtectedRoute` rendait `children` (undefined) en route **layout** sans `<Outlet/>` → corrigé dans `frontend/src/components/ProtectedRoute.jsx`. Rebuild + redéploiement du conteneur frontend : `docker compose up -d --build frontend` + **vidage du cache du navigateur** |
+| `502` sur recherche code-barres | Pas/plus de connexion internet côté serveur (MusicBrainz inaccessibles) → vérifier l'egress réseau de la VM |
+| `429` sur recherche code-barres | Quota MusicBrainz atteint (1 req/s) → réessayer après quelques secondes |
+| `404` sur recherche code-barres | Disque inconnu des deux sources (MusicBrainz ni Discogs) pour cet EAN → saisir la fiche manuellement (un `404` d'une seule source n'est **pas** bloquant : l'autre est renvoyée) |
+| `401` / `403` sur recherche code-barres (Discogs) | `DISCOGS_TOKEN` invalide/expiré ou permission manquante → régénérer le jeton sur <https://www.discogs.com/settings/developers> |
+| `429` sur recherche code-barres (Discogs) | Quota du jeton atteint (défaut 25 min) → patienter, ou ajuster `DISCOGS_RATE_LIMIT_PER_MINUTE` |
+| Fiche sans `discogs_url` / sans `discogs_release_id` | Discogs non configuré (`DISCOGS_TOKEN` vide) ou disque inconnu de Discogs → normal, la fiche MusicBrainz est complète |
+| `502` sur recherche ISBN | Pas/plus de connexion internet côté serveur (Google Books & Open Library inaccessibles) → vérifier egress réseau de la VM |
+| `404` sur recherche ISBN | ISBN inconnu ou non référencé dans Google Books / Open Library → saisir la fiche manuellement |
+| `401` à l'appel d'une API | Jeton expiré → reconnexion |
+| Images `/uploads/...` en 403/404 | Vérifier `chown -R 1000:1000 uploads` + `chmod 775` sur les sous-dossiers `vinyls/` et `comics/` au hôte |
+| La collection n'apparaît pas en publique (vinyles ou BDs) | Le toggle *Visibilité* du propriétaire doit être sur **Publique** |
+| Port 80 occupé sur la VM | Changer `APP_PORT` dans `.env` (ex. `APP_PORT=8080`) |
+| `column "acquired_date" does not exist` à la modification d'un vinyle (form. « DATE D'AJOUT ») | Colonne absente de la table `vinyls` : cause racine connue = **la vue `public_vinyls` (init.sql, `SELECT v.*`)** porte une dépendance PostgreSQL sur l'ancienne colonne `year_acquired`, ce qui bloquait le `DROP COLUMN` en fin de migration et **rollback**ait le `ADD COLUMN acquired_date`. Les deux scripts réparent sans effet de bord : `database/migrations/007_ensure_vinyl_acquired_date.sql` (psql) + auto-migration `vinyls.added-date` (`backend/src/config/db.js`, recrée la vue à l'identique après le drop). `GET /api/health` expose `schema_ok: false` tant que la colonne est absente |
+| `Base de données incomplète (colonne absente)` sur POST/PUT `/api/vinyls` | Même cause : appliquer `docker compose exec -T db psql -U vinyl -d geek0thek -f /dev/stdin < database/migrations/007_ensure_vinyl_acquired_date.sql` puis `docker compose restart backend` ; vérifier les logs de démarrage (`migration appliquée : vinyls.added-date`) |
+| Re-démarrer proprement la base | `docker compose down -v` puis `up -d` (⚠️ efface la base, `init.sql` recrée l'admin) |
+
+### Migrations & réparation du schéma
+
+L'API applique **automatiquement** des migrations idempotentes au démarrage
+(`backend/src/config/db.js`) : chaque migration est tracée dans la table
+`schema_migrations` et n'est ré-exécutée qu'une fois — un échec antérieur ne
+bloque plus les migrations suivantes (notamment `vinyls.added-date`, qui crée
+`vinyls.acquired_date`).
+
+**Réparation définitive** d'un schéma incomplet (message
+`column "acquired_date" does not exist` à la modification d'un vinyle) :
+
+```bash
+# 1. Inspecter : la colonne doit apparaître en sortie.
+docker compose exec \
+  psql -U vinyl -d geek0thek \
+  -c "SELECT column_name, data_type, is_nullable, column_default
+      FROM information_schema.columns
+      WHERE table_name = 'vinyls' AND column_name = 'acquired_date';"
+
+# 2. Si vide : appliquer la migration 007 (création + backfill + NOT NULL).
+docker compose exec -T db \
+  psql -U vinyl -d geek0thek -f /dev/stdin < database/migrations/007_ensure_vinyl_acquired_date.sql
+
+# 3. Reconstruire le conteneur API avec le code à jour, redémarrer, confirmer.
+docker compose up -d --build backend
+curl -s http://172.16.2.75/api/health   # -> { "status": "ok", "schema_ok": true }
+```
+
+> Sans la colonne, `GET /api/health` renvoie `schema_ok: false` et tout
+> POST/PUT `/api/vinyls` échoue avec le message
+> *Base de données incomplète (colonne absente) : appliquez la migration 007
+> puis relancez l'API.* Les logs backend affichent l'instruction SQL en échec
+> et son nom de migration.
+
+---
+
+## 📝 Licence
+
+Projet fourni tel quel (as-is) pour un usage interne / de démonstration.

@@ -1,0 +1,187 @@
+/* ============================================================
+   Geek0thek — Thème « Médiathèque » (lumineux)
+   Design épuré et lumineux : photo de fond public/img/bg-library.jpg
+   sous un voile semi-transparent (--bg-app + calque blanc),
+   cartes immaculées à ombres douces, texte en ardoise profonde,
+   accent ambre/brun doré conservant la signature de la marque.
+   Le mapping des variables reprend exactement la même logique
+   que le thème sombre (cf. index couleurs de theme.js).
+   ============================================================ */
+
+:root,
+[data-theme='library'] {
+  /* Chemin absolu de la photo du thème (fichier public/img/bg-library.jpg,
+     servi sous /img par nginx / le build Vite / Vite dev). Déclaré dans
+     :root pour rester utilisable avant l'initialisation JS du thème. */
+  --theme-bg-image: url('/img/bg-library.jpg');
+}
+
+[data-theme='library'] {
+  /* Fond / surfaces — correspondance night-* de la palette
+     sombre : 950 = page, 900 = panneaux, 800 = cartes/champs,
+     700 = éléments surélevés, 600 = survol, 500 = bordures. */
+  --bg-app: #eef2f7;
+  --bg-surface: #e2e8f1;
+  --bg-elevated: #ffffff;
+  --bg-raised: #f1f5f9;
+  --bg-hover: #dbe2ec;
+  --border-subtle: #dbe2ec;
+  --border-default: #c3cdda;
+  /* Texte — les teintes "claires" (slate-100/200/300) sont
+     volontairement assombries sur fond clair. */
+  --text-primary: #1e293b;
+  --text-secondary: #334155;
+  --text-muted: #475569;
+  --text-subtle: #64748b;
+  --text-faint: #8494a8;
+  /* Accent (signature or) — assombri pour le contraste
+     exigé sur fond clair. */
+  --accent-soft: #92400e;
+  --accent: #78350f;
+  --accent-strong: #92400e;
+  --accent-deep: #78350f;
+  --accent-dark: #451a03;
+  --accent-contrast: #ffffff;
+  --ring: rgba(180, 87, 17, 0.25);
+  --shadow-color: rgba(15, 23, 42, 0.12);
+  --card-radius: 1rem;
+  --app-font: 'Inter', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --body-font-weight: 400;
+  --body-letter-spacing: 0;
+  --input-bg: #ffffff;
+  --input-border: #c3cdda;
+  --input-focus-border: rgba(146, 64, 14, 0.55);
+  --scrollbar-thumb: rgba(148, 163, 184, 0.6);
+  --scrollbar-thumb-hover: #94a3b8;
+  --ghost-bg: rgba(241, 245, 249, 0.7);
+  --ghost-hover: #f1f5f9;
+  --ghost-border: #c3cdda;
+  --ghost-text: #334155;
+  --selection-bg: rgba(146, 64, 14, 0.22);
+  --selection-text: #1e293b;
+  --danger: rgba(190, 18, 60, 0.92);
+  --danger-hover: #e11d48;
+  --menu-pop-bg: #ffffff;
+  --menu-pop-shadow: rgba(15, 23, 42, 0.25);
+  --card-bg: #ffffff;
+  --card-border: rgba(195, 205, 218, 0.7);
+  --card-blur: 0px;
+  /* Ombre douce plutôt que flou (look épuré). */
+  --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+[data-theme='library'] body {
+  color: var(--text-secondary);
+  font-family: var(--app-font);
+  font-weight: var(--body-font-weight);
+  letter-spacing: var(--body-letter-spacing);
+  /* Photo de fond en « semi-transparence » : la pile se lit du bas vers
+     le haut — (1) voile blanc --bg-app à ~92 % qui assomplit l'image et
+     garantit la lisibilité, puis (2) les deux halos ambiants d'origine.
+     La photo n'apparaît donc qu'à ~8 %, comme un fond brumeux. */
+  background-color: var(--bg-app);
+  background-image:
+    radial-gradient(1100px 560px at 85% -10%, rgba(146, 64, 14, 0.06), transparent 60%),
+    radial-gradient(900px 520px at -10% 110%, rgba(71, 85, 105, 0.07), transparent 60%),
+    linear-gradient(rgba(238, 242, 247, 0.92), rgba(238, 242, 247, 0.92)),
+    var(--theme-bg-image);
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+  /* cover + center = équivalent « bg-cover bg-center » ; fixed = la photo
+     reste immobile pendant le défilement (« bg-fixed »). */
+  background-size: auto, auto, auto, cover;
+  background-position: center, center, 0 0, center;
+  background-attachment: fixed;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+[data-theme='library'] ::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+[data-theme='library'] .input {
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-primary);
+}
+
+[data-theme='library'] .input::placeholder {
+  color: var(--text-subtle);
+}
+
+[data-theme='library'] .input:focus {
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+[data-theme='library'] .label {
+  color: var(--text-muted);
+}
+
+[data-theme='library'] .btn {
+  --tw-ring-offset: transparent;
+}
+
+[data-theme='library'] .btn-primary {
+  background: var(--accent-strong);
+  color: var(--accent-contrast);
+  box-shadow: 0 8px 16px -8px var(--ring);
+}
+
+[data-theme='library'] .btn-primary:hover {
+  background: var(--accent-deep);
+}
+
+[data-theme='library'] .btn-ghost {
+  background: var(--ghost-bg);
+  color: var(--ghost-text);
+  border-color: var(--ghost-border);
+}
+
+[data-theme='library'] .btn-ghost:hover {
+  background: var(--ghost-hover);
+}
+
+[data-theme='library'] .btn-danger {
+  background: var(--danger);
+}
+
+[data-theme='library'] .btn-danger:hover {
+  background: var(--danger-hover);
+}
+
+[data-theme='library'] .card {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+  border-radius: var(--card-radius);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  /* Légère transparence sur la photo : l'image se devine sous les cartes
+     sans affaiblir le contraste du texte (équivalent bg-white/92). */
+  background-color: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--card-shadow);
+}
+
+[data-theme='library'] .badge {
+  background: var(--bg-raised);
+  color: var(--text-muted);
+}
+
+[data-theme='library'] .icon-btn {
+  color: var(--text-subtle);
+}
+
+[data-theme='library'] .icon-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+[data-theme='library'] ::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+
+[data-theme='library'] ::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}

@@ -1,0 +1,45 @@
+# ===== Node.js / dépendances =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json.bak
+
+# ===== Builds & artefacts =====
+dist/
+build/
+*.tsbuildinfo
+.vite/
+.cache/
+coverage/
+
+# ===== Environnement & secrets (JAMAIS committer) =====
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ===== Données & stockages local (VM hôte) =====
+uploads/
+!uploads/**/.gitkeep
+!uploads/.gitkeep
+data/
+*.dump
+*.sql.bak
+
+# ===== Logs =====
+logs/
+*.log
+
+# ===== Éditeur / OS =====
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ===== Docker =====
+# (les volumes de persistance restent sur le disque de la VM, hors dépôt git)

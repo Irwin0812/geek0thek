@@ -1,0 +1,172 @@
+/* ============================================================
+   Geek0thek — Thème « Geek0thek » (défaut)
+   Ambiance nuit / or : photo public/img/bg_dark.jpg en fond
+   global (bg-cover / bg-center / bg-fixed / bg-no-repeat),
+   texte clair, cartes sombres translucides, accent doré.
+   Ce thème est le « dark par défaut » de l'application : c'est
+   lui qui alimente, par correspondance, les classes utilitaires
+   night-* / gold-* / slate-* utilisées dans les composants
+   (cf. l'index couleurs en tête de src/services/theme.js).
+   ============================================================ */
+
+:root {
+  --bg-app: #080b13; /* = night-950 (fond de page) */
+  --bg-surface: #0c1120; /* = night-900 (panneaux) */
+  --bg-elevated: #121826; /* = night-800 (cartes, champs) */
+  --bg-raised: #161d2b; /* = night-700 (éléments surélevés) */
+  --bg-hover: #1b2333; /* = night-600 (survol) */
+  --border-subtle: #1b2333; /* = night-600 (bordures discrètes) */
+  --border-default: #2a3348; /* = night-500 (bordures) */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1; /* = slate-300 */
+  --text-muted: #94a3b8; /* = slate-400 */
+  --text-subtle: #64748b; /* = slate-500 (libellés, notes) */
+  --text-faint: #475569; /* = slate-600 (textes très discrets) */
+  --accent-soft: #ecc989; /* = gold-300 (texte accent) */
+  --accent: #e2b45f; /* = gold-400 (survol accent, logo) */
+  --accent-strong: #d4a24e; /* = gold-500 (boutons, focus, ring) */
+  --accent-deep: #c08c3b; /* = gold-600 */
+  --accent-dark: #a37430; /* = gold-700 */
+  --accent-contrast: #080b13; /* texte sur un bouton accent */
+  --ring: rgba(212, 162, 78, 0.2); /* halo de focus */
+  --shadow-color: rgba(0, 0, 0, 0.5);
+  --card-radius: 1rem; /* rounded-2xl */
+  --app-font: 'Inter', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --body-font-weight: 400;
+  --body-letter-spacing: 0;
+  --input-bg: #121826;
+  --input-border: #2a3348;
+  --input-focus-border: rgba(212, 162, 78, 0.6);
+  --scrollbar-thumb: rgba(42, 51, 72, 0.7);
+  --scrollbar-thumb-hover: #2a3348;
+  --ghost-bg: rgba(27, 35, 51, 0.6);
+  --ghost-hover: #1b2333;
+  --ghost-border: #2a3348;
+  --ghost-text: #e2e8f0;
+  --selection-bg: rgba(212, 162, 78, 0.3);
+  --selection-text: #ffffff;
+  --danger: rgba(225, 29, 72, 0.9);
+  --danger-hover: #f43f5e;
+  --menu-pop-bg: #0c1120;
+  --menu-pop-shadow: rgba(0, 0, 0, 0.5);
+  --card-bg: rgba(18, 24, 38, 0.8); /* = night-800 à 80 % de transparence */
+  --card-border: rgba(42, 51, 72, 0.6); /* = night-600 à 60 % */
+  --card-blur: 4px; /* 0 dans les thèmes qui n'ont pas d'effet flou */
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+[data-theme='dark'] body {
+  color: var(--text-secondary);
+  font-family: var(--app-font);
+  font-weight: var(--body-font-weight);
+  letter-spacing: var(--body-letter-spacing);
+  /* Photo de fond du thème Geek0thek : affichée telle quelle, à 100 %
+     d'opacité (1.0) — plus aucun voile/overlay semi-transparent par-dez
+     dessus (le linear-gradient « voile bleu nuit » à ~88 % ainsi que les
+     deux halos radiaux ont été retirés).
+     cover + center = équivalent « bg-cover bg-center », fixed = la photo
+     reste immobile pendant le défilement (« bg-fixed »), et la photo est
+     en « no-repeat » (équivalent « bg-no-repeat »). */
+  background-color: var(--bg-app);
+  background-image: url('/img/bg_dark.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+[data-theme='dark'] ::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+/* Composants de base (index.css, couche components) : le thème les
+   « recolle » à sa propre palette. */
+[data-theme='dark'] .input {
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .input::placeholder {
+  color: var(--text-subtle);
+}
+
+[data-theme='dark'] .input:focus {
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+[data-theme='dark'] .label {
+  color: var(--text-muted);
+}
+
+[data-theme='dark'] .btn {
+  --tw-ring-offset: transparent;
+}
+
+[data-theme='dark'] .btn-primary {
+  background: var(--accent-strong);
+  color: var(--accent-contrast);
+  box-shadow: 0 10px 15px -3px var(--ring), 0 4px 6px -4px var(--ring);
+}
+
+[data-theme='dark'] .btn-primary:hover {
+  background: var(--accent);
+}
+
+[data-theme='dark'] .btn-ghost {
+  background: var(--ghost-bg);
+  color: var(--ghost-text);
+  border-color: var(--ghost-border);
+}
+
+[data-theme='dark'] .btn-ghost:hover {
+  background: var(--ghost-hover);
+}
+
+[data-theme='dark'] .btn-danger {
+  background: var(--danger);
+}
+
+[data-theme='dark'] .btn-danger:hover {
+  background: var(--danger-hover);
+}
+
+/* Translucidité douce + flou, fidèle au look sombre d'origine. */
+[data-theme='dark'] .card {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+  border-radius: var(--card-radius);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
+}
+
+[data-theme='dark'] .badge {
+  background: rgba(42, 51, 72, 0.5);
+  color: var(--text-secondary);
+}
+
+[data-theme='dark'] .icon-btn {
+  color: var(--text-muted);
+}
+
+[data-theme='dark'] .icon-btn:hover {
+  background: var(--bg-hover);
+  color: #ffffff;
+}
+
+/* Barre de défilement harmonisée avec le thème */
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}

@@ -1,0 +1,179 @@
+/* ============================================================
+   Geek0thek — Thème « Bande Dessinée »
+   Esprit comics : contrastes marqués, couleurs punchy,
+   bordures épaisses et nettes (noires), ombres décalées
+   « case de BD » sans flou, typographie très contrastée.
+   Même logique de variables que les autres thèmes.
+   ============================================================ */
+
+[data-theme='comic'] {
+  --bg-app: #f2d94e; /* jaune « splash page » en fond de page */
+  --bg-surface: #e9cf3f;
+  --bg-elevated: #fffdf5; /* cartes / champs : papier crème */
+  --bg-raised: #f6eec2;
+  --bg-hover: #efe19a;
+  --border-subtle: #191105;
+  --border-default: #191105; /* bordures nettes : quasi noir */
+  --text-primary: #191105; /* noir chaud, contraste maximal */
+  --text-secondary: #2b2210;
+  --text-muted: #4a3d20;
+  --text-subtle: #6b5b33;
+  --text-faint: #8f7d4a;
+  --accent-soft: #1d4ed8; /* texte accent (bleu comic) */
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8; /* boutons : bleu vif */
+  --accent-deep: #1e40af;
+  --accent-dark: #1e3a8a;
+  --accent-contrast: #ffffff;
+  --ring: rgba(29, 78, 216, 0.3);
+  --shadow-color: #191105; /* ombre « case » : noir franc */
+  --card-radius: 0.5rem;
+  --app-font: 'Trebuchet MS', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+  --body-font-weight: 500; /* corps texte renforcé : ton « BD » */
+  --body-letter-spacing: 0.01em;
+  --input-bg: #fffdf5;
+  --input-border: #191105;
+  --input-focus-border: #1d4ed8;
+  --scrollbar-thumb: #191105;
+  --scrollbar-thumb-hover: #4a3d20;
+  --ghost-bg: rgba(255, 253, 245, 0.75);
+  --ghost-hover: #efe19a;
+  --ghost-border: #191105;
+  --ghost-text: #191105;
+  --selection-bg: #2563eb;
+  --selection-text: #ffffff;
+  --danger: rgba(190, 18, 60, 0.95);
+  --danger-hover: #e11d48;
+  --menu-pop-bg: #fffdf5;
+  --menu-pop-shadow: #191105;
+  --card-bg: #fffdf5;
+  --card-border: #191105;
+  --card-blur: 0px;
+  /* Ombres décalées sans flou = esprit « case de BD ».
+     Bordures épaisses appliquées via .card / .btn / .input ci-dessous. */
+  --card-shadow: 5px 5px 0 0 #191105;
+  --border-width: 3px;
+}
+
+[data-theme='comic'] {
+  color-scheme: light;
+}
+
+[data-theme='comic'] body {
+  background: var(--bg-app);
+  color: var(--text-secondary);
+  font-family: var(--app-font);
+  font-weight: var(--body-font-weight);
+  letter-spacing: var(--body-letter-spacing);
+  background-image:
+    /* légère trame halftone (points) pour le fond, très discrète */
+    radial-gradient(rgba(25, 17, 5, 0.05) 1.2px, transparent 1.3px);
+  background-size: 14px 14px;
+  background-attachment: fixed;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+[data-theme='comic'] ::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+/* Champs : bordure épaisse noire + halo de focus bleu franc */
+[data-theme='comic'] .input {
+  background: var(--input-bg);
+  border: var(--border-width, 3px) solid var(--input-border);
+  color: var(--text-primary);
+  border-radius: 0.375rem;
+}
+
+[data-theme='comic'] .input::placeholder {
+  color: var(--text-subtle);
+}
+
+[data-theme='comic'] .input:focus {
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+[data-theme='comic'] .label {
+  color: var(--text-muted);
+  font-weight: 800; /* libellés en gras « titre de case » */
+}
+
+/* Boutons : bordure noire épaisse + ombre décalée ; enfoncement au clic */
+[data-theme='comic'] .btn {
+  --tw-ring-offset: transparent;
+  border: var(--border-width, 3px) solid var(--border-default);
+  box-shadow: 3px 3px 0 0 var(--border-default);
+}
+
+[data-theme='comic'] .btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 var(--border-default);
+}
+
+[data-theme='comic'] .btn-primary {
+  background: var(--accent-strong);
+  color: var(--accent-contrast);
+}
+
+[data-theme='comic'] .btn-primary:hover {
+  background: var(--accent);
+}
+
+[data-theme='comic'] .btn-ghost {
+  background: var(--ghost-bg);
+  color: var(--ghost-text);
+}
+
+[data-theme='comic'] .btn-ghost:hover {
+  background: var(--ghost-hover);
+}
+
+[data-theme='comic'] .btn-danger {
+  background: #e11d48;
+  color: #ffffff;
+}
+
+[data-theme='comic'] .btn-danger:hover {
+  background: var(--danger-hover);
+}
+
+/* Cartes : papier crème, bordure noire marquée, ombre « case » */
+[data-theme='comic'] .card {
+  background: var(--card-bg);
+  border: var(--border-width, 3px) solid var(--card-border);
+  border-radius: var(--card-radius);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: var(--card-shadow);
+}
+
+[data-theme='comic'] .badge {
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  border: 2px solid var(--border-default);
+  border-radius: 999px;
+}
+
+[data-theme='comic'] .icon-btn {
+  color: var(--text-muted);
+  border: 2px solid transparent;
+}
+
+[data-theme='comic'] .icon-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+[data-theme='comic'] ::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+[data-theme='comic'] ::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
