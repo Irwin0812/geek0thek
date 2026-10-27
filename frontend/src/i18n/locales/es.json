@@ -40,7 +40,16 @@
       "series": "Series",
       "comicAuthors": "Autores de cómics"
     },
+    "mediaTypes": {
+      "vinyls": "Disco",
+      "comics": "Cómic",
+      "books": "Libro",
+      "boardGames": "Juego de rol/de mesa",
+      "videoGames": "Juego de vídeo"
+    },
     "latestAdd": "Último añadido",
+    "latestAddTitle": "Abrir la ficha del último añadido",
+    "noLatestAdd": "Ningún medio en tu colección — añade un disco, un cómic…",
     "noVinyl": "sin discos",
     "noComic": "sin cómics",
     "latestAdds": "Últimos añadidos",

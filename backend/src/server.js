@@ -13,6 +13,7 @@ const musicBrainzRoutes = require('./routes/musicBrainzRoutes');
 const discogsRoutes = require('./routes/discogsRoutes');
 const comicRoutes = require('./routes/comicRoutes');
 const isbnRoutes = require('./routes/isbnRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 
@@ -130,6 +131,10 @@ app.use('/api/musicbrainz', musicBrainzRoutes);
 app.use('/api/discogs', discogsRoutes);
 app.use('/api/comics', comicRoutes);
 app.use('/api/isbn', isbnRoutes);
+// Agrégat du tableau de bord : « Dernier ajout » GLOBAL (tous médias
+// confondus) + compteurs par bibliothèque (route bornée à la collection de
+// l'utilisateur connecté — cf. routes/dashboardRoutes.js).
+app.use('/api/dashboard', dashboardRoutes);
 
 // 404 — API inconnue
 app.use((req, res) => {

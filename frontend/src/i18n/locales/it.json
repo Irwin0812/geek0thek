@@ -34,13 +34,22 @@
     "addComic": "Aggiungi un fumetto",
     "stats": {
       "vinyls": "Dischi",
-      "artists": "Artisti",
+      "artists": "Artisti / Gruppi",
       "genres": "Generi",
       "comics": "Fumetti",
       "series": "Serie",
       "comicAuthors": "Autori fumetti"
     },
+    "mediaTypes": {
+      "vinyls": "Disco",
+      "comics": "Fumetto",
+      "books": "Libro",
+      "boardGames": "Gioco di ruolo/Da tavolo",
+      "videoGames": "Videogioco"
+    },
     "latestAdd": "Ultima aggiunta",
+    "latestAddTitle": "Apri la scheda dell'ultima aggiunta",
+    "noLatestAdd": "Nessun media nella tua collezione — aggiungi un disco, un fumetto…",
     "noVinyl": "nessun disco",
     "noComic": "nessun fumetto",
     "latestAdds": "Ultime aggiunte",

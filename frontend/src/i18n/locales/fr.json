@@ -34,13 +34,22 @@
     "addComic": "Ajouter une BD",
     "stats": {
       "vinyls": "Disques",
-      "artists": "Artistes",
+      "artists": "Artistes / Groupes",
       "genres": "Genres",
       "comics": "Bandes dessinées",
       "series": "Séries",
       "comicAuthors": "Auteurs BD"
     },
+    "mediaTypes": {
+      "vinyls": "Disque",
+      "comics": "BD",
+      "books": "Livre",
+      "boardGames": "Jeu de Rôle/Plateaux",
+      "videoGames": "Jeu vidéo"
+    },
     "latestAdd": "Dernier ajout",
+    "latestAddTitle": "Ouvrir la fiche du dernier ajout",
+    "noLatestAdd": "Aucun média dans votre collection pour le moment — ajoutez un disque, une BD…",
     "noVinyl": "aucun disque",
     "noComic": "aucune BD",
     "latestAdds": "Derniers ajouts",

@@ -34,13 +34,22 @@
     "addComic": "Add a comic",
     "stats": {
       "vinyls": "Disks",
-      "artists": "Artists",
+      "artists": "Artists / Groups",
       "genres": "Genres",
       "comics": "Comics",
       "series": "Series",
       "comicAuthors": "Comic authors"
     },
+    "mediaTypes": {
+      "vinyls": "Vinyl",
+      "comics": "Comic",
+      "books": "Book",
+      "boardGames": "Role/board game",
+      "videoGames": "Video game"
+    },
     "latestAdd": "Latest addition",
+    "latestAddTitle": "Open the latest addition's detail sheet",
+    "noLatestAdd": "No media in your collection yet — add a vinyl, comic…",
     "noVinyl": "no disks",
     "noComic": "no comics",
     "latestAdds": "Latest additions",

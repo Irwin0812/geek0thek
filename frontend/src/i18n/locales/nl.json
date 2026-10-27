@@ -34,13 +34,22 @@
     "addComic": "Strip toevoegen",
     "stats": {
       "vinyls": "Platen",
-      "artists": "Artiesten",
+      "artists": "Artiesten / Bands",
       "genres": "Genres",
       "comics": "Strips",
       "series": "Series",
       "comicAuthors": "Stripauteurs"
     },
+    "mediaTypes": {
+      "vinyls": "Plaat",
+      "comics": "Strip",
+      "books": "Boek",
+      "boardGames": "Rol-/bordspel",
+      "videoGames": "Videospel"
+    },
     "latestAdd": "Nieuwste toevoeging",
+    "latestAddTitle": "Open het artikel van de nieuwste toevoeging",
+    "noLatestAdd": "Nog geen media in je collectie — voeg een plaat, strip… toe.",
     "noVinyl": "geen plaat",
     "noComic": "geen strip",
     "latestAdds": "Nieuwste toevoegingen",

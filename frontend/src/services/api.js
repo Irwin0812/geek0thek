@@ -128,6 +128,17 @@ export const api = {
       }),
   },
 
+  // --- Tableau de bord (agrégat multimédia) ---
+  // « Dernier ajout » GLOBAL : tous les types de médias existant en base
+  // (actuellement `vinyls` + `comics`) sont comparés par la date d'ajout
+  // métier ; les futures bibliothèques (books / board_games / video_games)
+  // seront intégrées par le backend sans changement côté client. Répond :
+  // { counts: { vinyls, comics }, lastAdd: null | { id, mediaType, title,
+  //   addedDate, item } } — « item » = DTO normalisé du type d'origine.
+  dashboard: {
+    latest: () => request('/dashboard'),
+  },
+
   // --- ISBN (Google Books / Open Library) ---
   isbn: {
     lookup: (isbn) => request(`/isbn/lookup/${encodeURIComponent(isbn)}`),
