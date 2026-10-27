@@ -558,7 +558,7 @@ export default function AddComic() {
           </p>
         </div>
         {!isEdit && (
-          <button className="btn-ghost" onClick={() => setModalOpen(true)}>⌗ Import par ISBN</button>
+          <button className="btn-ghost" onClick={() => setModalOpen(true)}>Importer une BD (#ISBN/Mots clés)</button>
         )}
       </header>
 
