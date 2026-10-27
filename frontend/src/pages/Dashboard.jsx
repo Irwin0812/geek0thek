@@ -371,6 +371,10 @@ function LatestAddCard({ name = null, title = null, mediaTypeLabel = null, added
  * Fermeture au clic extérieur / touche Échap via `useDismiss` — la ref
  * est posée sur le conteneur englobant déclencheur + panneau (mêmes
  * règles que les menus déroulant du Navbar).
+ * Z-INDEX : le panneau absolu porte `z-50` impératif — il sort du
+ * stacking context racine de la page (aucun ancêtre positionné n'a de
+ * z-index, donc tous ses ancêtres partagent auto/0) et s'affiche au-dessus
+ * des tuiles du dashboard suivantes / cartes / modales.
  */
 function AddMediaDropdown() {
   const { t } = useTranslation()
@@ -427,7 +431,13 @@ function AddMediaDropdown() {
         <div
           role="menu"
           aria-label={t('dashboard.addMedia.title')}
-          className="absolute right-0 top-full mt-1.5 w-72 max-w-[calc(100vw-2rem)] card !p-1.5 shadow-2xl shadow-black/50"
+          /* Z-INDEX IMPÉRATIF (z-50) : les tuiles .card du dashboard (backdrop-blur-sm
+             + fond semi-transparent) créent des contextes d'empilement qui se peignent
+             dans l'ordre du DOM, APRÈS le wrapper du bouton — sans z explicite, le
+             panneau absolu (z auto/0) se retrouvait donc en-dessous. z-50 le sort de
+             ce conflit et le place au-dessus de toutes les tuiles / cartes suivantes
+             (niveau partagé avec les modales du codebase). */
+          className="absolute right-0 top-full z-50 mt-1.5 w-72 max-w-[calc(100vw-2rem)] card !p-1.5 shadow-2xl shadow-black/50"
         >
           {options.map((opt) => (
             <button
