@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
@@ -8,6 +8,7 @@ import ComicCard from '../components/ComicCard.jsx'
 import ItemDetailModal from '../components/ItemDetailModal.jsx'
 import { useDisplay } from '../services/display.jsx'
 import { addedDateValue, addedDateFr } from '../components/cards.js'
+import { useDismiss } from '../components/hooks.js'
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -150,10 +151,12 @@ export default function Dashboard() {
           <h1 className="text-2xl md:text-3xl font-bold text-white">
             {t('dashboard.greeting', { name: user.firstName })}
           </h1>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <Link to="/vinyles/nouveau" className="btn-primary">{t('dashboard.addVinyl')}</Link>
-            <Link to="/comics/nouveau" className="btn-primary">{t('dashboard.addComic')}</Link>
-          </div>
+          {/* BOUTON UNIQUE « Ajouter un média » : remplace les deux anciens
+              boutons séparés (« Ajouter un disque » + « Ajouter une BD »).
+              Menu déroulant listant tous les types — Disque / BD actifs,
+              Livres / Jeux de rôle-plateaux / Jeux vidéo déjà présents,
+              grisés tant que leur page d'ajout n'est pas prête. */}
+          <AddMediaDropdown />
         </div>
       </section>
 
@@ -348,6 +351,107 @@ function LatestAddCard({ name = null, title = null, mediaTypeLabel = null, added
         <p className="mt-1.5 border-t border-white/5 pt-1 text-xs text-slate-400">
           <span className="inline-block text-gold-400">·</span> {addedDate || '—'}
         </p>
+      )}
+    </div>
+  )
+}
+
+/**
+ * BOUTON UNIQUE « Ajouter un média » (header du tableau de bord).
+ * FUSIONNE les anciens boutons séparés « Ajouter un disque » /
+ * « Ajouter une BD » en un seul déclencheur + menu déroulant, prêt à
+ * accueillir les futures collections sans toucher au layout :
+ *   - Disque            -> /vinyles/nouveau  (actif)
+ *   - BD                -> /comics/nouveau   (actif)
+ *   - Livre             -> à venir           (grisé jusqu'à l'ouverture)
+ *   - Jeu de Rôle/Plateaux -> à venir        (idem)
+ *   - Jeu vidéo         -> à venir           (idem)
+ * Les types non prêts sont grisés + badge « à venir » : structure
+ * anticipée, désactivés tant que le routeur n'expose pas leurs pages.
+ * Fermeture au clic extérieur / touche Échap via `useDismiss` — la ref
+ * est posée sur le conteneur englobant déclencheur + panneau (mêmes
+ * règles que les menus déroulant du Navbar).
+ */
+function AddMediaDropdown() {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const ref = useDismiss(open, () => setOpen(false))
+
+  /**
+   * Catalogue des options d'ajout, dans l'ordre du menu :
+   *  - `label`         traduction (les clés existent déjà — i18n dashboard.addMedia.*) ;
+   *  - `to`            route d'ajout (clic -> navigate, le chemin est aussi la
+   *                    clé d'index stable de l'entrée) ;
+   *  - `enabled`       false tant que la page d'ajout du type n'est pas
+   *                    disponible : l'entrée reste AFFICHÉE mais grise +
+   *                    badge « à venir » (option « par anticipation » de la spec).
+   * Pour brancher un nouveau type : créer sa route dans App.jsx puis passer
+   * `enabled: true` ici — c'est tout.
+   */
+  const options = [
+    { to: '/vinyles/nouveau', label: t('dashboard.addMedia.vinyl'), enabled: true },
+    { to: '/comics/nouveau', label: t('dashboard.addMedia.comic'), enabled: true },
+    { to: '/livres/nouveau', label: t('dashboard.addMedia.book'), enabled: false },
+    { to: '/jeux-de-mesa/nouveau', label: t('dashboard.addMedia.boardGame'), enabled: false },
+    { to: '/jeux-video/nouveau', label: t('dashboard.addMedia.videoGame'), enabled: false },
+  ]
+
+  const pick = (opt) => {
+    setOpen(false) // ferme AVANT la navigation (re-rendu / démontage propres)
+    if (opt.enabled) navigate(opt.to)
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        disabled={!options.some((o) => o.enabled)}
+        className={`btn-primary ${open ? 'ring-2 ring-gold-500/40' : ''}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <span aria-hidden="true">+</span>
+        {t('dashboard.addMedia.title')}
+        {/* Chevron qui pivote à l'ouverture (même modèle que « Autres Collections »). */}
+        <span
+          aria-hidden="true"
+          className={`text-xs leading-none transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        >
+          ▾
+        </span>
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          aria-label={t('dashboard.addMedia.title')}
+          className="absolute right-0 top-full mt-1.5 w-72 max-w-[calc(100vw-2rem)] card !p-1.5 shadow-2xl shadow-black/50"
+        >
+          {options.map((opt) => (
+            <button
+              key={opt.to}
+              type="button"
+              role="menuitem"
+              disabled={!opt.enabled}
+              onClick={() => pick(opt)}
+              title={opt.enabled ? undefined : t('dashboard.addMedia.soon')}
+              className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                opt.enabled
+                  ? 'text-slate-200 hover:bg-night-700/60 hover:text-white'
+                  : 'cursor-not-allowed text-slate-500 hover:bg-transparent'
+              }`}
+            >
+              <span className="truncate">{opt.label}</span>
+              {!opt.enabled && (
+                <span className="ml-auto shrink-0 rounded-full bg-night-700 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-500">
+                  {t('dashboard.addMedia.soon')}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   )

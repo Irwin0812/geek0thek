@@ -32,6 +32,15 @@
     "greeting": "Benvenuto, {{name}}",
     "addVinyl": "Aggiungi un disco",
     "addComic": "Aggiungi un fumetto",
+    "addMedia": {
+      "title": "Aggiungi un media",
+      "vinyl": "Aggiungi un disco",
+      "comic": "Aggiungi un fumetto",
+      "book": "Aggiungi un libro",
+      "boardGame": "Aggiungi un gioco di ruolo/da tavolo",
+      "videoGame": "Aggiungi un videogioco",
+      "soon": "in arrivo"
+    },
     "stats": {
       "vinyls": "Dischi",
       "artists": "Artisti / Gruppi",

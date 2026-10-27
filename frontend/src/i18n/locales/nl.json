@@ -32,6 +32,15 @@
     "greeting": "Hallo, {{name}}",
     "addVinyl": "Plaat toevoegen",
     "addComic": "Strip toevoegen",
+    "addMedia": {
+      "title": "Medium toevoegen",
+      "vinyl": "Plaat toevoegen",
+      "comic": "Strip toevoegen",
+      "book": "Boek toevoegen",
+      "boardGame": "Rol-/bordspel toevoegen",
+      "videoGame": "Videospel toevoegen",
+      "soon": "binnenkort"
+    },
     "stats": {
       "vinyls": "Platen",
       "artists": "Artiesten / Bands",
