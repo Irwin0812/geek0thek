@@ -77,28 +77,37 @@ export default function Dashboard() {
   }, [vinyls, comics])
 
   /**
-   * Champ « NOM » de la tuile unique « Dernier ajout », déduit du type de
-   * médias (meta du backend, clé = MEDIA_SOURCES) et de son DTO normalisé :
-   *  - Disque          -> Groupe / Artiste (item.artist) ;
-   *  - BD              -> Auteurs (item.authors, premier séparateur) ;
-   *  - Futures tables  -> « Nom » unique attendu par convention backend :
-   *      books       -> item.author     (Auteur)
-   *      boardGames  -> item.publisher  (Maison d'édition / éditeur)
-   *      videoGames  -> item.platform   (Plateforme)
+   * Champ « NOM / ENTITÉ » de la grande tuile « Dernier ajout », déduit du
+   * type de médias (clé = registre MEDIA_SOURCES backend) et de son DTO
+   * normalisé — aligné sur la spec colonne 3 :
+   *  - Disque            -> Groupe / Artiste        (item.artist, vinyl DTO)
+   *  - BD                -> Auteurs                 (item.authors, premier
+   *                                séparateur ; reste en infobulle)
+   *  - Futures tables    -> « Nom » unique attendu par convention backend :
+   *      books       (Livres)              -> item.author    (Auteur)
+   *      boardGames  (Jeux de Rôle/Plateaux) -> item.publisher (Maison d'édition / éditeur)
+   *      videoGames  (Jeux vidéo)          -> item.platform  (Plateforme)
+   * Le default reste TOLÉRANT (chaîne de repli author→publisher→platform→
+   * artist) : un nouveau type s'affiche sans modification dès que son DTO
+   * expose l'un de ces champs — aucune ligne ne disparaît.
    */
   const latestName = useMemo(() => {
     if (!latestAdd) return null
     const item = latestAdd.item || {}
     switch (latestAdd.mediaType) {
+      case 'vinyls':
+        // Disque -> Groupe / Artiste (harmonisé « artist » du DTO vinyl).
+        return String(item.artist || '').trim() || null
       case 'comics':
-        // Auteurs : séparateur / — premier auteur affiché, reste en infobulle.
+        // BD -> Auteurs : séparateur / — premier auteur affiché, reste en infobulle.
         return String(item.authors || '').split('/')[0].trim() || null
       default:
-        // Disques ET futures bibliothèques : champ nommant l'element,
-        // harmonisé « artist » (vinyl DTO), ou convention author/publisher/
-        // platform des modules à venir (décommentés dans MEDIA_SOURCES).
+        // Livres / Jeux de Rôle/Plateaux / Jeux vidéo (futures bibliothèques,
+        // décommentées dans MEDIA_SOURCES) : chaîne de repli des champs « Nom »
+        // attendu — author / publisher / platform — et l'harmonisé artist du
+        // DTO vinyl en dernier recours.
         return (
-          String(item.artist || item.author || item.publisher || item.platform || '').trim() || null
+          String(item.author || item.publisher || item.platform || item.artist || '').trim() || null
         )
     }
   }, [latestAdd])
