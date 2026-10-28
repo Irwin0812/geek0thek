@@ -305,6 +305,88 @@ async function searchByBarcode(rawBarcode) {
 }
 
 /**
+ * Recherche d'une PARUTION par MOTS-CLÉS LIBRES (EAN/UPC ou phrase « titre »
+ * / « artiste titre ») — maillon 3 de la CASCADE PRIORITAIRE
+ * (1. Last.fm -> 2. Discogs -> 3. MUSICBRAINZ), commun à l'import par
+ * code-barres et à la recherche par mots-clés du contrôleur.
+ *   - EAN/UPC (8-14 chiffres)  : `barcode:<code>` — le chemin exact, déjà
+ *     exploité par searchByBarcode (deux appels MB + CAA, quota 1 req/s) ;
+ *   - phrase libre             : Lucene `artist:"<Artiste>" AND release:"<Titre>"`
+ *     quand la saisie contient deux mots ou plus (découpage premier-mot =
+ *     artiste, le reste = titre — heuristique des imports manuels), sinon la
+ *     release seule si c'est un titre court. Aucun résultat : null (non
+ *     bloquant — le contrôleur renvoie alors le 404 final).
+ * @returns {Promise<object|null>} fiche MusicBrainz normalisée (shape toPrefill,
+ *   MBID, jaquette Cover Art Archive), ou null si inconnu / non configuré.
+ */
+async function searchByQuery(rawQuery) {
+  const code = cleanBarcode(rawQuery);
+  if (/^\d{8,14}$/.test(code)) {
+    return searchByBarcode(code);
+  }
+  const queryText = String(rawQuery || '').replace(/\s+/g, ' ').trim();
+  if (!queryText) return null;
+
+  // Découpage heuristique « artiste — album » : priorité à un séparateur
+  // EXPLICITE (césure em/en « — »/« – » ou trait d'union « - » entourée
+  // d'espaces) — la recherche Lucene porte alors les DEUX champs nommés, bien
+  // plus précise. Sinon, repli au premier mot comme artiste quand la chaîne
+  // contient plusieurs mots (titre court : seul champ `release`).
+  let artist = '';
+  let title = queryText;
+  const sep = queryText.search(/(?:\s[—–]\s|\s-\s)/);
+  if (sep > 0) {
+    artist = queryText.slice(0, sep).trim();
+    title = queryText.slice(sep).replace(/^(?:\s[—–]\s|\s-\s)/, '').trim() || queryText;
+  } else if (/\s/.test(queryText)) {
+    const sp = queryText.indexOf(' ');
+    artist = queryText.slice(0, sp).trim();
+    title = queryText.slice(sp + 1).trim();
+    if (!title) { artist = ''; title = queryText; }
+  }
+
+  let data;
+  try {
+    const clause = artist && title
+      ? `artist:${JSON.stringify(artist)} AND release:${JSON.stringify(title)}`
+      : `release:${JSON.stringify(title)}`;
+    data = await getJSON(
+      `${MUSICBRAINZ_BASE}/ws/2/release/?query=${encodeURIComponent(clause)}` +
+        `&fmt=json&limit=10`
+    );
+  } catch (err) {
+    // PANNES NON BLOQUANTES : la cascade est au bout du chemin (MusicBrainz =
+    // dernier maillon) — l'erreur est propagée telle quelle : le contrôleur la
+    // transforme en 502/429 explicite (états 'unavailable' dans providers).
+    throw err;
+  }
+
+  const releases = Array.isArray(data.releases) ? data.releases : [];
+  if (releases.length === 0) return null;
+
+  // Sélection du CANDIDAT CLASSÉ N°1 par Lucene (artist-credit + titre exacts
+  // déjà validés — jamais un album « proche » sans artiste).
+  const creditNames = (r) =>
+    Array.isArray(r && r['artist-credit'])
+      ? r['artist-credit'].map((a) => a && normalizeArtistName(a.name)).filter(Boolean)
+      : [];
+  const wantedArtist = artist ? normalizeArtistName(artist) : '';
+  const userTokens = albumTitleTokens(title);
+  const candidates = releases.filter((r) => {
+    if (!r || !r.title) return false;
+    if (artist && creditNames(r).length > 0 && !creditNames(r).includes(wantedArtist)) return false;
+    if (!userTokens.length) return false;
+    return albumTitleEquals(r.title, userTokens) || titleContainsAll(albumTitleTokens(r.title), userTokens);
+  });
+  const pick = candidates[0] || releases[0];
+  const mbid = (pick && pick.id) || '';
+  const [details, coverImage] = mbid
+    ? await Promise.all([fetchReleaseDetails(mbid), fetchCoverArt(mbid)])
+    : [null, null];
+  return toPrefill({ ...pick, ...(details || {}) }, /^\d{8,14}$/.test(code) ? code : null, coverImage, mbid);
+}
+
+/**
  * Recherche d'une PARUTION par ARTISTE + TITRE D'ALBUM (import « manuel » de
  * la fiche — complément du scan par code-barres) via l'endpoint Lucene :
  *   GET /ws/2/release/?query=artist:"<Artiste>" AND release:"<Album>"&fmt=json
@@ -634,6 +716,7 @@ const ARTIST_NO_GROUP_URL = '/img/no_group.jpg';
 module.exports = {
   MusicBrainzError,
   searchByBarcode,
+  searchByQuery,
   searchByRelease,
   albumTitleTokens,
   albumTitleEquals,

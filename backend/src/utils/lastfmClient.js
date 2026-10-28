@@ -355,6 +355,92 @@ async function searchAlbum(artistName, albumTitle) {
 }
 
 /**
+ * Recherche des fiches ALBUM sur Last.fm à partir d'une CHAÎNE LIBRE de
+ * mots-clés (EAN/UPC ou phrase « titre » / « artiste titre ») :
+ *   GET /2.0/?method=album.search&album=<chaîne>&api_key=<clé>&format=json
+ * (signée `api_sig` si LASTFM_SHARED_SECRET). La chaîne est passée telle
+ * quelle au paramètre `album` — pas de découpage en artiste/titre : les
+ * candidats sont triés par pertinence et `fetchAlbumInfo` re-valide LE couple
+ * (ARTISTE + TITRE — vérifié via album.getInfo) au moment de la résolution.
+ * C'est le SÉLECTEUR de la CASCADE PRIORITAIRE LAST.FM (1. Last.fm ->
+ * 2. Discogs -> 3. MusicBrainz), commun aux imports par code-barres ET par
+ * mots-clés du contrôleur (musicBrainzController).
+ * @param {string} query chaîne libre (EAN ou « artiste titre », ≥ 2 caractères)
+ *   ou couple [artiste, titre].
+ * @returns {Promise<Array<object|null>>} liste de fiches Last.fm normalisées
+ *   ({ album_name, artist, url, label, release_date, tracklist, track_count,
+ *   genres, cover_image, source: 'lastfm' }) CLASSÉE par pertinence — VIDE si
+ *   aucun résultat ou toute panne (indisponibilité, quota…) : chaque échec est
+ *   NON BLOQUANT, la cascade retombe sur la source suivante.
+ */
+async function searchAlbumsByQuery(query) {
+  const raw = String((Array.isArray(query) ? query.join(' ') : query) || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!raw || !isConfigured()) return [];
+
+  // Décomposition éventuelle « Artiste — Album » de la saisie : la recherche
+  // nommée Last.fm porte alors les DEUX paramètres (artist + album) — bien
+  // plus précise quand l'utilisateur a distingué les deux champs (sépateur des
+  // trois formes courantes : césure insécable « — », « – » ou « - » entourée
+  // d'espaces). Sans séparateur explicite, la chaîne complète part seule dans
+  // `album` (l'API fait du matching flou ; fetchAlbumInfo re-valide strictement
+  // le couple artiste + titre en dessous).
+  let artistParam = '';
+  let albumParam = raw;
+  const sepMatch = raw.search(/(?:\s[—–]\s|\s-\s)/);
+  if (sepMatch > 0) {
+    artistParam = raw.slice(0, sepMatch).trim();
+    albumParam = raw.slice(sepMatch).replace(/^(?:\s[—–]\s|\s-\s)/, '').trim();
+  }
+  if (!artistParam || !albumParam) {
+    // Pas de séparateur utilisable (ou partie vide) : toute la chaîne part
+    // dans `album` — matching flou Last.fm + re-validation stricte après.
+    artistParam = '';
+    albumParam = raw;
+  }
+
+  let data;
+  try {
+    data = await getJSONSigned({
+      method: 'album.search',
+      ...(artistParam ? { artist: artistParam.slice(0, 200) } : {}),
+      album: (albumParam || raw).slice(0, 300),
+      api_key: API_KEY,
+      limit: 5,
+      format: 'json',
+    });
+  } catch (err) {
+    // PANNES NON BLOQUANTES : la CASCADE du contrôleur (musicBrainzController)
+    // retombe alors sur Discogs puis MusicBrainz — dernier maillon de la
+    // priorité Last.fm > Discogs > MusicBrainz.
+    console.warn(`[lastfm] album.search impossible (« ${raw.slice(0, 60)} ») :`, err.message);
+    return [];
+  }
+  const rawMatches = (data && data.results && data.results.albummatches) || null;
+  const rawAlbum = rawMatches ? rawMatches.album : data && data.results && data.results.album;
+  const results = Array.isArray(rawAlbum) ? rawAlbum : rawAlbum ? [rawAlbum] : [];
+
+  // Résolution des fiches COMPLÈTES (album.getInfo — la vraie source des
+  // visuels/tracklists) dans l'ordre de pertinence : chaque échec est ignoré,
+  // le suivant est essayé (le dernier candidat valide prime).
+  const out = [];
+  for (const r of results.slice(0, 5)) {
+    if (!r || out.length >= 3) continue;
+    const name = nodeText(r && r.name);
+    const artistName = nodeText(r && (r && r.artist ? nodeText(r.artist) : ''));
+    if (!name) continue;
+    try {
+      const info = await fetchAlbumInfo(artistName || artistParam, name);
+      if (info) out.push(info);
+    } catch {
+      // Non bloquant : fiche corrompue / API en panne -> tentative suivante.
+    }
+  }
+  return out;
+}
+
+/**
  * Localise la fiche ALBUM de Last.fm pour un code-barres — PORTE D'ENTRÉE du
  * scan disque (PRIORITÉ 1 côté visuels / métadonnées). L'API Last.fm n'expose
  * pas d'index par EAN (`album.search` exige un PARAMÈTRE `album`, donc le code
@@ -530,6 +616,7 @@ module.exports = {
   searchArtist,
   fetchArtistImage,
   searchAlbum,
+  searchAlbumsByQuery,
   searchAlbumByBarcode,
   fetchAlbumInfo,
   fetchTopAlbums,

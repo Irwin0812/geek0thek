@@ -39,6 +39,16 @@ function isConfigured() {
 }
 
 // ------------------------------------------------------------
+// État de DERNIÈRE ERREUR de recherche (lecture seule du contrôleur) :
+// la cascade « Last.fm -> Discogs -> MusicBrainz » de musicBrainzController
+// a besoin de distinguer « Discogs inconnu du disque » (null SANS erreur) de
+// « Discogs JOIGNABLE mais indisponible » (429 quota / jeton expiré / réseau)
+// pour décider de l'état remonté au client ('not-found' vs 'unavailable').
+// searchByQuery la met à jour en cas d'échec (non bloquant : null renvoyée).
+// ------------------------------------------------------------
+let DISCOGS_ERROR_LAST = null;
+
+// ------------------------------------------------------------
 // Mini file anti-débit (25 requêtes/min par défaut)
 // ------------------------------------------------------------
 // File de tokens (token bucket) : au maximum `rateLimitPerMinute`
@@ -467,10 +477,81 @@ async function searchArtistAlbum(artistName, albumTitle) {
   return { ...prefill, barcode: null }; // import par artiste + titre : pas d'EAN.
 }
 
+/**
+ * Recherche d'une PARUTION par MOTS-CLÉS LIBRES (EAN/UPC ou phrase « titre »
+ * / « artiste titre ») — maillon 2 de la CASCADE PRIORITAIRE
+ * (1. Last.fm -> 2. DISCOGS -> 3. MusicBrainz), commun à l'import par
+ * code-barres et à la recherche par mots-clés du contrôleur :
+ *   GET /database/search?q=<chaîne>&type=release&per_page=10
+ * (le paramètre `barcode` est déjà exploité par searchByBarcode). La chaîne
+ * est passée telle quelle : l'API Discogs recherche simultanément titre,
+ * artiste, label — c'est le « fuzzer » de secours quand Last.fm ne trouve rien.
+ * Candidat retenu : premier résultat de la recherche CLASSÉE par pertinence
+ * (fiche complète GET /releases/<id> pour la tracklist / labels / genres).
+ * PANNES NON BLOQUANTES (quota 429, jeton expiré, réseau) : `null` — la
+ * cascade retombe alors sur MusicBrainz (jamais d'exception non classée), et
+ * l'erreur est journalisée côté contrôleur pour les avertissements.
+ * @param {string} query chaîne libre (≥ 2 caractères).
+ * @returns {Promise<object|null>} fiche Discogs normalisée (shape toPrefill,
+ *   barcode conservé si la saisie était un EAN), ou null (non bloquant —
+ *   DISCOGS_ERROR_LAST porte l'erreur éventuelle pour le contrôleur).
+ */
+async function searchByQuery(rawQuery) {
+  const queryText = String(rawQuery || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 200);
+  if (!queryText || !isConfigured()) return null;
+
+  let data;
+  DISCOGS_ERROR_LAST = null;
+  try {
+    data = await getJSON(
+      `${DISCOGS_BASE}/database/search?q=${encodeURIComponent(queryText)}&type=release&per_page=10`
+    );
+  } catch (err) {
+    // Non bloquant : quota Discogs (25 req/min), jeton expiré, réseau — la
+    // cascade retombe sur MusicBrainz ; l'état 'unavailable' est remonté via
+    // l'erreur journalisée par le contrôleur (voir DISCOGS_ERROR_LAST).
+    DISCOGS_ERROR_LAST = err;
+    console.warn('[discogs] recherche mots-clés impossible :', err.message);
+    return null;
+  }
+
+  const items = (Array.isArray(data.results) ? data.results : []).filter(Boolean);
+  if (items.length === 0) return null;
+
+  // SÉLECTION du candidat — le premier résultat CLASSÉ par pertinence est la
+  // référence (search classant titre + artiste + label) ; si la saisie était
+  // un EAN/UPC, on privilégie le résultat dont LE code-barres coïncide.
+  const isBarcode = /^\d{8,14}$/.test(queryText);
+  const pick =
+    (isBarcode
+      ? items.find((i) => /^\d{8,14}$/.test(i && String(i.barcode || '').replace(/\D/g, '')) || null)
+      : null
+    ) || items[0] || null;
+  if (!pick) return null;
+
+  const full = pick.id ? await fetchRelease(pick.id).catch(() => null) : null;
+  return toPrefill({ ...pick, ...(full || {}) }, isBarcode ? queryText : null);
+}
+
+/**
+ * Dernière ERREUR de recherche Discogs (lecture seule du contrôleur) — à
+ * appelé APRÈS searchByQuery/searchByBarcode pour distinguer « inconnu »
+ * (null sans erreur, état 'not-found') d'« indisponibilité » (429 quota /
+ * jeton expiré / réseau, état 'unavailable' dans providers + warnings).
+ */
+function lastSearchError() {
+  return DISCOGS_ERROR_LAST;
+}
+
 module.exports = {
   DiscogsError,
   searchByBarcode,
+  searchByQuery,
   searchArtist,
   searchArtistAlbum,
   isConfigured,
+  lastSearchError,
 };

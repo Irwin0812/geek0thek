@@ -25,6 +25,10 @@ const EMPTY = {
   mbid: '',
   discogsReleaseId: '',
   discogsUrl: '',
+  // Fiche Last.fm d'album — provenance PRIORITAIRE de la cascade d'import
+  // (jaquette + métadonnées issues de album.getInfo) : URL persistée avec le
+  // disque (backend `lastfm_url`), remplie par le scan / la recherche.
+  lastfmUrl: '',
   acquiredDate: todayIso(),
   notes: '',
   // Options du disque (rangée horizontale) : type de disque, nombre de
@@ -194,6 +198,7 @@ export default function AddVinyl() {
           mbid: v.mbid || '',
           discogsReleaseId: v.discogsReleaseId ? String(v.discogsReleaseId) : '',
           discogsUrl: v.discogsUrl || '',
+          lastfmUrl: v.lastfmUrl || '',
           acquiredDate: v.addedDate ? String(v.addedDate).slice(0, 10) : todayIso(),
           notes: v.notes || '',
           // Options du disque : type (défaut « Disque »), entiers
@@ -255,6 +260,8 @@ export default function AddVinyl() {
       // Identifiants Discogs (recherche par code-barres, complément MusicBrainz)
       discogsReleaseId: fill('discogsReleaseId') || f.discogsReleaseId,
       discogsUrl: fill('discogsUrl') || f.discogsUrl,
+      // Fiche Last.fm d'album — provenance PRIORITAIRE de la cascade d'import.
+      lastfmUrl: fill('lastfmUrl') || f.lastfmUrl,
       // « Date d'ajout » : jamais pré-remplie par un import ; on conserve la
       // valeur courante (date du jour à l'ouverture du formulaire).
     }))
@@ -421,11 +428,13 @@ export default function AddVinyl() {
           mbid: form.mbid || '',
           discogs_release_id: form.discogsReleaseId || '',
           discogs_url: form.discogsUrl || '',
+          lastfm_url: form.lastfmUrl || '',
           // '' (jamais null/NaN) : FormData convertirait null en "null"
           acquired_date: acquiredDate === null ? '' : acquiredDate,
           notes: form.notes || '',
-          // Type de disque (« Disque » / « Compact ») + picture disc boolean
-          // (« true » / « false » ; le backend accepte aussi '1'/'0').
+          // Type de disque (« Vinyle » / « Compact », défaut « Vinyle »)
+          // + picture disc boolean (« true » / « false » ; le backend
+          // accepte aussi '1'/'0').
           disc_type: discType,
           is_picture_disc: String(isPictureDisc),
           discs_count: String(discsCount),
@@ -445,6 +454,7 @@ export default function AddVinyl() {
           mbid: form.mbid || null,
           discogs_release_id: form.discogsReleaseId || null,
           discogs_url: form.discogsUrl || null,
+          lastfm_url: form.lastfmUrl || null,
           acquired_date: acquiredDate,
           notes: form.notes || null,
           disc_type: discType,
@@ -498,7 +508,7 @@ export default function AddVinyl() {
           </p>
         </div>
         {!isEdit && (
-          <button className="btn-ghost" onClick={() => setModalOpen(true)}>⌗ Import par code-barres</button>
+          <button className="btn-ghost" onClick={() => setModalOpen(true)}>Importer un Disque (#EAN/Mots clés)</button>
         )}
       </header>
 
@@ -695,8 +705,8 @@ export default function AddVinyl() {
         </Field>
 
         {/* Options du disque : UNE ligne horizontale (flexbox), de gauche à
-            droite — 1. Type de Disque (select « Disque »/« Compact », défaut
-            « Disque » — remplace l'ancienne checkbox « Édition spéciale ») ·
+            droite — 1. Type de Disque (select « Vinyle »/« Compact », défaut
+            « Vinyle » — remplace l'ancienne checkbox « Édition spéciale ») ·
             2. Nombre de Disques (select 1 → 5, défaut 1) ·
             3. Picture Disc (case à cocher, défaut non coché) ·
             4. Couleur (menu déroulant custom des couleurs de galettes avec
@@ -706,12 +716,15 @@ export default function AddVinyl() {
         <fieldset className="space-y-2">
           <legend className="label !mb-0">Disque — options</legend>
           <div className="flex flex-col sm:flex-row gap-x-4 gap-y-2 items-end">
-            {/* 1. Type de Disque : « Disque » / « Compact » (défaut « Disque »),
+            {/* 1. Type de Disque : « Vinyle » / « Compact » (défaut « Vinyle »),
                 envoyé `disc_type` — remplace l'ancienne checkbox « Édition spéciale » */}
             <div className="sm:flex-1">
               <Field label="Type de Disque">
+                {/* « Vinyle » (défaut) / « Compact » — la valeur `Vinyle` est
+                    portée par le formulaire (EMPTY.discType = 'Vinyle' et
+                    chargement en mode édition) : c'est l'option par défaut. */}
                 <select className="input" value={form.discType} onChange={set('discType')}>
-                  <option value="Vinyle">Disque Vinyle</option>
+                  <option value="Vinyle">Vinyle</option>
                   <option value="Compact">Compact</option>
                 </select>
               </Field>
@@ -888,6 +901,8 @@ export default function AddVinyl() {
             mbid: payload.mbid || f.mbid,
             discogsReleaseId: payload.discogsReleaseId || f.discogsReleaseId,
             discogsUrl: payload.discogsUrl || f.discogsUrl,
+            // Fiche Last.fm d'album (provenance prioritaire de la cascade).
+            lastfmUrl: payload.lastfmUrl || f.lastfmUrl,
           }))
           if (payload.coverRemoteUrl) setRemoteUrl(payload.coverRemoteUrl)
         }}

@@ -79,9 +79,11 @@ CREATE TABLE IF NOT EXISTS vinyls (
     -- création). Alignée sur comics.added_date.
     acquired_date DATE        NOT NULL DEFAULT CURRENT_DATE,
     notes         TEXT,
-    -- Options du vinyle (rangée horizontale du formulaire) : « Édition
-    -- spéciale » (case à cocher), « Picture Disc » (Oui/Non), nombre de
-    -- galettes (1 → 5) et couleur de la galette (défaut « Noir »).
+    -- Options du vinyle (rangée horizontale du formulaire) : type de disque
+    -- (« Vinyle » / « Compact », défaut « Vinyle »), « Édition spéciale
+    -- (case à cocher), « Picture Disc » (Oui/Non), nombre de galettes (1 → 5)
+    -- et couleur de la galette (défaut « Noir »).
+    disc_type          VARCHAR(20) NOT NULL DEFAULT 'Vinyle',
     is_special_edition BOOLEAN     NOT NULL DEFAULT FALSE,
     is_picture_disc    BOOLEAN     NOT NULL DEFAULT FALSE,
     discs_count        INTEGER     NOT NULL DEFAULT 1

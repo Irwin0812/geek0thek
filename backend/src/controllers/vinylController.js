@@ -59,10 +59,12 @@ function toVinylDto(row) {
     // disque à la collection (DATE YYYY-MM-DD), alignée sur comics.added_date.
     addedDate: row.acquired_date ? String(row.acquired_date).slice(0, 10) : null,
     notes: row.notes,
-    // Options du disque (rangée horizontale du formulaire) : booléens,
-    // nombre de galettes (1 → 5) et couleur de la galette (défaut « Noir »).
-    // Bornes garanties côté base (CHECK) ; le resserrage défend les lignes
+    // Options du disque (rangée horizontale du formulaire) : TYPE DE DISQUE
+    // (« Vinyle » / « Compact », défaut « Vinyle »), booléens, nombre de
+    // galettes (1 → 5) et couleur de la galette (défaut « Noir »). Bornes
+    // garanties côté base (CHECK) ; le resserrage défend les lignes
     // pré-migration (discs_count 6 → 20 stockées par de vieilles versions).
+    discType: row.disc_type || 'Vinyle',
     isSpecialEdition: Boolean(row.is_special_edition),
     pictureDisc: Boolean(row.is_picture_disc),
     discsCount: Math.min(5, Math.max(1, Number(row.discs_count) || 1)),
@@ -634,6 +636,13 @@ function cleanVinyl(body) {
     notes: body.notes ? String(body.notes).trim() : null,
     // Options du disque (rangée horizontale du formulaire) — mêmes entrées
     // snake_case / camelCase que le reste, avec tolérance des chaînes texte.
+    // « Type de Disque » (menu déroulant, 1er élément de la rangée) :
+    // « Vinyle » (défaut — option « Disque Vinyle » renommée) ou « Compact ».
+    // Toute autre valeur (vide, incohérente, typographié…) retombe sur le
+    // défaut « Vinyle » — aucun blanc stocké en base (colonne NOT NULL).
+    discType: /^\s*(vinyle|compact)\s*$/i.test(String(body.disc_type ?? body.discType ?? ''))
+      ? (/^vinyle$/i.test(String(body.disc_type ?? body.discType).trim()) ? 'Vinyle' : 'Compact')
+      : 'Vinyle',
     isSpecialEdition: asBoolean(
       body.is_special_edition ?? body.isSpecialEdition,
       false
@@ -914,10 +923,11 @@ async function createVinyl(req, res, next) {
     const { rows } = await query(
       `INSERT INTO vinyls (user_id, cover_url, artist, artist_id, artist_image, title, track_count, tracklist,
                            genre, label, release_date, barcode, mbid, discogs_release_id,
-                           discogs_url, lastfm_url, acquired_date, notes, is_special_edition,
+                           discogs_url, lastfm_url, acquired_date, notes, disc_type,
+                           is_special_edition,
                            is_picture_disc, discs_count, color)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-               COALESCE($17, CURRENT_DATE), $18, $19, $20, $21, $22)
+               COALESCE($17, CURRENT_DATE), $18, $19, $20, $21, $22, $23)
        RETURNING *`,
       [
         req.user.id,
@@ -946,6 +956,9 @@ async function createVinyl(req, res, next) {
         // la colonne prend CURRENT_DATE (défaut d'aujourd'hui).
         values.acquiredDate || null,
         values.notes,
+        // « Type de Disque » (« Vinyle » / « Compact », défaut « Vinyle » —
+        // proprement normalisé par cleanVinyl ; colonne NOT NULL).
+        values.discType,
         // Options du disque (defaults de boiserie en cas d'absence) :
         // édition spéciale, picture disc, nombre de galettes, couleur.
         values.isSpecialEdition,
@@ -1294,11 +1307,12 @@ async function updateVinyl(req, res, next) {
                          label=$6, release_date=$7, barcode=$8, mbid=$9,
                          discogs_release_id=$10, discogs_url=$11, lastfm_url=$12,
                          acquired_date=COALESCE($13, acquired_date),
-                         notes=$14, cover_url=$15, is_special_edition=$16,
-                          is_picture_disc=$17, discs_count=$18, color=$19,
-                          artist_id=COALESCE($20, artist_id),
-                          artist_image=COALESCE($21, artist_image)
-        WHERE id=$22 RETURNING *`,
+                         notes=$14, cover_url=$15, disc_type=$16,
+                         is_special_edition=$17,
+                         is_picture_disc=$18, discs_count=$19, color=$20,
+                          artist_id=COALESCE($21, artist_id),
+                          artist_image=COALESCE($22, artist_image)
+        WHERE id=$23 RETURNING *`,
       [
         values.artist,
         values.title,
@@ -1319,6 +1333,10 @@ async function updateVinyl(req, res, next) {
         values.acquiredDate || null,
         values.notes,
         coverUrl,
+        // « Type de Disque » (« Vinyle » / « Compact ») : toujours écrasé —
+        // le formulaire est la source de vérité (défaut normalisé par
+        // cleanVinyl ; colonne NOT NULL DEFAULT 'Vinyle').
+        values.discType,
         // Options du disque : toujours écrasées (le formulaire est la source
         // de vérité ; les défauts sont portés par cleanVinyl).
         values.isSpecialEdition,
@@ -1329,8 +1347,8 @@ async function updateVinyl(req, res, next) {
         // null -> on conserve la valeur courante de la colonne.
         artistId,
         artistImage,
-        // $22 : id de la ligne à mettre à jour (clause WHERE) — 22 PARAMÈTRES
-        // pour 22 placeholders, comptez-les. Causes historiques du bug
+        // $23 : id de la ligne à mettre à jour (clause WHERE) — 23 PARAMÈTRES
+        // pour 23 placeholders, comptez-les. Causes historiques du bug
         // « column "acquired_date" does not exist » sur le PUT, toutes
         // éliminées (ne pas les faire réapparaître) :
         //   (a) $19 absent ici -> 18 paramètres pour une requête à 19 slots

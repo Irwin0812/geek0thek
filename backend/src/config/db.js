@@ -377,6 +377,19 @@ const MIGRATIONS = [
        WHERE u.is_public = TRUE AND u.share_comics = TRUE;`,
     ],
   },
+   // TYPE DE DISQUE du formulaire « Ajouter / Modifier un disque » (1er
+   // élément de la rangée des options) : « Vinyle » / « Compact », défaut
+   // « Vinyle » — remplace l'ancienne option « Disque Vinyle ». Colonne
+   // VARCHAR(20) NOT NULL avec rétro-remplissage « Vinyle » (cf. migration
+   // 010, identique pour init.sql sur une base neuve).
+   {
+     name: 'vinyls.disc-type',
+     statements: [
+       `ALTER TABLE vinyls ADD COLUMN IF NOT EXISTS disc_type VARCHAR(20) NOT NULL DEFAULT 'Vinyle';`,
+       `ALTER TABLE vinyls ALTER COLUMN disc_type SET DEFAULT 'Vinyle';`,
+       `UPDATE vinyls SET disc_type = 'Vinyle' WHERE btrim(COALESCE(disc_type, '')) = '';`,
+     ],
+   },
 ];
 
 /**

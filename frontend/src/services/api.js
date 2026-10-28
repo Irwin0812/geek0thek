@@ -96,7 +96,15 @@ export const api = {
   // --- MusicBrainz ---
   musicbrainz: {
     status: () => request('/musicbrainz/status'),
-    barcode: (code) => request(`/musicbrainz/barcode/${code}`)
+    barcode: (code) => request(`/musicbrainz/barcode/${code}`),
+    // Recherche TEXTUELLE par mots-clés (EAN/UPC ou « artiste titre ») :
+    // CASCADE STRICTE 1. Last.fm (prioritaire, jaquettes) -> 2. Discogs ->
+    // 3. MusicBrainz. Renvoie { success, data, providers?, warnings? },
+    // data = fiche normalisée (mêmes champs que le scan par code-barres).
+    // Mêmes conventions que isbn.search (BD) : ?q=<mots-clés> (cf. GET
+    // /api/musicbrainz/keyword?q=…) — la CASCADE est appliquée côté serveur
+    // en ordre strict (Last.fm d'abord, jamais en parallèle).
+    keyword: (q) => request(`/musicbrainz/keyword?q=${encodeURIComponent(q)}`)
   },
 
   // --- Discogs (complément de MusicBrainz, recherche par code-barres) ---
