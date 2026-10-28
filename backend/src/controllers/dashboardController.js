@@ -19,10 +19,14 @@ const { toComicDto } = require('./comicController');
  *    (contrôle via information_schema.tables — aucune vue dépendante à créer)
  *    : le dashboard ne doit JAMAIS échouer à cause d'une bibliothèque future
  *    non migrée ;
- *  - tri strict sur la DATE D'AJOUT métier (YYYY-MM-DD zéro-padded : l'ordre
- *    lexicographique EST l'ordre temporel), les égalités étant départagées
- *    par l'ORDRE DU REGISTRE (priorité Disques > BD > …) pour un rendu
- *    DÉTERMINISTE, sans jamais utiliser l'horodatage technique created_at ;
+ *  - tri strict sur l'HORODATAGE D'INSERTION `created_at` — posé par le
+ *    DEFAULT now() de la table au INSERT, immuable ensuite (le trigger
+ *    met à jour updated_at, jamais created_at) : il reflète le TOUT DERNIER
+ *    média INSÉRÉ en base de données, indépendamment des dates de parution
+ *    (release_date) ET des dates d'ajout métier éditables via formulaire
+ *    (acquired_date / added_date — une édition peut ré-écrire ces dernières,
+ *    d'où l'ancien blocage de la tuile sur un élément historique) ; les
+ *    égalités sont départagées par `id DESC` pour un rendu DÉTERMINISTE ;
  *  - chaque branche de l'UNION est bornée `user_id = $1` (paramètre SQL —
  *    JAMAIS d'interpolation) : le dashboard reflète la collection PERSO du
  *    connectataire, comme les routes /vinyls et /comics ;
@@ -111,20 +115,22 @@ async function tableExists(tableName) {
 /**
  * UNION ALL des bibliothèques PRÉSENTES EN BASE : une LIGNE PAR ÉLÉMENT de la
  * collection de l'utilisateur avec `media_type` (clé du registre), `id`,
- * `title`, la DATE D'AJOUT métier castée ::TEXT en « YYYY-MM-DD » et `prio`
- * (rang du registre pour un départage déterministe sur date égale). Le même
- * paramètre `user_id = $1` borne TOUS les types de médias : le `$1` des N
- * sous-requêtes d'une UNION est unique et partage l'id utilisateur passé une
- * seule fois dans `query(sql, [userId])`.
+ * `title` et l'HORODATAGE D'INSERTION `${alias}.created_at` castée ::TEXT en
+ * ISO UTC (comparaison lexicographique = comparaison temporelle). Le tri
+ * « dernier inséré » repose donc STRICTEMENT sur la base (`created_at`,
+ * départage `id DESC`) : jamais sur la date de parution (`release_date`) ni
+ * sur la date d'ajout métier éditée via formulaire (`acquired_date` /
+ * `added_date`). Le même paramètre `user_id = $1` borne TOUS les types de
+ * médias : le `$1` des N sous-requêtes d'une UNION est unique et partage
+ * l'id utilisateur passé une seule fois dans `query(sql, [userId])`.
  */
 function buildUnionSql(sources) {
   return sources
     .map(
-      (s, i) => `SELECT '${s.key}' AS media_type,
+      (s) => `SELECT '${s.key}' AS media_type,
          ${s.alias}.id,
          ${s.alias}.title,
-         (${s.alias}.${s.addedDateColumn})::TEXT AS added_date,
-         ${i + 1} AS prio
+         (${s.alias}.created_at)::TEXT AS created_at
        FROM ${s.table} ${s.alias}
        WHERE ${s.alias}.user_id = $1`
     )
@@ -170,12 +176,17 @@ async function getDashboard(req, res, next) {
     const unionSql = buildUnionSql(sources);
     const params = [userId]; // $1 partagé par TOUTES les branches de l'union
 
-    // N°2 : le plus récent élément, TOUTES bibliothèques confondues — tri
-    // DESC sur la date d'ajout métier ; égalités départagées par prio (ordre
-    // du registre) LIMIT 1 : jamais besoin des horodatages techniques.
+    // N°2 : le TOUT DERNIER MÉDIA INSÉRÉ en base, TOUTES bibliothèques
+    // confondues — tri DESC strict sur l'horodatage d'insertion created_at
+    // (immuable, posé par DEFAULT now() au INSERT — jamais lisible dans les
+    // formulaires), départage id DESC (séquence BIGSERIAL par table : le plus
+    // grand id = le plus récent à timestamp égal) puis LIMIT 1. Jamais la
+    // date de parution (release_date) ni la date d'ajout métier éditée
+    // (acquired_date / added_date — celles-ci pouvaient faire bloquer la
+    // tuile sur un élément historique ré-édité).
     const { rows: topRows } = await query(
       `SELECT * FROM (${unionSql}) _u
-       ORDER BY added_date DESC NULLS LAST, prio ASC
+       ORDER BY created_at DESC, id DESC
        LIMIT 1`,
       params
     );
