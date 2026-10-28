@@ -89,17 +89,20 @@ export default function Dashboard() {
       </section>
 
       {/* ================= GRILLE BENTO IMMERSIVE (asymétrique) ================
-          Layout large (md+, 3 colonnes) : la colonne de GAUCHE pèse le double
-          (md:col-span-2) et porte LES DEUX DOMAINES OUVERTS, chacun construit en
-          bloc vertical :
-            MUSIQUE   → DISQUES (carte PRINCIPALE, pleine largeur du bloc) puis
-                        deux tuiles SECONDAIRES (Artistes / Genres) côte à côte ;
-                      → BANDES DESSINÉES (carte PRINCIPALE pleine largeur) puis
-                        Auteurs BD / Séries BD.
-          La colonne de DROITE (1/3) empile les 3 cartes « À venir » en
-          GLASSMORPHISME SOMBRE (backdrop-blur-md sur leur photo, bordures
-          subtiles white/10, cadenas + badge PROCHAINEMENT — tables non migrées).
-          Mobile (< md) : les deux blocs s'empilent, 1 colonne.
+          LIGNE DU HAUT (grille md:grid-cols-5) : deux GRANDES tuiles pèsent le
+          double de la colonne de droite (md:col-span-2 chacune) — aucun bloc
+          secondaire entre les grandes cartes et la colonne de droite :
+            Colonne 1 (HAUT GAUCHE) → DISQUES, grande tuile (bg_tuile_disques.jpg) ;
+            Colonne 2 (HAUT CENTRE) → BANDES DESSINÉES, grande tuile (bg_tuile_bd.jpg) ;
+            Colonne 3 (HAUT DROITE) → pile VERTICALE de 3 tuiles « À venir » en
+                      GLASSMORPHISME SOMBRE (backdrop-blur-md sur leur photo,
+                      bordures subtiles white/10, cadenas + badge PROCHAINEMENT —
+                      tables non migrées) : Jeux Vidéo / Jeux de Rôle-Plateau /
+                      Livres-Magazines.
+          LIGNE DU BAS (section pleine largeur) : une SEULE ligne regroupant côte à
+          côte les 4 CARTES SECONDAIRES (grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
+          — 1/2/4 colonnes selon le breakpoint) : Artistes / Groupes, Genres Musicaux,
+          Auteurs BD et Séries BD.
           Chaque tuile porte sa PHOTO DÉDIÉE (img/bg_tuile_*.jpg servies statique-
           ment depuis frontend/public/img/) VOILÉE par un overlay sombre
           (slate-950/night-950) → contraste & lisibilité garantis sur n'importe
@@ -111,83 +114,89 @@ export default function Dashboard() {
           musique, TEAL/Émeraude pour la littérature, gris neutres (slate) pour
           les sections à venir. Titres en CAPITALES ESPACÉES, gros chiffres
           audacieux (font-black 5xl→6xl). */}
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {/* ---------- Bloc MUSIQUE + LITTÉRATURE (colonne double) ---------- */}
-        <div className="flex flex-col gap-4 md:col-span-2">
-          <PrimaryStatCard
-            to="/collection"
-            icon={<Disc3 size={26} />}
-            label={t('dashboard.stats.vinyls')}
-            value={stats.total}
-            bgImage="/img/bg_tuile_disques.jpg"
-            glow="bg-amber-500/40"
-            frame="border-amber-500/40 hover:border-amber-400/70"
-            chip="border-amber-500/40 text-amber-300"
-            numberClass="text-white [text-shadow:0_2px_18px_rgba(245,158,11,0.45)]"
-          />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <SecondaryStatCard
-              to="/collection"
-              icon={<Users size={16} />}
-              label={t('dashboard.stats.artists')}
-              value={stats.artists}
-              bgImage="/img/bg_tuile_disques.jpg"
-              glow="bg-amber-500/30"
-              chip="border-amber-500/30 text-amber-300"
-            />
-            <SecondaryStatCard
-              to="/collection"
-              icon={<Tags size={16} />}
-              label={t('dashboard.stats.musicalGenres')}
-              value={stats.genres}
-              bgImage="/img/bg_tuile_disques.jpg"
-              glow="bg-amber-500/30"
-              chip="border-amber-500/30 text-amber-300"
-            />
-          </div>
-
-          <PrimaryStatCard
-            to="/comics"
-            icon={<BookOpen size={26} />}
-            label={t('dashboard.stats.comics')}
-            value={stats.comics.total}
-            bgImage="/img/bg_tuile_bd.jpg"
-            glow="bg-teal-500/40"
-            frame="border-teal-500/40 hover:border-teal-400/70"
-            chip="border-teal-500/40 text-teal-300"
-            numberClass="text-white [text-shadow:0_2px_18px_rgba(45,212,191,0.45)]"
-          />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <SecondaryStatCard
-              to="/comics"
-              icon={<PenLine size={16} />}
-              label={t('dashboard.stats.comicAuthors')}
-              value={stats.comics.authors}
-              bgImage="/img/bg_tuile_bd.jpg"
-              glow="bg-teal-500/30"
-              chip="border-teal-500/30 text-teal-300"
-            />
-            <SecondaryStatCard
-              to="/comics"
-              icon={<Layers size={16} />}
-              label={t('dashboard.stats.comicSeries')}
-              value={stats.comics.series}
-              bgImage="/img/bg_tuile_bd.jpg"
-              glow="bg-teal-500/30"
-              chip="border-teal-500/30 text-teal-300"
-            />
-          </div>
-        </div>
-
-        {/* ---------- BLOCS « À VENIR » (colonne droite, glassmorphism) --------
-          bases de données non migrées : icône cadenas + badge PROCHAINEMENT.
-          Quand une collection ouvrira : retirer `locked`/le badge et passer le
-          vrai compteur — même composant, rien d'autre à changer. */}
+      {/* LIGNE DU HAUT — les 2 GRANDES tuiles (largeur double) + pile « À venir ».
+          md:grid-cols-5 → DISQUES (2/5) + BANDES DESSINÉES (2/5) + colonne de
+          droite (1/5) : AUCUN bloc secondaire entre les grandes cartes et la
+          colonne de droite. Les 3 colonnes s'étirent à hauteurs égales (grid
+          items stretch) : pile SoonCard en flex-1, grandes tuiles en h-full. */}
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-5">
+        {/* Colonne 1 — Haut Gauche : grande tuile DISQUES (largeur double). */}
+        <PrimaryStatCard
+          className="md:col-span-2"
+          to="/collection"
+          icon={<Disc3 size={26} />}
+          label={t('dashboard.stats.vinyls')}
+          value={stats.total}
+          bgImage="/img/bg_tuile_disques.jpg"
+          glow="bg-amber-500/40"
+          frame="border-amber-500/40 hover:border-amber-400/70"
+          chip="border-amber-500/40 text-amber-300"
+          numberClass="text-white [text-shadow:0_2px_18px_rgba(245,158,11,0.45)]"
+        />
+        {/* Colonne 2 — Haut Centre : grande tuile BANDES DESSINÉES (largeur double). */}
+        <PrimaryStatCard
+          className="md:col-span-2"
+          to="/comics"
+          icon={<BookOpen size={26} />}
+          label={t('dashboard.stats.comics')}
+          value={stats.comics.total}
+          bgImage="/img/bg_tuile_bd.jpg"
+          glow="bg-teal-500/40"
+          frame="border-teal-500/40 hover:border-teal-400/70"
+          chip="border-teal-500/40 text-teal-300"
+          numberClass="text-white [text-shadow:0_2px_18px_rgba(45,212,191,0.45)]"
+        />
+        {/* Colonne 3 — Haut Droite : pile VERTICALE de 3 tuiles « À venir »
+            (glassmorphism sombre). Bases de données non migrées : icône cadenas +
+            badge PROCHAINEMENT. Quand une collection ouvrira : retirer `locked`/le
+            badge et passer le vrai compteur — même composant, rien d'autre à
+            changer. */}
         <div className="flex flex-col gap-4">
           <SoonCard icon={Gamepad2} label={t('dashboard.stats.videoGames')} bgImage="/img/bg_tuile_jv.jpg" />
           <SoonCard icon={Dices} label={t('dashboard.stats.boardGames')} bgImage="/img/bg_tuile_jdr.jpg" />
           <SoonCard icon={Library} label={t('dashboard.stats.books')} bgImage="/img/bg_tuile_livreszines.jpg" />
         </div>
+      </section>
+
+      {/* LIGNE DU BAS — une SEULE ligne pleine largeur regroupant côte à côte les
+          4 CARTES SECONDAIRES (1 → sm:2 → lg:4 colonnes). */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <SecondaryStatCard
+          to="/collection"
+          icon={<Users size={16} />}
+          label={t('dashboard.stats.artists')}
+          value={stats.artists}
+          bgImage="/img/bg_tuile_disques.jpg"
+          glow="bg-amber-500/30"
+          chip="border-amber-500/30 text-amber-300"
+        />
+        <SecondaryStatCard
+          to="/collection"
+          icon={<Tags size={16} />}
+          label={t('dashboard.stats.musicalGenres')}
+          value={stats.genres}
+          bgImage="/img/bg_tuile_disques.jpg"
+          glow="bg-amber-500/30"
+          chip="border-amber-500/30 text-amber-300"
+        />
+        <SecondaryStatCard
+          to="/comics"
+          icon={<PenLine size={16} />}
+          label={t('dashboard.stats.comicAuthors')}
+          value={stats.comics.authors}
+          bgImage="/img/bg_tuile_bd.jpg"
+          glow="bg-teal-500/30"
+          chip="border-teal-500/30 text-teal-300"
+        />
+        <SecondaryStatCard
+          to="/comics"
+          icon={<Layers size={16} />}
+          label={t('dashboard.stats.comicSeries')}
+          value={stats.comics.series}
+          bgImage="/img/bg_tuile_bd.jpg"
+          glow="bg-teal-500/30"
+          chip="border-teal-500/30 text-teal-300"
+        />
       </section>
 
       {/* Derniers ajouts */}
@@ -268,8 +277,9 @@ export default function Dashboard() {
 }
 
 /**
- * BENTO — CARTE PRINCIPALE (largeur double au sein de son bloc domaine) :
- * Disques / Bandes dessinées. Photo dédiée plein cadre + overlay sombre en
+ * BENTO — CARTE PRINCIPALE (grande tuile, `md:col-span-2` sur la grille 5 cols
+ * de la ligne du haut) : Disques / Bandes dessinées. Wrapper OUTER en h-full →
+ * les deux grandes tuiles s'étirent à la hauteur de la pile « À venir » droite. Photo dédiée plein cadre + overlay sombre en
  * dégradé, grand chiffre audacieux (text-5xl→6xl font-black, halo coloré par
  * le domaine), icône contextuelle lucide dans un chip glassmorphism et
  * ACTIONS RAPIDES (boutons « Ajouter » / « Tout voir ») ancrés en bas à droite.
@@ -279,10 +289,10 @@ export default function Dashboard() {
  * halo (sans overflow-hidden — le halo doit déborder) ; la carte INNER
  * (overflow-hidden rounded-2xl) contient photo, overlay et contenu.
  */
-function PrimaryStatCard({ to, icon, label, value, bgImage, glow, frame, chip, numberClass }) {
+function PrimaryStatCard({ to, icon, label, value, bgImage, glow, frame, chip, numberClass, className = '' }) {
   const { t } = useTranslation()
   return (
-    <div className="group relative flex-1 rounded-2xl transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50">
+    <div className={`group relative h-full rounded-2xl transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50 ${className}`}>
       {/* Halo lumineux : première couche peinte → derrière la carte ; déborde
           de 12 px (-inset-3), flou blur-2xl, couleur du domaine `glow`. */}
       <span aria-hidden="true" className={`pointer-events-none absolute -inset-3 rounded-[26px] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-75 ${glow}`} />
