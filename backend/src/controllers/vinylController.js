@@ -52,6 +52,9 @@ function toVinylDto(row) {
     // Identifiants Discogs (complément de MusicBrainz, via la recherche EAN)
     discogsReleaseId: row.discogs_release_id,
     discogsUrl: row.discogs_url,
+    // Fiche Last.fm d'album (source PRIORITAIRE de la cascade d'import) :
+    // URL de la fiche — provenance persistée de la jaquette / métadonnées.
+    lastfmUrl: row.lastfm_url || null,
     // Remplace l'ancien « Année d'acquisition » : date exacte d'ajout du
     // disque à la collection (DATE YYYY-MM-DD), alignée sur comics.added_date.
     addedDate: row.acquired_date ? String(row.acquired_date).slice(0, 10) : null,
@@ -592,6 +595,13 @@ function cleanVinyl(body) {
   const discogsUrl = /^https:\/\/(www\.)?discogs\.com\/releases\/\d+/i.test(discogsUrlRaw)
     ? discogsUrlRaw
     : null;
+  // Fiche Last.fm d'album (provenance PRIORITAIRE de la cascade d'import —
+  // jaquette + métadonnées issues de album.getInfo). Colonnes TEXT ; null si
+  // absente ou non conforme (URL https du format « https://www.last.fm/music/… »).
+  const lastfmUrlRaw = String(body.lastfm_url || body.lastfmUrl || '').trim();
+  const lastfmUrl = /^https:\/\/(www\.)?last\.fm\/music\/.+$/i.test(lastfmUrlRaw)
+    ? lastfmUrlRaw
+    : null;
   // Champs entiers : vide, "NaN", indéfini ou invalide deviennent 0 (track_count,
   // colonne NOT NULL CHECK >= 0) — jamais la chaîne "NaN" vers Postgres
   // (« invalid input syntax for type integer »). toInteger accepte les chaînes
@@ -609,6 +619,7 @@ function cleanVinyl(body) {
     mbid,
     discogsReleaseId,
     discogsUrl,
+    lastfmUrl,
     // Remplace l'ancien « Année d'acquisition » : date exacte d'ajout à la
     // collection (AAAA-MM-JJ) — envoi snake_case `acquired_date` (FormData et
     // JSON ; camelCase toléré). Renvoie null si absente / invalide :
@@ -903,10 +914,10 @@ async function createVinyl(req, res, next) {
     const { rows } = await query(
       `INSERT INTO vinyls (user_id, cover_url, artist, artist_id, artist_image, title, track_count, tracklist,
                            genre, label, release_date, barcode, mbid, discogs_release_id,
-                           discogs_url, acquired_date, notes, is_special_edition,
+                           discogs_url, lastfm_url, acquired_date, notes, is_special_edition,
                            is_picture_disc, discs_count, color)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-               COALESCE($16, CURRENT_DATE), $17, $18, $19, $20, $21)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+               COALESCE($17, CURRENT_DATE), $18, $19, $20, $21, $22)
        RETURNING *`,
       [
         req.user.id,
@@ -928,6 +939,9 @@ async function createVinyl(req, res, next) {
         values.mbid,
         values.discogsReleaseId,
         values.discogsUrl,
+        // Fiche Last.fm (source PRIORITAIRE de la cascade d'import) : URL de
+        // la fiche album — provenance persistée de la jaquette / métadonnées.
+        values.lastfmUrl || null,
         // « Date d'ajout » : null si le formulaire n'en fournit pas ->
         // la colonne prend CURRENT_DATE (défaut d'aujourd'hui).
         values.acquiredDate || null,
@@ -1278,13 +1292,13 @@ async function updateVinyl(req, res, next) {
     const updated = await query(
       `UPDATE vinyls SET artist=$1, title=$2, track_count=$3, tracklist=$4, genre=$5,
                          label=$6, release_date=$7, barcode=$8, mbid=$9,
-                         discogs_release_id=$10, discogs_url=$11,
-                         acquired_date=COALESCE($12, acquired_date),
-                         notes=$13, cover_url=$14, is_special_edition=$15,
-                          is_picture_disc=$16, discs_count=$17, color=$18,
-                          artist_id=COALESCE($19, artist_id),
-                          artist_image=COALESCE($20, artist_image)
-        WHERE id=$21 RETURNING *`,
+                         discogs_release_id=$10, discogs_url=$11, lastfm_url=$12,
+                         acquired_date=COALESCE($13, acquired_date),
+                         notes=$14, cover_url=$15, is_special_edition=$16,
+                          is_picture_disc=$17, discs_count=$18, color=$19,
+                          artist_id=COALESCE($20, artist_id),
+                          artist_image=COALESCE($21, artist_image)
+        WHERE id=$22 RETURNING *`,
       [
         values.artist,
         values.title,
@@ -1297,6 +1311,10 @@ async function updateVinyl(req, res, next) {
         values.mbid,
         values.discogsReleaseId,
         values.discogsUrl,
+        // Fiche Last.fm (source PRIORITAIRE de la cascade) : jamais le
+        // COALESCE — la valeur du formulaire écrase (null = reprise sans
+        // source Last.fm connue).
+        values.lastfmUrl || null,
         // « Date d'ajout » : null -> on conserve la date existante en base.
         values.acquiredDate || null,
         values.notes,
@@ -1311,8 +1329,8 @@ async function updateVinyl(req, res, next) {
         // null -> on conserve la valeur courante de la colonne.
         artistId,
         artistImage,
-        // $21 : id de la ligne à mettre à jour (clause WHERE) — 21 PARAMÈTRES
-        // pour 21 placeholders, comptez-les. Causes historiques du bug
+        // $22 : id de la ligne à mettre à jour (clause WHERE) — 22 PARAMÈTRES
+        // pour 22 placeholders, comptez-les. Causes historiques du bug
         // « column "acquired_date" does not exist » sur le PUT, toutes
         // éliminées (ne pas les faire réapparaître) :
         //   (a) $19 absent ici -> 18 paramètres pour une requête à 19 slots

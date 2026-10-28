@@ -10,13 +10,19 @@ const {
   DiscogsError,
   isConfigured: isDiscogsConfigured,
 } = require('../utils/discogsClient');
-// Last.fm — COMPLEMENT (et source PRIORITAIRE de l'import par artiste + titre)
-// de MusicBrainz / Discogs lors du rapportage des disques : la fiche d'album
-// (tracklist toptracks, tags/genres, label si présent, jaquette d'ALBUM, URL)
-// assure l'intégrité des données quand les deux autres sources sont absentes,
-// vides ou injoignables.
+// Last.fm — SOURCE PRIORITAIRE des deux imports (scan par code-barres ET
+// saisie artiste + titre) : la fiche d'album complète (tracklist toptracks,
+// tags/genres, label si présent, jaquette d'ALBUM, URL) est récupérée via
+// album.search → album.getInfo et prime champ par champ dans la fusion.
+// Au scan EAN, Last.fm n'ayant pas d'index par code-barres, l'IDENTITÉ
+// « artiste + album » de la parution est identifiée par MusicBrainz / Discogs
+// (en parallèle) qui servent ensuite de PORTES D'ENTRÉE à Last.fm ; en cas
+// d'échec ou d'absence de résultat Last.fm, MusicBrainz / Discogs fournissent
+// alors la fiche en secours — les champs manquants sont comblés par la fusion
+// (mergeResults, priorité Last.fm sur les visuels / métadonnées).
 const {
   searchAlbum,
+  searchAlbumByBarcode,
   fetchAlbumInfo,
   LastfmError,
   isConfigured: isLastfmConfigured,
@@ -35,9 +41,9 @@ function status(req, res) {
   return res.json({
     configured: isConfigured(),
     provider: 'musicbrainz',
-    // Photo d'artiste PRIORITÉ 1 + fiche d'album : actif si LASTFM_API_KEY valide.
+    // Fiche d'album + photo d'artiste PRIORITÉ 1 : actif si LASTFM_API_KEY valide.
     lastfm: { configured: isLastfmConfigured() },
-    // Complément optionnel : active seulement si DISCOGS_TOKEN est renseigné.
+    // Secours (repli de la cascade) : actif si DISCOGS_TOKEN est renseigné.
     discogs: { configured: isDiscogsConfigured() },
   });
 }
@@ -71,26 +77,27 @@ function mergeLabels(...values) {
 
 /**
  * Fusionne les fiches des trois sources d'import disque — STRATÉGIE COMBINÉE
- * (cascade / repli) :
- *   - MUSICBRAINZ : fiche de RÉFÉRENCE au scan EAN (MBID, tracklist exacte,
- *     date, genres agrégés, jaquette Cover Art Archive) ;
- *   - LAST.FM : complément « artiste + album » — tracklist toptracks, tags /
- *     genres, label et date de sortie quand les deux autres n'apportent rien,
- *     ET jaquette d'ALBUM (image extralarge) si aucune autre source n'en a ;
- *   - DISCOGS : complément (image HD, labels détaillés, id release + URL).
- * Chaque champ est pris à la PREMIÈRE source (ordre ci-dessus) qui le porte ;
- * genre ET label accumulent les libellés des sources sans doublon.
- * @returns {object|null} fiche fusionnée ({ source: 'musicbrainz' | 'lastfm'
+ * (cascade / repli, PRIORITÉ LAST.FM) :
+ *   - LAST.FM (PRIORITÉ 1) : porte la fiche d'ALBUM — tracklist toptracks,
+ *     tags/genres, label et date de sortie quand connus, URL de la fiche et
+ *     jaquette d'ALBUM (image extralarge de album.getInfo) ; au scan EAN c'est
+ *     la première source interrogée (album.search&query=<EAN> → album.getInfo) ;
+ *   - MUSICBRAINZ (secours 1) : MBID + tracklist fidèle à la RELEASE EXACTE
+ *     et jaquette Cover Art Archive quand Last.fm n'apporte rien ;
+ *   - DISCOGS (secours 2) : labels détaillés, image HD, id release + URL.
+ * Chaque champ est pris à la PREMIÈRE source de l'ordre ci-dessus qui le
+ * porte ; genre ET label accumulent les libellés des sources sans doublon.
+ * @returns {object|null} fiche fusionnée ({ source: 'lastfm' | 'musicbrainz'
  *   | 'discogs' | combos }), ou null si aucune source ne connaît la parution.
  */
 function mergeResults(lf, mb, dg) {
   if (!lf && !mb && !dg) return null;
 
-  // Genre : fusion MusicBrainz + Last.fm (tags d'album) + Discogs (genres +
+  // Genre : fusion Last.fm (tags d'album) + MusicBrainz + Discogs (genres +
   // styles des fiches complètes), dé-duplicés — c'est la garantie qu'un disque
   // porte ses tags musicaux même si une source est vide sur ce champ.
   const genreSet = new Set();
-  [mb && mb.genre, lf && lf.genres, dg && dg.genre].forEach((v) => {
+  [lf && lf.genres, mb && mb.genre, dg && dg.genre].forEach((v) => {
     String(v || '')
       .split(',')
       .map((s) => s.trim())
@@ -99,33 +106,35 @@ function mergeResults(lf, mb, dg) {
   });
 
   return {
-    barcode: (mb && mb.barcode) || (dg && dg.barcode) || null,
-    artist: (mb && mb.artist) || (lf && lf.artist) || (dg && dg.artist) || '',
-    title: (mb && mb.title) || (lf && lf.album_name) || (dg && dg.title) || '',
+    barcode: (dg && dg.barcode) || (mb && mb.barcode) || null,
+    artist: (lf && lf.artist) || (mb && mb.artist) || (dg && dg.artist) || '',
+    title: (lf && lf.album_name) || (mb && mb.title) || (dg && dg.title) || '',
     genre: [...genreSet].join(', '),
-    // Label : MusicBrainz > Discogs (labels détaillés) > Last.fm — accumulé.
-    label: mergeLabels(mb && mb.label, dg && dg.label, lf && lf.label),
+    // Label : Last.fm > MusicBrainz > Discogs (labels détaillés) — accumulé.
+    label: mergeLabels(lf && lf.label, mb && mb.label, dg && dg.label),
     release_date:
-      (mb && mb.release_date) || (lf && lf.release_date) || (dg && dg.release_date) || null,
-    // Tracklist : MusicBrainz (pistes de la RELEASE EXACTE) > Last.fm
-    // (toptracks ordonnées) > Discogs (fiche complète). Même format
-    // « A1 : Blackened (6:42) » / « Titre » que le reste de l'application.
-    tracklist: (mb && mb.tracklist) || (lf && lf.tracklist) || (dg && dg.tracklist) || '',
+      (lf && lf.release_date) || (mb && mb.release_date) || (dg && dg.release_date) || null,
+    // Tracklist : Last.fm (toptracks ordonnées de l'album recherché) >
+    // MusicBrainz (pistes de la RELEASE EXACTE) > Discogs (fiche complète).
+    // Même format « A1 : Blackened (6:42) » / « Titre » que le reste de
+    // l'application — les durées Last.fm sont dans l'ordre toptracks.
+    tracklist: (lf && lf.tracklist) || (mb && mb.tracklist) || (dg && dg.tracklist) || '',
     track_count:
-      Number(mb && mb.track_count) || Number(lf && lf.track_count) || Number(dg && dg.track_count) || 0,
-    // Jaquette : Cover Art Archive (MB) > Last.fm (image extralarge de
-    // album.getInfo) > Discogs (cover_image HD — reprise dans la recherche
-    // mais rarement sur les fiches complètes) : toujours un visuel d'album.
+      Number(lf && lf.track_count) || Number(mb && mb.track_count) || Number(dg && dg.track_count) || 0,
+    // Jaquette : LAST.FM (image extralarge de album.getInfo — prioritaire,
+    // conformément à la nouvelle stratégie) > Cover Art Archive (MB) >
+    // Discogs (cover_image HD). La URL retenue est téléchargée au stockage de
+    // la ligne vinyle (resolveCover -> uploadDir/vinyls) puis associée au disque.
     cover_image:
-      (mb && mb.cover_image) || (lf && lf.cover_image) || (dg && dg.cover_image) || null,
+      (lf && lf.cover_image) || (mb && mb.cover_image) || (dg && dg.cover_image) || null,
     // Identifiants persistés avec le disque (DTO / colonnes).
     mbid: (mb && mb.mbid) || null,
     discogs_release_id: (dg && dg.discogs_release_id) || null,
     discogs_url: (dg && dg.discogs_url) || null,
     // URL de la fiche Last.fm (lien « Fiche Last.fm ↗ » optionnel du formulaire).
     lastfm_url: (lf && lf.url) || null,
-    // Source(s) ayant réellement alimenté la fiche : 'musicbrainz+lastfm+discogs'.
-    source: [mb && 'musicbrainz', lf && 'lastfm', dg && 'discogs']
+    // Source(s) ayant réellement alimenté la fiche : 'lastfm+musicbrainz+discogs'.
+    source: [lf && 'lastfm', mb && 'musicbrainz', dg && 'discogs']
       .filter(Boolean)
       .join('+'),
   };
@@ -152,40 +161,61 @@ function sourceState(settled, ErrorClass) {
 // ------------------------------------------------------------
 
 /**
- * SCAN COMBINÉ des trois sources pour un code-barres (parallèle, repli mutuel) :
- *   - MusicBrainz (fiche de référence) + Discogs en parallèle d'abord :
- *     leur résultat « artiste + album » sert d'IDENTITÉ à la recherche Last.fm ;
- *   - Last.fm ensuite : album.search positionne la parution, album.getInfo
- *     apporte tracklist, tags/genres, label, date et jaquette d'album — les
- *     champs que MusicBrainz / Discogs ne fournissent PAS toujours (notamment
- *     les visuels et les tags). Coste total : 1 à 2 requêtes Last.fm.
+ * SCAN par code-barres — CASCADE avec PRIORITÉ LAST.FM :
+ *   1. IDENTITÉ « artiste + album » de la parution par MusicBrainz + Discogs
+ *      EN PARALLÈLE : ce sont les SEULES sources indexées par code-barres —
+ *      l'API Last.fm n'expose AUCUN index EAN (`album.search` exige un
+ *      paramètre `album` nominal : le code seul répond 400 « Invalid
+ *      parameters », vérifié en local).
+ *   2. PRIORITÉ 1 — LAST.FM : la porte d'entrée du scan est donc la fiche
+ *      d'ALBUM résolue depuis cette identité (album.search&artist=…&album=… →
+ *      album.getInfo : tracklist toptracks, tags/genres, label, date et
+ *      jaquette d'ALBUM image extralarge). C'est LA source prioritaire des
+ *      visuels et métadonnées : chaque champ de la fusion (mergeResults) est
+ *      pris À LAST.FM en premier, MusicBrainz / Discogs ne complétant que
+ *      ses champs vides (MBID, id release + URL Discogs, labels détaillés…).
+ *   3. En l'absence de résultat Last.fm (ou sur son échec) : MusicBrainz puis
+ *      Discogs FORNIRENT la fiche — repli propre, sans jamais mélanger les
+ *      pistes d'un autre album homonyme (fetchAlbumInfo re-valide le couple
+ *      artiste + titre strictement).
  * @param {string} code code-barres propre (8-14 chiffres).
  */
 async function combinedBarcodeLookup(code) {
   const lastfmActive = isLastfmConfigured();
   const discogsActive = isDiscogsConfigured();
 
-  // 1) Identité de la parution : MusicBrainz ET Discogs en parallèle.
+  // ------------------------------------------------------------------
+  // 1) IDENTITÉ : MusicBrainz + Discogs en parallèle (seules bases indexées
+  //    par code-barres — Last.fm n'a aucun index EAN). Leur « artiste +
+  //    album » est la porte d'entrée de la recherche Last.fm ci-dessous ; le
+  //    premier des deux à trouver sert l'identité à la cascade.
+  // ------------------------------------------------------------------
   const [mbSettled, dgSettled] = await Promise.allSettled([
     searchByBarcode(code),
     discogsActive ? searchDiscogsByBarcode(code) : Promise.resolve(null),
   ]);
   const mbData = mbSettled.status === 'fulfilled' ? mbSettled.value : null;
   const dgData = dgSettled.status === 'fulfilled' ? dgSettled.value : null;
-
-  // 2) Fiche Last.fm uniquement si l'identité « artiste + album » est connue
-  //    (aucune des deux sources n'a trouvé -> Last.fm ne peut pas deviner ; la
-  //    saisie manuelle artiste + titre reste disponible côté frontend).
   const identityArtist = (mbData && mbData.artist) || (dgData && dgData.artist) || '';
   const identityTitle = (mbData && mbData.title) || (dgData && dgData.title) || '';
+
+  // ------------------------------------------------------------------
+  // 2) PRIORITÉ 1 — LAST.FM : fiche d'ALBUM complète via la porte d'entrée
+  //    identifiée (searchAlbumByBarcode = album.search → album.getInfo,
+  //    validation stricte du couple artiste + titre). Sans identité connue,
+  //    Last.fm ne PEUT PAS deviner : elle n'est pas interrogée ('not-found'),
+  //    ce qui n'est pas une panne — MusicBrainz / Discogs fournissent alors la
+  //    fiche seule. Un échec d'infrastructure (429/502) devient 'unavailable'
+  //    et est signalé dans warnings ; les deux sources restent disponibles.
+  // ------------------------------------------------------------------
   let lfSettled = null;
   if (lastfmActive && identityArtist && identityTitle) {
     try {
-      const match = await searchAlbum(identityArtist, identityTitle);
-      // fetchAlbumInfo VALIDe strictement le titre + artiste (null sinon).
-      const data = match ? await fetchAlbumInfo(match.artist || identityArtist, match.name) : null;
-      lfSettled = { status: 'fulfilled', value: data };
+      lfSettled = { status: 'fulfilled', value: await searchAlbumByBarcode(identityArtist, identityTitle) };
     } catch (err) {
+      // Non bloquant : quota 429 / clé invalide / réseau — la fiche reste
+      // fournie par MusicBrainz / Discogs ci-dessous.
+      console.warn('[musicbrainz lookupBarcode] Recherche Last.fm impossible, repli :', err.message);
       lfSettled = { status: 'rejected', reason: err };
     }
   }
@@ -196,8 +226,10 @@ async function combinedBarcodeLookup(code) {
     lastfm: lfSettled && lfSettled.status === 'fulfilled' ? lfSettled.value : null,
     mbState: sourceState(mbSettled, MusicBrainzError),
     dgState: discogsActive ? sourceState(dgSettled, DiscogsError) : 'not-configured',
-    // Non configuré / identité inconnue (sources absentes) -> 'not-found' :
-    // Last.fm n'a simplement PAS ÉTÉ INTERROGÉE, ce qui n'est pas une panne.
+    // Non configuré -> 'not-configured' ; identité inconnue (ni MB ni Discogs
+    // n'a trouvé) -> lfSettled null = 'not-found' (Last.fm non INTERROGÉE, pas
+    // une panne) ; sinon l'état de la résolution Last.fm (source PRIORITAIRE
+    // de la cascade).
     lfState: !lastfmActive ? 'not-configured' : sourceState(lfSettled, LastfmError),
     mbError: mbSettled.status === 'rejected' ? mbSettled.reason : null,
     dgError: dgSettled.status === 'rejected' ? dgSettled.reason : null,
@@ -205,10 +237,11 @@ async function combinedBarcodeLookup(code) {
   };
 }
 
-/** Liste (separée par « , ») des sources configurées pour le message d'erreur. */
+/** Liste (dans l'ordre de la CASCADE) des sources configurées pour le message d'erreur. */
 function activeSourcesList() {
-  const names = ['MusicBrainz'];
+  const names = [];
   if (isLastfmConfigured()) names.push('Last.fm');
+  names.push('MusicBrainz');
   if (isDiscogsConfigured()) names.push('Discogs');
   return names.join(' ni ');
 }
@@ -216,11 +249,14 @@ function activeSourcesList() {
 /**
  * GET /api/musicbrainz/barcode/:code
  *
- * Recherche par code-barres (EAN/UPC, 8 à 14 chiffres) : MusicBrainz (fiche de
- * référence : titre, artiste, date, label, genre, tracklist + noms de
- * chansons, MBID, jaquette Cover Art Archive), Last.fm en complément (tracklist
- * toptracks, tags/genres, jaquette d'albume) ET Discogs en complément (date,
- * label, genre, miniature HD, id + URL de la fiche).
+ * Recherche par code-barres (EAN/UPC, 8 à 14 chiffres) — CASCADE PRIORITÉ
+ * LAST.FM : l'identité « artiste + album » est identifiée par MusicBrainz +
+ * Discogs en parallèle (les seules bases indexées par code-barres), puis la
+ * fiche d'ALBUM Last.fm est résolue depuis cette identité (album.search →
+ * album.getInfo : tracklist toptracks, tags/genres, label, date et jaquette
+ * d'ALBUM). mergeResults applique la priorité LAST.FM au champ par champ
+ * (jaquette d'album incluse) ; en l'absence de résultat Last.fm, MusicBrainz
+ * puis Discogs fournissent la fiche en secours.
  *
  * Les trois sources sont interrogées avec REPLI MUTUEL :
  * - source non configurée (pas de clé/jeton) : non interrogée, aucune erreur
@@ -256,7 +292,9 @@ async function lookupBarcode(req, res, next) {
         states.dgState === 'unavailable' ||
         states.lfState === 'unavailable';
       if (anyUnavailable) {
-        const primary = states.mbError || states.dgError || states.lfError;
+        // Erreur PRIORITAIRE = celle du premier maillon de la cascade en échec
+        // (Last.fm, interrogée EN TÊTE ici), puis les secours.
+        const primary = states.lfError || states.mbError || states.dgError;
         const status = primary && primary.status === 429 ? 429 : 502;
         return res.status(status).json({
           error:
@@ -304,16 +342,19 @@ async function lookupBarcode(req, res, next) {
 // ------------------------------------------------------------
 
 /**
- * Recherche la fiche d'un disque SAISI MANUELLEMENT (artiste + titre) sur les
- * trois sources avec REPLI MUTUEL :
- *   1. Last.fm : album.search + album.getInfo (tracklist toptracks, tags,
- *      label, date, jaquette) — PRIORITAIRE ici (la plus large couverture) ;
- *   2. MusicBrainz : Lucene `artist:"…" AND release:"…"` (release exacte si
- *      existante : MBID + tracklist fidèle au support + Cover Art Archive) ;
- *   3. Discogs : recherche release « Artiste Album » + fiche complète
- *      (id de la release + URL, image HD).
- * La réponse part dès qu'UNE source fournit la fiche (garantie d'intégrité
- * des données) ; les champs manquants d'une source sont comblés par les autres.
+ * Recherche la fiche d'un disque SAISI MANUELLEMENT (artiste + titre) —
+ * CASCADE PRIORITÉ LAST.FM :
+ *   1. Last.fm D'ABORD : album.search + album.getInfo (tracklist toptracks,
+ *      tags/genres, label, date et jaquette d'ALBUM) — source prioritaire
+ *      des visuels et métadonnées ;
+ *   2. MusicBrainz en SECOURS : Lucene `artist:"…" AND release:"…"` (release
+ *      exacte si existante : MBID + tracklist fidèle au support + Cover Art
+ *      Archive) ;
+ *   3. Discogs en SECOURS : recherche release « Artiste Album » + fiche
+ *      complète (id de la release + URL, image HD).
+ * Les trois sont lancés en parallèle ; la fusion (mergeResults, priorité
+ * Last.fm) part dès qu'UNE source fournit la fiche et comble les champs
+ * manquants d'une source par les autres.
  * @returns {Promise<{data: object|null,
  *   lastfm: 'found'|'not-found'|'not-configured'|'unavailable',
  *   musicbrainz: string, discogs: string, warnings: Error[]}>}
@@ -436,4 +477,12 @@ async function searchRelease(req, res, next) {
   }
 }
 
-module.exports = { status, lookupBarcode, searchRelease };
+module.exports = {
+  status,
+  lookupBarcode,
+  searchRelease,
+  // Exportés pour les tests / scripts locaux (test-lastfm-priority.js) :
+  combinedBarcodeLookup,
+  combinedReleaseSearch,
+  mergeResults,
+};

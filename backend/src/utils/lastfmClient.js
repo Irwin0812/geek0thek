@@ -294,7 +294,7 @@ function formatDuration(value) {
 }
 
 /**
- * Recherche un ALBUM sur Last.fm par artiste + titre :
+ * Recherche un ALBUM sur Last.fm par ARTISTE + TITRE :
  *   GET /2.0/?method=album.search&artist=<nom>&album=<titre>&api_key=<clé>&format=json
  * (signée `api_sig` si LASTFM_SHARED_SECRET). Privilégie la correspondance
  * EXACTE des deux noms normalisés ; à défaut, aucun résultat n'est retenu
@@ -316,9 +316,21 @@ async function searchAlbum(artistName, albumTitle) {
     limit: 20,
     format: 'json',
   });
-  const results = Array.isArray(data && data.results && data.results.album)
-    ? data.results.album
-    : [];
+  // La liste de résultats est « results.albummatches.album » (pluriel XML
+  // `albummatches` > élément singulier `album`, tableau ou objet unique).
+  // `results.album` seul n'existe PAS dans la réponse — une lecture directe
+  // donnait TOUJOURS [] donc « not-found » permanent malgré des milliers de
+  // résultats : c'est le bug que ce chemin réparé corrige. Le repli sur les
+  // deux variantes tolère les changements de nomenclature Last.fm.
+  const rawMatches = (data && data.results && data.results.albummatches) || null;
+  const rawAlbum = rawMatches
+    ? rawMatches.album
+    : data && data.results && data.results.album;
+  const results = Array.isArray(rawAlbum)
+    ? rawAlbum
+    : rawAlbum
+      ? [rawAlbum]
+      : [];
   if (results.length === 0) return null;
   // Correspondance EXACTE en priorité : le titre normalisé doit coïncider
   // (protection contre un album homonyme d'un autre artiste), et l'artiste
@@ -340,6 +352,38 @@ async function searchAlbum(artistName, albumTitle) {
     artist: nodeText(pick.artist) || artist,
     url: typeof pick.url === 'string' ? pick.url : null,
   };
+}
+
+/**
+ * Localise la fiche ALBUM de Last.fm pour un code-barres — PORTE D'ENTRÉE du
+ * scan disque (PRIORITÉ 1 côté visuels / métadonnées). L'API Last.fm n'expose
+ * pas d'index par EAN (`album.search` exige un PARAMÈTRE `album`, donc le code
+ * seul est un 400 « Invalid parameters ») : la localisation passe donc par
+ * l'IDENTITÉ « artiste + album » de la parution, fournie en parallèle par
+ * MusicBrainz / Discogs (indexés par code-barres), puis est résolue dans le
+ * catalog Last.fm via la recherche nommée :
+ *   GET /2.0/?method=album.search&artist=<nom>&album=<titre>&api_key=<clé>&format=json
+ * (signée `api_sig` si LASTFM_SHARED_SECRET). La fiche retenue est ensuite
+ * validée strictement par album.getInfo (couple artiste + titre normalisés)
+ * avant d'apporter tracklist / tags/genres / label / date / JACQUETTE D'ALBUM.
+ * À l'état « not-found » aucune identité n'est connue : Last.fm ne PEUT PAS
+ * deviner — null, et la cascade se rabat sur MusicBrainz puis Discogs.
+ * @param {string} artist artiste de la parution (identifié par code-barres).
+ * @param {string} album  titre de l'album de la parution.
+ * @returns {Promise<object|null>} fiche Last.fm normalisée (tracklist, genres,
+ *   label, release_date, cover_image d'ALBUM, url) ou null (repli MusicBrainz /
+ *   Discogs — non bloquant).
+ * @throws {LastfmError} 429/502… (indisponibilité de l'API — 404 impossible :
+ *   la recherche ne lève que « found » / null).
+ */
+async function searchAlbumByBarcode(artist, album) {
+  const name = String(album || '').trim();
+  if (!artist || !name || !isConfigured()) return null;
+  const match = await searchAlbum(artist, name);
+  // fetchAlbumInfo re-valide le couple « artiste + album » STRICTEMENT (null
+  // sinon) : jamais un album homonyme pré-rempli à tort — c'est cette
+  // validation qui protège la priorité Last.fm sur les visuels d'ALBUM.
+  return match ? await fetchAlbumInfo(match.artist || artist, match.name) : null;
 }
 
 /**
@@ -486,6 +530,7 @@ module.exports = {
   searchArtist,
   fetchArtistImage,
   searchAlbum,
+  searchAlbumByBarcode,
   fetchAlbumInfo,
   fetchTopAlbums,
 };

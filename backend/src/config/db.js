@@ -86,6 +86,16 @@ const MIGRATIONS = [
       'CREATE INDEX IF NOT EXISTS idx_vinyls_discogs_release ON vinyls(discogs_release_id) WHERE discogs_release_id IS NOT NULL;',
     ],
   },
+  // Fiche LAST.FM d'un disque : URL de la fiche album (provenance de la
+  // jaquette et des métadonnées, car Last.fm est PRIORITÉ 1 de la cascade) +
+  // lien « Fiche Last.fm ↗ » du formulaire. Mêmes colonnes TEXT que
+  // discogs_url : identifiants de PROVENANCE persistés avec le disque.
+  {
+    name: 'vinyls.lastfm',
+    statements: [
+      'ALTER TABLE vinyls ADD COLUMN IF NOT EXISTS lastfm_url TEXT;',
+    ],
+  },
   // Sélecteur granulaire de visibilité : partage des disques et des BD
   // indépendamment du drapeau global is_public. Défaut NOT NULL TRUE : les
   // collections déjà publiques restent intégralement visibles.
