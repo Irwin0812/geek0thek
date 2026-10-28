@@ -100,14 +100,17 @@ async function lookupIsbn(req, res, next) {
 /**
  * GET /api/isbn/search?q=<mots-clés>&maxResults=<n>
  * Recherche TEXTUELLE par mots-clés (titre / auteur / série) via Google Books
- * (`q=...` sur https://www.googleapis.com/books/v1/volumes). Sert la modale
- * d'ajout de BD quand l'ISBN / code-barres échoue : renvoie la LISTE des fiches
- * normalisées (mêmes champs que `GET /isbn/lookup/:isbn`, via toLookupPayload)
- * 200 + `data: []` si aucun résultat, pour que le frontend propose de choisir
- * la bonne BD dans une grille/sélection puis pré-remplisse le formulaire.
- * Les erreurs Google explicites (400/403/429… quota) sont propagées à travers
- * err.status au gestionnaire centralisé de server.js -> même statut + message
- * clair que le parcours ISBN (aucune fuite de clé API ni d'URL, cf. client).
+ * ET Open Library en combiné (cascade + fusion — cf. searchByQuery isbnClient).
+ * Sert la modale d'ajout de BD quand l'ISBN / code-barres échoue : renvoie la
+ * LISTE des fiches normalisées (mêmes champs que `GET /isbn/lookup/:isbn`, via
+ * toLookupPayload) — 200 + `data: []` si aucun résultat, pour que le frontend
+ * propose de choisir la bonne BD dans une grille/sélection puis pré-remplisse
+ * le formulaire. Chaque fiche porte sa `source` : 'google_books',
+ * 'open_library' (cascade quand Google n'a rien trouvé) ou
+ * 'google_books+open_library' (fusion des deux). Les erreurs Google explicites
+ * (400/403/429… quota) sont propagées à travers err.status au gestionnaire
+ * centralisé de server.js -> même statut + message clair que le parcours ISBN
+ * (aucune fuite de clé API ni d'URL, cf. client).
  */
 async function searchBooks(req, res, next) {
   try {
@@ -127,7 +130,11 @@ async function searchBooks(req, res, next) {
 
     const records = await searchByQuery(rawQ, maxResults);
     const data = records.map(toLookupPayload);
-    console.log(`[searchBooks] Résultat final : ${data.length} fiche(s) pour « ${rawQ} ». (Source Google Books.)`);
+    // Les fiches peuvent provenir de Google Books, d'Open Library (cascade) ou
+    // des deux à la fois (« google_books+open_library » — fusion enrichie) : on
+    // logge la répartition réelle plutôt que le fournisseur nominal.
+    const bySource = data.reduce((acc, it) => { acc[it.source || '?'] = (acc[it.source || '?'] || 0) + 1; return acc; }, {});
+    console.log(`[searchBooks] Résultat final : ${data.length} fiche(s) pour « ${rawQ} ». Répartition par source : ${JSON.stringify(bySource)}.`);
     return res.json({ success: true, data });
   } catch (err) {
     if (err && err.status) {
@@ -139,7 +146,7 @@ async function searchBooks(req, res, next) {
       return res.status(400).json({ error: err.message });
     }
     console.error('[searchBooks]', err);
-    return res.status(502).json({ error: 'Recherche par mots-clés indisponible (Google Books). Vérifiez la connexion internet du serveur.' });
+    return res.status(502).json({ error: 'Recherche par mots-clés indisponible (Google Books / Open Library). Vérifiez la connexion internet du serveur.' });
   }
 }
 

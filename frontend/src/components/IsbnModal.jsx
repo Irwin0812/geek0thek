@@ -172,7 +172,8 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
             <h2 className="text-lg font-extrabold text-white">Remplir via ISBN / Code-barres</h2>
             <p className="text-sm text-slate-400 mt-0.5">
               Saisissez l'ISBN de la bande dessinée, OU — si son code-barres échoue —
-              retrouvez-la par MOTS-CLÉS (titre, auteur, série) via Google Books.
+              retrouvez-la par MOTS-CLÉS (titre, auteur, série) via Google Books +
+              Open Library.
             </p>
           </div>
           <button onClick={close} className="btn-ghost !p-1.5" aria-label="Fermer">✕</button>
@@ -281,8 +282,13 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
                       <span className="block text-slate-400 truncate text-xs">
                         {[item.authors, item.publisher].filter(Boolean).join(' · ')}
                       </span>
-                      <span className="block text-slate-600 text-[11px] font-mono">
-                        {[item.release_date, item.isbn ? `ISBN ${item.isbn}` : ''].filter(Boolean).join(' · ') || '—'}
+                      <span className="block text-slate-600 text-[11px] font-mono flex items-center gap-2">
+                        <span>{[item.release_date, item.isbn ? `ISBN ${item.isbn}` : ''].filter(Boolean).join(' · ') || '—'}</span>
+                        {/* Provenance de la fiche : Google Books seul, Open
+                            Library (cascade) ou fusion des deux. */}
+                        <span className="text-[10px] px-1.5 py-0.5 rounded border border-night-600/70 text-slate-500">
+                          {SOURCE_LABELS[item.source] || 'Open Library'}
+                        </span>
                       </span>
                     </span>
                   </button>

@@ -449,6 +449,223 @@ async function fetchFromOpenLibrarySearch(cleanedIsbn) {
 }
 
 // ------------------------------------------------------------
+// Open Library API (recherche TEXTUELLE par mots-clés — /search.json?fields=…)
+// ------------------------------------------------------------
+
+/**
+ * Champs demandés à /search.json pour la recherche TEXTUELLE : chaque doc est
+ * un « work » (œuvre regroupant ses éditions) — le résultat est déjà propre
+ * côté Open Library, contrairement à l'index complet paginé par ÉDITION. La
+ * liste `fields` borne la taille du payload sans sacrifier aucune donnée utile
+ * au pré-remplissage (cf. toComicPrefillFromOpenLibraryDoc). Tolérante : un
+ * champ absent de `fields` est simplement manquant dans le doc renvoyé — le
+ * mapping traite chacun en optionnel (`subjects` absent sur beaucoup de
+ * notices BD -> heuristique du titre, cf. fetchFromOpenLibrary).
+ */
+const OL_SEARCH_FIELDS = [
+  'key',                // /works/OL…W — identifiant stable (diagnostic/dédupe)
+  'title',              // titre principal (« Série, tome N — Album »)
+  'subtitle',           // sous-titre (titre d'album) quand distinct du titre
+  'author_name',        // auteur(s) — array de libellés lisibles
+  'publisher',          // éditeur(s) — array de libellés (works)
+  'first_publish_year', // année minimale connue — proxy de « publishedDate »
+  'description',        // résumé -> synopsis
+  'cover_i',            // id jaquette -> covers.openlibrary.org/b/id/<id>-L.jpg
+  'isbn',               // ISBN du work (array) -> ISBN le plus plausible
+  'subjects',           // sujets -> série « series:Nom » + genres
+].join(',');
+
+/**
+ * Recherche TEXTUELLE Open Library via l'index /search.json — le miroir du
+ * parcours ISBN (fetchFromOpenLibrarySearch) appliqué à une requête LIBRE, et
+ * le COMPLÉMENT de Google Books dans l'onglet « Recherche par mots-clés » de
+ * la modale : cascade quand Google Books ne renvoie aucun résultat, fusion
+ * (dédoublonnement + complétion des vides) sinon — voir searchByQuery.
+ * Renvoie déjà les fiches normalisées (ComicPrefill), prêtes pour le
+ * contrôleur : même shape que toComicPrefillFromGoogle (sauf `source`).
+ *
+ * Cas particulier ISBN tapé en texte (« 978… ») : on envoie la requête brute
+ * telle quelle dans `q` — l'index Open Library matche aussi les ISBN des
+ * documents (« q=9782302015906 » -> le bon work, vérifié), à l'image de Google
+ * Books qui interprète lui-même la syntaxe « isbn:… » dans `q`. Aucun besoin
+ * du paramètre dédié `isbn=` : ce serait redondant et moins tolérant (il
+ * restreindrait par ÉDITION du work).
+ *
+ * NON BLOQUANT (important) : toute erreur HTTP/réseau est ABSORBÉE et tracée,
+ * la fonction renvoie null (pas d'exception) — Open Library est un COMPLEMENT,
+ * un échec ne doit jamais nuire à une requête Google Books déjà exploitable.
+ *
+ * @param {string} query requête libre (« Les Démons d'Alexia… »)
+ * @param {number} [limit] nombre MAX de docs demandés (défaut 10, borne 20 —
+ *   même plafond que Google Books côté contrôleur).
+ * @returns {Promise<object[]|null>} liste de fiches normalisées (éventuellement
+ *   VIDE si aucun document), ou null en cas d'échec Open Library (absorbé).
+ */
+async function searchOpenLibraryText(query, limit = 10) {
+  const q = String(query || '').trim();
+  if (!q) return [];
+  const n = Math.max(1, Math.min(Number(limit) || 10, 20));
+
+  const params = new URLSearchParams();
+  params.set('q', q);
+  params.set('limit', String(n));
+  params.set('fields', OL_SEARCH_FIELDS);
+  const url = `https://openlibrary.org/search.json?${params.toString()}`;
+
+  console.log(`[ISBN] Open Library (/search.json, textuel) : GET ${url} (User-Agent: "${USER_AGENT}")`);
+  let response;
+  try {
+    response = await fetchWithRetry(
+      url,
+      { headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(15000) },
+      { attempts: 2, delayMs: 1500 }
+    );
+  } catch (err) {
+    // Idem /api/books : err.cause porte la vraie cause réseau (DNS, refus, TLS…).
+    const cause = (err && err.cause && (err.cause.code || err.cause.message)) || 'cause inconnue';
+    console.warn(`[ISBN] Open Library (/search.json, textuel) — échec HTTP/réseau : ${err.message} (${cause})`);
+    return null; // absorbé : le COMPLEMENT ne bloque jamais la recherche
+  }
+
+  const data = await response.json().catch((parseErr) => {
+    console.warn(`[ISBN] Open Library (/search.json, textuel) — corps illisible (HTTP ${response.status}, ${parseErr.message})`);
+    return null;
+  });
+  if (!data || typeof data !== 'object') {
+    console.warn('[ISBN] Open Library (/search.json, textuel) — réponse non conforme, abandon propre.');
+    return [];
+  }
+
+  const docs = Array.isArray(data.docs) ? data.docs : [];
+  console.log(`[ISBN] Open Library (/search.json, textuel) — numFound=${data.numFound ?? '?'} → ${docs.length} doc(s) pour « ${q} »`);
+
+  // Chaque doc -> fiche ComicPrefill (null ignoré, ex. doc sans titre).
+  return docs.map((d) => toComicPrefillFromOpenLibraryDoc(d)).filter(Boolean);
+}
+
+/**
+ * Mapping d'UN DOCUMENT `/search.json` (work) vers une fiche `ComicPrefill`.
+ * MÊME shape que toComicPrefillFromGoogle / fetchFromOpenLibrary — le
+ * dédoublonnage de searchByQuery croise donc les fiches des deux fournisseurs
+ * sur leurs champs sans aucune transformation supplémentaire.
+ *
+ * Règles d'extraction (fidèles aux conventions du module, reprises du parcours
+ * ISBN + Google Books) :
+ *   - title = « Titre principal » ; le « Série — Album » est découpé via
+ *     splitTitleSeries (idempotent avec la logique Google cf. analyzeVolume).
+ *   - series = subject « series:Nom » OU découpage du titre (fallback titre).
+ *   - tome = extrayé du titre sous-titre/série (heuristique extractTomeNumber,
+ *     identique à fetchFromOpenLibrarySearch pour cohérence du flux ISBN).
+ *   - authors = 1er auteur ; illustrators = auteurs suivants (convention BD).
+ *   - publisher : OL retourne une liste string[] -> concaténation « , ».
+ *   - release_date = normalisation AAAA-MM-JJ stricte de first_publish_year.
+ *   - cover_image = jaquette via cover_i (`covers.openlibrary.org/b/id/<id>-L.jpg`,
+ *     idem fetchSeriesCoverFromOpenLibrary de seriesService.js). Sans cover_i ->
+ *     null (le contrôleur / la modale font eux-mêmes le repli local no_title).
+ *   - genre = normalizeGenre(subjects) puis repli DEFAULT_GENRE (comportement
+ *     aligné sur fetchFromGoogleBooks : genreIsDefault pilote la fusion).
+ *   - isbn : le plus plausible parmi ceux du work (œuvre multi-éditions)
+ *     — voir pickOlibraryIsbn ci-dessous.
+ */
+function toComicPrefillFromOpenLibraryDoc(doc) {
+  if (!doc || typeof doc !== 'object') return null;
+
+  const text = (v) => String(v ?? '').replace(/\s+/g, ' ').trim();
+
+  // ---- titre (+ sous-titre éventuel joint, cf. fetchFromOpenLibrary) ----
+  let title = text(doc.title);
+  if (doc.subtitle && text(doc.subtitle) && !title.toLowerCase().includes(text(doc.subtitle).toLowerCase())) {
+    title = title ? `${title} — ${text(doc.subtitle)}` : text(doc.subtitle);
+  }
+
+  // ---- série + tome (+ éventuel « consumed Tome » du découpage) ----------
+  let series = '';
+  let consumedTome = '';
+  const subjectNames = (Array.isArray(doc.subjects) ? doc.subjects : [doc.subjects])
+    .map((s) => String(s || '').trim())
+    .filter(Boolean);
+  for (const s of subjectNames) {
+    const m = s.match(/^series:\s*([A-Za-zÀ-ÿ].{1,80})$/);
+    if (m) { series = m[1].trim(); break; }
+  }
+  if (!series) {
+    // Fallback titre : « Série — Album » / « Série, Album » / « Série : Album »
+    // (splitTitleSeries renvoie null sans série plausible -> aucun changement).
+    const split = splitTitleSeries(title);
+    if (split) {
+      series = split.series;
+      consumedTome = split.tome || '';
+      const startsWithTome = /^(?:t\.?|tome|vol\.?|volume|n[°º]|é?pisode)[\s.]*\d/i.test(split.cleanTitle);
+      if (split.cleanTitle && !startsWithTome) title = split.cleanTitle;
+    }
+  }
+
+  // ---- n° tome : titre, sous-titre, série, puis subject « series: » --------
+  const seriesSubjectsTome = extractTomeNumber(
+    subjectNames.filter((n) => /^series:/i.test(n)).map((n) => n.replace(/^series:/i, ''))
+  );
+  const tome = extractTomeNumber(title, doc.subtitle, series) || consumedTome || seriesSubjectsTome;
+
+  // ---- auteurs / dessinateurs (1er = scénario, suivants = dessin) ---------
+  const authorList = (Array.isArray(doc.author_name) ? doc.author_name : [])
+    .map((a) => text(a)).filter(Boolean);
+  const authors = authorList.join(', ');
+  const illustrators = authorList.length > 1 ? authorList.slice(1).join(', ') : '';
+
+  // ---- éditeur(s) : array de labels -> chaîne « , » --------------------------
+  const publishers = (Array.isArray(doc.publisher) ? doc.publisher : [doc.publisher])
+    .map((p) => text(p)).filter(Boolean).join(', ');
+
+  // ---- couverture via cover_i (idem sérieService.fetchSeriesCoverFromOpenLibrary)
+  let coverImage = null;
+  if (Number(doc.cover_i)) {
+    coverImage = `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
+  }
+
+  // ---- ISBN le plus plausible parmi ceux du work --------------------------
+  const pickedIsbn = pickOlibraryIsbn(doc.isbn);
+
+  return {
+    isbn: pickedIsbn,
+    title: clip(title, 250),
+    series: clip(series, 250),
+    tome_number: clip(tome, 50),
+    authors: clip(authors, 250),
+    illustrators: clip(illustrators, 250),
+    publisher: clip(publishers, 250),
+    release_date: normalizeReleaseDate(doc.first_publish_year),
+    genre: normalizeGenre(subjectNames) || DEFAULT_GENRE,
+    synopsis: typeof doc.description === 'string' ? doc.description.replace(/\s+/g, ' ').trim() : '',
+    cover_image: coverImage,
+    source: 'open_library',
+  };
+}
+
+/**
+ * Sélectionne l'ISBN « le plus plausible » parmi la liste d'un work (work =
+ * œuvre multi-éditions). Hiérarchie :
+ *   1. ISBN-13 commençant par « 978 » (préfixe principal des éditions FR/BE
+ *      — pertinence maximale pour une médiathèque BD francophone) ;
+ *   2. sinon le premier ISBN-13 quel qu'il soit ;
+ *   3. sinon le premier ISBN-10 (un seul, au contrôle) ;
+ *   4. sinon la première valeur saine de la liste.
+ * Ne renvoie QUE des valeurs déjà validées (10/13 chiffres + X final possible)
+ * via isValidIsbn — un work dont aucun ISBN n'est exploitable renvoie ''.
+ */
+function pickOlibraryIsbn(list) {
+  if (!Array.isArray(list) || list.length === 0) return '';
+  const clean = list
+    .map((x) => String(x ?? '').replace(/[^0-9xX]/g, ''))
+    .filter((x) => isValidIsbn(x));
+  if (clean.length === 0) return '';
+  const isbn13Fr = clean.find((i) => i.length === 13 && i.startsWith('978'));
+  if (isbn13Fr) return isbn13Fr;
+  const anyIsbn13 = clean.find((i) => i.length === 13);
+  if (anyIsbn13) return anyIsbn13;
+  return clean[0];
+}
+
+// ------------------------------------------------------------
 // Normalisation des dates publiées
 // ------------------------------------------------------------
 
@@ -854,18 +1071,51 @@ async function searchByIsbn(isbnRaw) {
 }
 
 /**
- * Recherche TEXTUELLE multi-résultats : Google Books uniquement (l'index de
- * Open Library /search.json n'est pas normalisé en ComicPrefill et sa
- * pagination est limitée — Google Books reste LA source des métadonnées,
- * idem du lookup par ISBN). Sert à la modale « Remplir via ISBN » quand l'ISBN
- * / le code-barres échoue : l'utilisateur saisit titre / auteur / série.
+ * Recherche TEXTUELLE multi-résultats : Google Books + Open Library en
+ * CASCADE/FUSION (même philosophie que searchByIsbn, transposée à la LISTE
+ * de fiches). Sert à la modale « Remplir via ISBN » quand l'ISBN / le
+ * code-barres échoue : l'utilisateur saisit titre / auteur / série.
+ *
+ * Stratégie combinée (les deux API sont COMPLÉMENTAIRES, pas concurrentes) :
+ *   1) Les deux fournisseurs sont interrogés EN PARALLÈLE (cf. corps de la
+ *      fonction) : Google Books = source PRIORITAIRE (meilleur index BD de
+ *      référence, couvertures nettes, champs series via volumeInfo.series),
+ *      Open Library /search.json?fields=… = complément / recours — la cascade
+ *      ne coûte donc aucune latence additionnelle.
+ *   2) FUSION des deux listes (dédoublonnement par HOMONYMIE — ISBN commun,
+ *      série+tome+album, titre en préfixe — cf. prefillsHomonymy) :
+ *        - CASCADE : Google vide ou indisponible (503/429, panne réseau…) ET
+ *          Open Library sans aucun document -> la liste finale est fournie
+ *          PAR Open Library (et son échec absorbé renvoie [] plutôt qu'une
+ *          erreur : un 200 + data: [] reste préféable à un 503 quand rien n'a
+ *          été fusionné) ;
+ *        - FUSION : les deux rentournent des fiches -> une fiche OL homonyme
+ *          ENRICHIT la fiche Google (complétion des CHAMPS VIDES — synopsis,
+ *          série, dessinateurs, éditeur, genre réel… — via mergeComicPrefill,
+ *          qui conserve Google prioritaire pour chaque champ déjà rempli) et
+ *          l'ISBN y est propagé quand la fiche Google n'en avait pas.
+ *      L'ordre final est stable : les fiches Google restent D'ABORD (dans
+ *      l'ordre de pertinence Google), les fiches Open Library s'ajoutent
+ *      ensuite ; le tout est plafonné à `max` fiches.
+ *
+ * Robustesse : un échec Open Library ne fait JAMAIS échouer une recherche
+ * déjà exploitée par Google Books (warning + liste Google intacte). En cas
+ * d'échec CROISÉ VRAI — Google indisponible ET Open Library sans réponse
+ * exploitable (null : panne réseau / corps illisible) — on relance l'erreur
+ * EXPLICITE de Google Books : seule elle porte le code HTTP + le message
+ * user-facing sécurisé (503/429/403…) géré par le contrôleur. Quand Open
+ * Library a bien RÉPONDU mais n'a trouvé AUCUN document, la réponse finale
+ * est 200 + [] (la recherche a fonctionné, elle n'a tout simplement rien
+ * trouvé des deux côtés).
  *
  * @param {string} query mots-clés libres (« Les Démons d'Alexia … »)
- * @param {number} [max] nombre max de résultats (défaut 10, borne haute 20)
+ * @param {number} [max] nombre max de résultats AU TOTAL (défaut 10, borne haute 20)
  * @returns {Promise<ComicPrefill[]>} liste de fiches normalisées (mêmes champs
  *   que searchByIsbn : title, series, tome_number, authors, illustrators,
- *   publisher, release_date AAAA-MM-JJ strict, genre, synopsis, cover_image,
- *   source 'google_books'), éventuellement VIDE si aucun volume trouvé.
+ *   publisher, release_date AAAA-MM-JJ strict, genre, synopsis, cover_image)
+ *   avec `source` ∈ { 'google_books', 'open_library',
+ *   'google_books+open_library' } — éventuellement VIDE si aucun volume trouvé
+ *   des deux côtés (200 + [] côté contrôleur).
  * @throws {Error} requête vide / erreurs Google explicites (400/403/429/5xx)
  */
 async function searchByQuery(query, max = 10) {
@@ -873,18 +1123,286 @@ async function searchByQuery(query, max = 10) {
   if (!q) throw new Error('Requête de recherche vide : indiquez un titre, un auteur ou une série.');
   // Cas d'usage : l'utilisateur colle un « isbn:978… » dans le champ texte —
   // Google Books interprète lui-même cette syntaxe en `q` ; aucun traitement
-  // particulier n'est nécessaire (la clé de contrôle n'est pas vérifiée ici,
-  // l'utilisateur choisissant librement parmi les résultats).
+  // particulier n'est nécessaire (Open Library matche aussi l'ISBN brut,
+  // cf. docblock searchOpenLibraryText).
 
   const limit = Math.max(1, Math.min(Number(max) || 10, 20));
-  console.log(`[ISBN] searchByQuery : « ${q} » (maxResults=${limit}) via Google Books`);
+  console.log(`[ISBN] searchByQuery : « ${q} » (maxResults=${limit}) via Google Books + Open Library`);
 
-  // searchVolumesMany lève les erreurs Google explicites (cf. contrainte du
-  // client : cette recherche EST l'action de l'utilisateur) ; un résultat vide
-  // n'est PAS une erreur -> liste vide renvoyée au contrôleur (200 + []).
-  const parsedList = await googleBooks.searchVolumesMany(q, { maxResults: limit });
+  // ---- Étapes 1+2 : Google Books + Open Library, EN PARALLÈLE. -------------
+  // Les deux fournisseurs sont interrogés SIMULTANÉMENT (Promise.allSettled)
+  // — la cascade « OL quand Google n'a rien renvoyé » ne coûte alors AUCUNE
+  // latence additionnelle (en séquence il fallait attendre la réponse Google
+  // avant de pouvoir appeler Open Library ; le pire cas cumulait deux appels
+  // et leurs timeout de 15 s). Chacun est borné à `limit` dès le départ : la
+  // fusion plafonnera la liste finale à `limit` fiches, ordre Google d'abord.
+  //   - Google Books : source PRIORITAIRE (meilleur index BD francophone) ;
+  //     son échec explicite est CONSERVÉ pour être relancé en cas d'échec
+  //     croisé (message sécurisé + code HTTP gérés par le contrôleur).
+  //   - Open Library : complément / secours ; son échec est déjà absorbé en
+  //     null par searchOpenLibraryText (non-bloquant par contracte).
+  const [gbResult, olResult] = await Promise.allSettled([
+    googleBooks.searchVolumesMany(q, { maxResults: limit }),
+    searchOpenLibraryText(q, limit),
+  ]);
 
-  return parsedList.map((parsed) => toComicPrefillFromGoogle(parsed, ''));
+  let googleRecords = [];
+  let googleError = null;
+  if (gbResult.status === 'fulfilled') {
+    googleRecords = gbResult.value.map((parsed) => toComicPrefillFromGoogle(parsed, ''));
+  } else {
+    // CASCADE : on absorbe l'échec Google ici — si Open Library ne renvoie
+    // rien non plus, `googleError` est relancée en fin de fonction (message
+    // explicite : quota / clé refusée / service en panne).
+    googleError = gbResult.reason;
+    console.warn(`[ISBN] Échec Google Books pour ${q} :`, googleError.message);
+  }
+
+  let olRecords = [];
+  if (olResult.status === 'fulfilled' && Array.isArray(olResult.value)) {
+    olRecords = olResult.value.filter((r) => r.title); // sans titre -> inutile au formulaire
+  }
+
+  // ---- Étape 3 : FUSION + DÉDOUBLONNAGE par homonymie. ---------------------
+  // Distinction cruciale : `olResult` FULFILLED et VIDE (Open Library a bien
+  // répondu « aucun document ») ≠ REJECTED/null (panne réseau, corps illisible)
+  // — dans le premier cas la recherche EST réussie : 200 + data: [] est la
+  // bonne réponse; dans le second, si Google Books échoue à son tour, seule sa
+  // propre erreur explicite (message sécurisé + code HTTP) mérite d'être
+  // remontée au contrôleur.
+  const olAnswered = olResult.status === 'fulfilled';
+
+  const merged = mergeQueryResults(googleRecords, olRecords, limit);
+  console.log(
+    `[ISBN] searchByQuery : « ${q} » — GB=${googleRecords.length}, OL=${olRecords.length}${olAnswered ? '' : ' (indisponible)'} -> ${merged.length} fiche(s) fusionnée(s)`
+  );
+
+  // Échec CROISÉ VRAI : Google indisponible ET Open Library SANS RÉPONSE
+  // exploitée (null — réseau / corps illisible). On relance l'erreur EXPLICITE
+  // de Google (statut HTTP + message user-facing déjà sécurisé) — c'est elle
+  // que le contrôleur associe au code renvoyé au client ; une erreur OL brute
+  // (« fetch failed », « HTTP 503 »…) n'en donnerait aucun contexte utile.
+  // Quand Open Library a RÉPONDU (« aucun document » inclus) -> merged = []
+  // -> 200 + [] (la recherche a fonctionné, elle n'a rien trouvé des deux côtés).
+  if (merged.length === 0 && googleError && !olAnswered) {
+    throw googleError;
+  }
+
+  return merged;
+}
+
+/**
+ * Normalisation « compacte » pour l'homonymie : accents retirés (NFD), TOUS
+ * les caractères non-alphanumériques supprimés, minuscules — même esprit que
+ * `genreKey` du module (« Lanfeust de TROY » = « lanfeustdetroy »,
+ * « L'Ivoire » = « livoire »). Une comparaison sur chaîne compacte ignore
+ * ponctuation, guillemets et doubles espaces sans jamais tronquer.
+ */
+function normKeyPart(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/gi, '')
+    .toLowerCase();
+}
+
+/**
+ * ALBUM d'une fiche pour l'homonymie : le titre SANS son préfixe de série ni
+ * sa mention de tome. Google Books catalogue souvent un volume sous la forme
+ * « Série — Album » (voire « Série Tome N » seul) alors qu'Open Library renvoie
+ * « Série, tome 1 — Album » : retirer LE MÊME PRÉFIXE NORMALISÉ des deux côtés
+ * fait converger les formes (les albums restants sont comparés compactement).
+ * En l'absence de préfixe reconnaissable dans le titre, TOUT le titre est
+ * l'album.
+ */
+function albumOfPrefill(record) {
+  const titleCompact = normKeyPart(record?.title);
+  if (!titleCompact) return '';
+  const seriesCompact = normKeyPart(record?.series);
+  if (!seriesCompact || !titleCompact.startsWith(seriesCompact)) {
+    return titleCompact; // pas de préfixe série -> le titre entier est l'album
+  }
+  let rest = titleCompact.slice(seriesCompact.length);
+  // Mention de tome résiduelle (« …Tome 1 — Album » -> « tome1album… ») :
+  // retirée — elle est déjà portée par le champ tome_number (évalué séparément),
+  // ne pas la laisser biaiser la comparaison d'albums.
+  return rest.replace(/^tome\d{1,3}/, '').replace(/^t\d{1,3}([^\d]|$)/, '$1').trim();
+}
+
+/**
+ * Détermine si DEUX fiches décrivent le MÊME album (homonymie FORTE — un seul
+ * doublon : UNE ligne, enrichie) ou la même RÉGION série/tome (homonymie
+ * FAIBLE — volumes OU albums DISTINCTS d'une même série : la référence est
+ * enrichie par les champs vides de l'incidente ET la ligne reste visible dans
+ * la grille pour le choix utilisateur).
+ *
+ * HOMONYMIE FORTE (« strong ») — strict doublon :
+ *   1. ISBN commun (les deux renseignés et IDENTIQUES) -> même exemplaire ;
+ *      deux ISBN DIFFÉRENTS -> false (éditions/volumes distincts) ;
+ *   2. sinon : même SÉRIE connue des deux côtés ET même album normalisé
+ *      (albumOfPrefill — la forme « Série — Album » de Google converge avec la
+ *      forme « Série, tome N — Album » d'Open Library) ;
+ *   3. sans série reconnue des deux côtés : repli TITRE — un titre est le
+ *      PRÉFIXE de l'autre (>= 12 caractères), la suite ne débute PAS par un
+ *      chiffre ni une mention de tome (« …Tome 1 » ≠ « …Tome 10 ») et les tomes
+ *      sont compatibles.
+ * HOMONYMIE FAIBLE (« weak ») — même SÉRIE connue des deux côtés : tomes
+ * différents, ou albums distincts/inconnus (avec au moins un tome connu).
+ * @returns {'strong'|'weak'|false}
+ */
+function prefillsHomonymy(a, b) {
+  if (!a || !b) return false;
+
+  // ISBN commun ET identique -> MÊME exemplaire, point (homonymie FORTE). Un
+  // ISBN présent d'un seul côté ne constitue PAS une preuve de distinctitude
+  // non plus : on retombe sur la comparaison structurelle des metadata (c'est
+  // le cas 1 des tests : GB sans ISBN + OL avec ISBN de même album -> fusion +
+  // propagation d'ISBN par mergeWithIsbnPropagation).
+  const aIsbn = String(a.isbn || '').replace(/[^0-9xX]/g, '');
+  const bIsbn = String(b.isbn || '').replace(/[^0-9xX]/g, '');
+  if (aIsbn && bIsbn) {
+    return aIsbn === bIsbn ? 'strong' : false; // ISBN différents -> éditions/volumes distincts
+  }
+
+  // SÉRIE connue des deux côtés et ÉGALE : on compare le TOME puis l'ALBUM.
+  const as = normKeyPart(a.series);
+  const bs = normKeyPart(b.series);
+  if (as && bs) {
+    if (as !== bs) return false; // séries différentes -> albums distincts
+    const at = normKeyPart(a.tome_number);
+    const bt = normKeyPart(b.tome_number);
+    if (at && bt) {
+      if (at !== bt) return 'weak'; // même série, tomes DIFFÉRENTS -> les deux volumes restent visibles
+    }
+    const aa = albumOfPrefill(a);
+    const ba = albumOfPrefill(b);
+    if (aa && ba) return aa === ba ? 'strong' : (at || bt) ? 'weak' : 'strong';
+    return (at || bt) ? 'weak' : false; // un album inconnu : on ne fusionne que si série+tome connus
+  }
+
+  // Séries inconnues d'au moins un côté : repli TITRE — homonymie FORTE si un
+  // titre est le PRÉFIXE de l'autre (« Lanfeust de Troy Tome 1 » ⊂ « …Tome 1
+  // — L'Ivoire… ») avec un préféreau substantiel (>= 12 caractères), une suite
+  // qui ne débute PAS par un chiffre ni une mention de tome (« …Tome 1 » ≠
+  // « …Tome 10 ») et des tomes COMPATIBLES (égaux quand les deux connus). On
+  // ne monte jamais plus bas qu'à FAIBLE : les titres courts / homonymies
+  // partielles resteraient distinctes -> choix utilisateur dans la grille.
+  const ta = normKeyPart(a.title);
+  const tb = normKeyPart(b.title);
+  if (!ta || !tb) return false;
+  const at = normKeyPart(a.tome_number);
+  const bt = normKeyPart(b.tome_number);
+  if (at && bt && at !== bt) return false;
+  const shorter = ta.length <= tb.length ? ta : tb;
+  const longer = ta.length <= tb.length ? tb : ta;
+  if (shorter.length >= 12 && longer.startsWith(shorter)) {
+    const rest = longer.slice(shorter.length);
+    if (rest && !/^\d/.test(rest) && !/^tome/i.test(rest)) return 'strong';
+  }
+  return false;
+}
+
+/**
+ * Trouve la PREMIÈRE fiche de `list` en homonymie FORTE (index renvoyé) — à
+ * défaut, la PREMIÈRE en homonymie FAIBLE — sinon -1. L'ordre de la liste est
+ * conservé : la priorité Google est déjà portée par l'ordre d'insertion dans
+ * mergeQueryResults, pas par cette fonction.
+ */
+function findHomonymIndex(list, rec) {
+  let weakIdx = -1;
+  for (let i = 0; i < list.length; i += 1) {
+    const h = prefillsHomonymy(list[i], rec);
+    if (h === 'strong') return i;
+    if (h === 'weak' && weakIdx === -1) weakIdx = i;
+  }
+  return weakIdx; // -1 si aucune homonymie (même faible)
+}
+
+/**
+ * mergeComicPrefill + PROPAGATION D'ISBN : ce champ n'est PAS géré par
+ * mergeComicPrefill ; les fiches Google sans ISBN sont courantes (volumeInfo.
+ * isbn absente) et c'est précisément le gain d'Open Library dans ces cas — on
+ * reporte l'ISBN incident sur la cible UNIQUEMENT si celle-ci n'en avait pas.
+ * `source` est recomputé sur les sources RÉELLES des deux fiches : une fusion
+ * OL+OL (cascade, deux works Open Library) reste bien « open_library » —
+ * mergeComicPrefill posait systématiquement « google_books+open_library ».
+ */
+function mergeWithIsbnPropagation(primary, secondary) {
+  const merged = mergeComicPrefill(primary, secondary);
+  if (!String(merged.isbn || '').replace(/[^0-9xX]/g, '')) {
+    const recIsbn = String(secondary?.isbn || '').replace(/[^0-9xX]/g, '');
+    if (recIsbn) merged.isbn = recIsbn;
+  }
+  const srcA = String(primary?.source || '');
+  const srcB = String(secondary?.source || '');
+  const hasG = srcA.includes('google_books') || srcB.includes('google_books');
+  const hasO = srcA.includes('open_library') || srcB.includes('open_library');
+  merged.source =
+    hasG && hasO ? 'google_books+open_library' :
+    hasG ? 'google_books' :
+    'open_library'; // OL seul (cascade de deux works OL) — jamais fictif
+  return merged;
+}
+
+/**
+ * Clé de DÉDOUBLONNAGE d'une fiche : [série | tome | ALBUM], chaque partie
+ * compacte (cf. normKeyPart / albumOfPrefill) — « même clé = mêmes séries/tome/
+ * album ». L'ISBN est volontairement hors clé : l'identité réelle est calculée
+ * paire à paire par prefillsHomonymy dans mergeQueryResults. DeUX albums
+ * DIFFÉRENTS d'une même série restent différenciés par leur album -> clés
+ * distinctes -> lignes séparées dans la grille, l'utilisateur choisit.
+ */
+function dedupeKeyComicPrefill(record) {
+  if (!record || !String(record.title || '').trim()) return '';
+  return [
+    normKeyPart(record.series),
+    normKeyPart(record.tome_number),
+    albumOfPrefill(record),
+  ].join('|');
+}
+
+/**
+ * FUSIONNE deux listes de ComicPrefill (Google PRIORITAIRE, OL en COMPLEMENT)
+ * et plafonne à `limit` fiches. Ordre : d'abord les fiches Google (ordre de
+ * pertinence GB conservé), ensuite les fiches Open Library UNIQUEMENT — une
+ * fiche OL « doublonne » (même titre normalisé) enrichit la fiche déjà
+ * insérée au lieu d'en dupliquer une ligne : seuls les champs VIDES sont
+ * complétés (mergeComicPrefill, Google prioritaire champ par champ : un ISBN /
+ * éditeur / date fournis par Google ne sont JAMAIS écrasés par Open Library),
+ * et l'ISBN est PROPAGÉ depuis la fiche OL uniquement quand la fiche existante
+ * n'en a pas (`source` devient alors « google_books+open_library »).
+ *
+ * Indexation : `keyIndex` (Map clé -> INDEX dans `out`) mémorise l'emplacement
+ * de chaque fiche au moment de son insertion ; une homonyme OL est ensuite
+ * localisée par index direct (`out[idx]`) enrichie IN PLACE — l'index 0 est
+ * une position valide, d'où le test `=== undefined` (et non « falsy ») pour
+ * distinguer « absente » de « première fiche ».
+ */
+function mergeQueryResults(googleRecords, olRecords, limit) {
+  const out = [];
+
+  for (const rec of [...(googleRecords || []), ...(olRecords || [])]) {
+    if (!rec || !String(rec.title || '').trim()) continue; // sans titre -> inutile au formulaire
+
+    const idx = findHomonymIndex(out, rec);
+    if (idx === -1) {
+      if (out.length < limit) out.push(rec); // ligne UNIQUE, plafonnée à `limit`
+      continue;
+    }
+
+    // Enrichissement de la référence par les vides de l'incidente
+    // (mergeWithIsbnPropagation : Google prioritaire + propagation d'ISBN).
+    out[idx] = mergeWithIsbnPropagation(out[idx], rec);
+
+    // HOMONYMIE FAIBLE uniquement : la ligne incidente est CONSERVÉE à part —
+    // deux albums DISTINCTS d'une même série doivent rester visibles dans la
+    // grille (cas 3 des tests unitaires) ; la FORTE, elle, n'en duplique pas.
+    if (prefillsHomonymy(out[idx], rec) === 'weak' && out.length < limit) {
+      out.push(rec);
+    }
+  }
+
+  return out;
 }
 
 /**
@@ -975,6 +1493,11 @@ module.exports = {
   isLocalCoverPath,
   downloadCoverImage,
   searchByIsbn,
+  // Recherche texte combinée Google Books + Open Library (cascade/fusion) —
+  // helpers exposés pour le test unitaire de la stratégie de fusion.
+  mergeQueryResults,
+  dedupeKeyComicPrefill,
+  toComicPrefillFromOpenLibraryDoc,
   searchByQuery,
   mergeComicPrefill,
   genreIsDefault,
