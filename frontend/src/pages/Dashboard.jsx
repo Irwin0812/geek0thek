@@ -70,10 +70,12 @@ export default function Dashboard() {
   }, [vinyls, comics])
 
   return (
-    // BENTO COMPACTE : la ligne du haut est plafonnée à la hauteur des bannières
-    // rectangulaires de Disques / Bandes dessinées (h-40 / h-48, soit ~moitié de
-    // l'ancien format carré/large) ; la pile « À venir » s'étire proportionnelle-
-    // ment à cette hauteur, le reste du dashboard reste inchangé.
+    // BENTO COMPACTE (3 colonnes strictes) : 1re rangée = bannière DISQUES
+    // (md:col-span-2) + bannière BANDES DESSINÉES (1 col) ; la pile « À venir »
+    // (md:row-span-2, 3 tuiles empilées) occupe toute la hauteur de ces deux
+    // rangées dans la colonne de droite. Rangée du bas : les 4 cartes secondaires
+    // en grille md:grid-cols-12 × col-span-3 DIRECTEMENT sous les bannières →
+    // aucun espace vide (auto placement CSS Grid, spans explicites).
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 xl:space-y-6">
       {/* Modale de détail (clic sur carte) */}
       <ItemDetailModal type="vinyl" item={detailVinyl} onClose={() => setDetailVinyl(null)} onEdit={(v) => { setDetailVinyl(null); navigate(`/vinyles/${v.id}`) }} />
@@ -90,39 +92,42 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* ================= GRILLE BENTO COMPACTE (asymétrique) ================
-          LIGNE DU HAUT (grille md:grid-cols-5, hauteur plafonnée par les bannières) :
-          deux BANNIÈRES RECTANGULAIRES pèsent le double de la colonne de droite
-          (md:col-span-2 chacune), hauteur ≈ moitié du format carré/large initial
-          (h-40 → h-48) :
-            Colonne 1 (HAUT GAUCHE) → DISQUES, bannière compacte (bg_tuile_disques.jpg) ;
-            Colonne 2 (HAUT CENTRE) → BANDES DESSINÉES, bannière compacte (bg_tuile_bd.jpg) ;
-            Colonne 3 (HAUT DROITE) → pile VERTICALE de 3 tuiles « À venir » en
-                      GLASSMORPHISME SOMBRE (backdrop-blur-md sur leur photo,
-                      bordures subtiles white/10, cadenas + badge PROCHAINEMENT —
-                      tables non migrées) : Jeux Vidéo / Jeux de Rôle-Plateau /
-                      Livres-Magazines. Élastique (flex-1) : s'étire à la hauteur de
-                      la ligne, plafonnée par les bannières compactes → adaptation
-                      proportionnelle et fluide sans trou ni tuile orpheline.
-          LIGNE DU BAS (section pleine largeur) : une SEULE ligne regroupant côte à
-          côte les 4 CARTES SECONDAIRES (grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
-          — 1/2/4 colonnes selon le breakpoint) : Artistes / Groupes, Genres Musicaux,
-          Auteurs BD et Séries BD. FOND UNI THÉMATIQUE par domaine (AUCUNE photo de
-          fond) : marron/bordeaux à accents ambre, violet/prune, vert émeraude,
-          bleu nuit — bordure + accent assortis au thème (prop `theme`).
+      {/* ================= GRILLE BENTO COMPACTE (3 colonnes strictes) ============
+          Grille CSS stricte md:grid-cols-3 + SPANS EXPLICITES, sans aucun espace
+          vide : l'auto placement dépose chaque élément dans la 1re case libre →
+          aucun trou possible.
+
+          ZONE 1 (haut gauche)     — DISQUES : bannière compacte,
+                                     md:col-span-2 (bg_tuile_disques.jpg) ;
+          ZONE 2 (haut centre)     — BANDES DESSINÉES : bannière compacte,
+                                     md:col-span-1 (bg_tuile_bd.jpg) ;
+          ZONE 3 (colonne de droite) — pile VERTICALE md:row-span-2 contenant les
+                                     3 tuiles « À venir » empilées en GLASSMORPHISME
+                                     SOMBRE (backdrop-blur-md sur leur photo, bordures
+                                     subtiles white/10, cadenas + badge PROCHAINEMENT
+                                     — tables non migrées) : Jeux Vidéo / Jeux de
+                                     Rôle-Plateau / Livres-Magazines. Elle OCCUPE
+                                     TOUTE LA HAUTEUR des deux rangées du haut ; ses
+                                     3 tuiles élastiques (flex-1) remplissent la pile.
+          LIGNE DU BAS — les 4 CARTES SECONDAIRES se placent DIRECTEMENT sous les
+            bannières Disques / BD : grid md:grid-cols-12 → Artistes/Groupes (col-span-3),
+            Genres Musicaux (col-span-3), Auteurs BD (col-span-3), Séries BD (col-span-3)
+            — 4 × 3 = 12, aucune case libre, SANS zone vide à gauche de la colonne de
+            droite. Sont en FOND UNI THÉMATIQUE par domaine (AUCUNE photo de fond) :
+            marron/ambre, prune/violet, vert sombre, bleu nuit — bordure + accent
+            assortis au thème (prop `theme`).
           Les 2 bannières du haut restent en PHOTO DÉDIÉE VOILÉE par un overlay
           sombre (slate-950/night-950) → contraste & lisibilité garantis. Hauteurs :
-          `flex-1` sur chaque tuile + colonnes flex à hauteurs égales (grid items
-          stretch). Effets au survol (toutes tuiles) : hover:-translate-y-1 fluide,
-          HALO LUMINEUX coloré par domaine (blur-2xl déporté hors du cadre), shadow-xl
-          — transition-all 300 ms. Palette : AMBRE/Or chaud pour la musique, TEAL/
-          Émeraude pour la littérature, gris neutres (slate) pour les sections à
-          venir. Titres en CAPITALES ESPACÉES, chiffres gras audacieux
+          stretch sur la grille (items auto) ; le contenu inner porte les min-height.
+          Effets au survol (toutes tuiles) : hover:-translate-y-1 fluide, HALO LUMINEUX
+          coloré par domaine (blur-2xl déporté hors du cadre), shadow-xl —
+          transition-all 300 ms. Titres en CAPITALES ESPACÉES, chiffres gras audacieux
           (font-black 3xl→4xl). */}
-      {/* LIGNE DU HAUT — bannières compactes DISQUES (2/5) + BANDES DESSINÉES (2/5)
-          + pile « À venir » (1/5), tous à hauteurs égales (grid items stretch). */}
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-5">
-        {/* Colonne 1 — Haut Gauche : bannière compacte DISQUES (largeur double). */}
+
+      {/* ------- LIGNE DU HAUT : DISQUES (cols 1-2) + BD (col 3, rangée 1)
+           -------+ pile « À venir » (col 3, row-span-2 sur les deux rangées) ------- */}
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {/* ZONE 1 — Haut Gauche : bannière compacte DISQUES (2 colonnes sur 3). */}
         <PrimaryStatCard
           className="md:col-span-2"
           to="/collection"
@@ -135,9 +140,9 @@ export default function Dashboard() {
           chip="border-amber-500/40 text-amber-300"
           numberClass="text-white [text-shadow:0_2px_18px_rgba(245,158,11,0.45)]"
         />
-        {/* Colonne 2 — Haut Centre : bannière compacte BANDES DESSINÉES (largeur double). */}
+        {/* ZONE 2 — Haut Centre : bannière compacte BANDES DESSINÉES (1 colonne sur 3). */}
         <PrimaryStatCard
-          className="md:col-span-2"
+          className="md:col-span-1"
           to="/comics"
           icon={<BookOpen size={26} />}
           label={t('dashboard.stats.comics')}
@@ -148,25 +153,31 @@ export default function Dashboard() {
           chip="border-teal-500/40 text-teal-300"
           numberClass="text-white [text-shadow:0_2px_18px_rgba(45,212,191,0.45)]"
         />
-        {/* Colonne 3 — Haut Droite : pile VERTICALE de 3 tuiles « À venir »
-            (glassmorphism sombre). Bases de données non migrées : icône cadenas +
-            badge PROCHAINEMENT. Quand une collection ouvrira : retirer `locked`/le
-            badge et passer le vrai compteur — même composant, rien d'autre à
-            changer. */}
-        <div className="flex flex-col gap-4">
+        {/* Colonne de Droite (1 colonne sur 3, md:row-span-2 = toute la hauteur des
+            deux bannières du haut) : pile VERTICALE de 3 tuiles « À venir »
+            empilées (glassmorphism sombre). Bases de données non migrées : icône
+            cadenas + badge PROCHAINEMENT. Quand une collection ouvrira : retirer le
+            badge et passer le vrai compteur — même composant, rien d'autre à changer.
+            Chaque tuile est élastique (flex-1) → la pile remplit exactement
+            la hauteur de la rangée double sans déborder ni laisser de trou. */}
+        <div className="flex flex-col gap-4 md:row-span-2">
           <SoonCard icon={Gamepad2} label={t('dashboard.stats.videoGames')} bgImage="/img/bg_tuile_jv.jpg" />
           <SoonCard icon={Dices} label={t('dashboard.stats.boardGames')} bgImage="/img/bg_tuile_jdr.jpg" />
           <SoonCard icon={Library} label={t('dashboard.stats.books')} bgImage="/img/bg_tuile_livreszines.jpg" />
         </div>
       </section>
 
-      {/* LIGNE DU BAS — une SEULE ligne pleine largeur regroupant côte à côte les
-          4 CARTES SECONDAIRES (1 → sm:2 → lg:4 colonnes), en FOND UNI THÉMATIQUE
-          (plus aucune photo de fond) : bordure + accent du thème appliqué aux
-          chip icône, halo et flèche (objets `theme` ci-dessous). */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* LIGNE DU BAS — les 4 CARTES SECONDAIRES se placent DIRECTEMENT sous les
+          bannières Disques / BD (même conteneur, auto placement immédiatement
+          après la rangée double) et en dessous de la colonne de droite : grille
+          md:grid-cols-12 avec chaque carte en md:col-span-3 → 4 × 3 = 12, zéro
+          case libre, SANS zone vide à gauche de la colonne de droite. FOND UNI
+          THÉMATIQUE (plus aucune photo de fond) : bordure + accent du thème
+          appliqué aux chip icône, halo et flèche (objets `theme` ci-dessous). */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-12">
         {/* Artistes / Groupes — marron/bordeaux chaud, bordure + accents ambre. */}
         <SecondaryStatCard
+          className="md:col-span-3"
           to="/collection"
           icon={<Users size={16} />}
           label={t('dashboard.stats.artists')}
@@ -180,6 +191,7 @@ export default function Dashboard() {
         />
         {/* Genres Musicaux — violet/prune sombre, bordure assortie. */}
         <SecondaryStatCard
+          className="md:col-span-3"
           to="/collection"
           icon={<Tags size={16} />}
           label={t('dashboard.stats.musicalGenres')}
@@ -193,6 +205,7 @@ export default function Dashboard() {
         />
         {/* Auteurs BD — vert sombre élégant, bordure + accents vert émeraude. */}
         <SecondaryStatCard
+          className="md:col-span-3"
           to="/comics"
           icon={<PenLine size={16} />}
           label={t('dashboard.stats.comicAuthors')}
@@ -206,6 +219,7 @@ export default function Dashboard() {
         />
         {/* Séries BD — bleu nuit sombre, bordure + accents bleus. */}
         <SecondaryStatCard
+          className="md:col-span-3"
           to="/comics"
           icon={<Layers size={16} />}
           label={t('dashboard.stats.comicSeries')}
@@ -297,12 +311,13 @@ export default function Dashboard() {
 }
 
 /**
- * BENTO — CARTE PRINCIPALE (BANNIÈRE RECTANGULAIRE compacte, `md:col-span-2` sur
- * la grille 5 cols de la ligne du haut) : Disques / Bandes dessinées. Le wrapper
- * OUTER en h-full + height plafonnée (h-40 → h-48) fait BANNIÈRE : hauteur ≈ moitié
- * de l'ancien format carré/large ; la pile « À venir » droite (flex-1) s'étire à
- * cette hauteur → toute la ligne s'adapte proportionnellement. Photo dédiée plein
- * cadre + overlay sombre en dégradé, icône contextuelle lucide dans un chip
+ * BENTO — CARTE PRINCIPALE (BANNIÈRE RECTANGULAIRE compacte) : Disques
+ * (`md:col-span-2`) / Bandes dessinées (`md:col-span-1`) sur la grille stricte à
+ * 3 colonnes de la ligne du haut. Le wrapper OUTER en h-full s'étire à la hauteur
+ * de la rangée (déterminée par le contenu inner min-h) ; la pile « À venir »
+ * droite (row-span-2 + flex-1) occupe toute la hauteur des deux bannières → toute
+ * la grille s'adapte proportionnellement. Photo dédiée plein cadre + overlay sombre
+ * en dégradé, icône contextuelle lucide dans un chip
  * glassmorphism, stat (label CAPITALES ESPACÉES + chiffre font-black 3xl→4xl)
  * ancrée à gauche, ACTIONS RAPIDES (« Ajouter », « Tout voir ») ancrées à droite —
  * contenu aligné verticalement sur UNE ligne pour le gabarit bannière.
@@ -315,11 +330,14 @@ export default function Dashboard() {
 function PrimaryStatCard({ to, icon, label, value, bgImage, glow, frame, chip, numberClass, className = '' }) {
   const { t } = useTranslation()
   return (
-    <div className={`group relative h-full max-h-48 rounded-2xl transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50 md:h-40 sm:max-h-none ${className}`}>
+    <div className={`group relative h-full rounded-2xl transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50 ${className}`}>
       {/* Halo lumineux : première couche peinte → derrière la carte ; déborde
           de 12 px (-inset-3), flou blur-2xl, couleur du domaine `glow`. */}
       <span aria-hidden="true" className={`pointer-events-none absolute -inset-3 rounded-[26px] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-75 ${glow}`} />
-      <div className={`relative flex h-full min-h-[140px] items-center overflow-hidden rounded-2xl border bg-night-950/50 px-5 sm:min-h-[160px] sm:px-6 transition-colors duration-300 ${frame}`}>
+      {/* HAUTEUR DE LA BANNIÈRE : min-h plafonne chaque bannière (140 → 160 px) ;
+          le contenu en UNE ligne (stat à gauche, actions à droite) reste compact
+          sans écraser la pile de droite ni laisser d'espace vide dans la grille. */}
+      <div className={`relative flex h-full min-h-[140px] flex-wrap items-center gap-y-2 overflow-hidden rounded-2xl border bg-night-950/50 px-5 sm:min-h-[160px] sm:px-6 transition-colors duration-300 ${frame}`}>
         {/* PHOTO DE FOND dédiée à la tuile (servie statiquement par public/img)
             + VEILLE SOMBRE : gradient slate-950/95 → night-950/40, plus dense
             en bas où vivent le label et les actions ; fade léger au survol
@@ -329,7 +347,10 @@ function PrimaryStatCard({ to, icon, label, value, bgImage, glow, frame, chip, n
 
         {/* Gauche : icône (chip verre) + stat, alignées en UNE ligne (bannière). */}
         <div className="relative flex min-w-0 shrink-0 items-center gap-3 sm:gap-4">
-          <span className={`hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl border bg-night-950/60 shadow-lg shadow-black/40 backdrop-blur-md sm:flex ${chip}`}>
+          {/* Chip icône uniquement en large (xl) : la colonne BD ne fait qu'une
+              place sur trois → tout ce qui est superflu est masqué pour que la
+              bannière compacte ne transborde jamais. */}
+          <span className={`hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl border bg-night-950/60 shadow-lg shadow-black/40 backdrop-blur-md xl:flex ${chip}`}>
             {icon}
           </span>
           {/* Statistique : label CAPITALES ESPACÉES + CHIFFRE gras, ancrés à gauche ;
@@ -370,11 +391,12 @@ function PrimaryStatCard({ to, icon, label, value, bgImage, glow, frame, chip, n
  * Bordure du thème qui s'éclaire au survol, flèche ArrowRight du thème qui
  * glisse en fin de ligne. La carte ENTIERE est un lien direct vers la collection
  * concernée (accessible au clavier, focus visible) — « Accès direct sur chaque
- * carte active » du spec.
+ * carte active » du spec. Prop `className` : span de grille porté par le wrapper
+ * (md:col-span-3 sur la rangée du bas).
  */
-function SecondaryStatCard({ to, icon, label, value, theme = { card: '', glow: '', chip: '', arrow: 'text-slate-300' } }) {
+function SecondaryStatCard({ to, icon, label, value, theme = { card: '', glow: '', chip: '', arrow: 'text-slate-300' }, className = '' }) {
   return (
-    <div className="group relative rounded-2xl transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50">
+    <div className={`group relative h-full rounded-2xl transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50 ${className}`}>
       {/* Halo lumineux du thème (blur-2xl déporté hors du cadre). */}
       <span aria-hidden="true" className={`pointer-events-none absolute -inset-2.5 rounded-[20px] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-60 ${theme.glow}`} />
       <Link
@@ -409,12 +431,13 @@ function SecondaryStatCard({ to, icon, label, value, theme = { card: '', glow: '
 function SoonCard({ icon: Icon, label, bgImage }) {
   const { t } = useTranslation()
   return (
-    <div className="group relative flex-1 rounded-2xl transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50">
+    <div className="group relative flex-1 min-h-[44px] rounded-2xl transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50">
       {/* Halo neutre discret (slate) — le « glow » des sections à venir. */}
       <span aria-hidden="true" className="pointer-events-none absolute -inset-2.5 rounded-[20px] bg-slate-500/25 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-60" />
-      {/* Pas de min-h interne : la tuile est 100 % élastique (flex-1) et suit la
-          hauteur plafonnée de la ligne par les bannières compactes du haut. */}
-      <div className="relative flex h-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-white/10 bg-night-950/40 px-4 py-3 text-center backdrop-blur-md transition-colors duration-300 group-hover:border-slate-400/30">
+      {/* Tuile élastique (flex-1) : la pile (row-span-2) remplit exactement la
+          hauteur des DEUX bannières du haut, sans déborder ni laisser de trou ;
+          paddings compacts pour que les 3 tuiles tiennent dans cette hauteur. */}
+      <div className="relative flex h-full flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl border border-white/10 bg-night-950/40 px-3 py-2 text-center backdrop-blur-md transition-colors duration-300 group-hover:border-slate-400/30">
         {/* Photo dédiée derrière le VERRE (backdrop-blur-md la dépolit → bokeh). */}
         <img src={bgImage} alt="" aria-hidden="true" loading="lazy" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-70" />
         <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-slate-950/40" />
