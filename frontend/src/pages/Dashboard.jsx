@@ -112,7 +112,7 @@ export default function Dashboard() {
           Livres-Magazines. Chaque tuile est flex-1, elles remplissent la colonne entière.
 
           SECTION BASSE : les 4 CARTES SECONDAIRES (grid grid-cols-1 sm:grid-cols-2
-          lg:grid-cols-4 + gap-6) en VERRE DÉPOLI TRANSLUCIDE (glassmorphism, BACKDROP-BLUR-MD) sans photo de fond — bordure et
+          lg:grid-cols-4 + gap-6) en VERRE DÉPOLI TRANSLUCIDE (glassmorphism, BACKDROP-BLUR-LG) sans photo de fond — bordure et
           accents assortis au domaine (marron/ambre, prune/violet, vert sombre, bleu nuit). */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* COLONNE GAUCHE — les 2 colonnes sur 3 (lg:col-span-2) : pile VERTICALE des
@@ -160,8 +160,8 @@ export default function Dashboard() {
       </div>
 
       {/* SECTION BASSE — les 4 CARTES SECONDAIRES alignées horizontalement (1 → sm:2 →
-          lg:4 colonnes), en VERRE DÉPOLI TRANSLUCIDE (glassmorphism, backdrop-blur-md)
-          sans photo de fond : fond teinté à ~60 % d'opacité + bordure fine colorée et
+          lg:4 colonnes), en VERRE DÉPOLI TRANSLUCIDE (glassmorphism, backdrop-blur-lg)
+          sans photo de fond : fond teinté à ~20 % d'opacité + bordure fine colorée et
           accents du domaine appliqués aux chip icône, halo et flèche (objets `theme`). */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {/* Artistes / Groupes — verre dépoli teinté marron chaud + accents ambre. */}
@@ -171,7 +171,7 @@ export default function Dashboard() {
           label={t('dashboard.stats.artists')}
           value={stats.artists}
           theme={{
-            card: 'bg-[#2a1a15]/60 border-amber-500/20 hover:border-amber-400/40',
+            card: 'bg-[#2a1a15]/20 border-amber-500/30 hover:border-amber-400/60',
             glow: 'bg-amber-500/30',
             chip: 'border-amber-500/40 text-amber-300',
             arrow: 'text-amber-300',
@@ -184,7 +184,7 @@ export default function Dashboard() {
           label={t('dashboard.stats.musicalGenres')}
           value={stats.genres}
           theme={{
-            card: 'bg-[#221528]/60 border-purple-500/20 hover:border-purple-400/40',
+            card: 'bg-[#221528]/20 border-purple-500/30 hover:border-purple-400/60',
             glow: 'bg-purple-500/30',
             chip: 'border-purple-500/40 text-purple-300',
             arrow: 'text-purple-300',
@@ -197,7 +197,7 @@ export default function Dashboard() {
           label={t('dashboard.stats.comicAuthors')}
           value={stats.comics.authors}
           theme={{
-            card: 'bg-[#11221c]/60 border-emerald-500/20 hover:border-emerald-400/40',
+            card: 'bg-[#11221c]/20 border-emerald-500/30 hover:border-emerald-400/60',
             glow: 'bg-emerald-500/30',
             chip: 'border-emerald-500/40 text-emerald-300',
             arrow: 'text-emerald-300',
@@ -210,7 +210,7 @@ export default function Dashboard() {
           label={t('dashboard.stats.comicSeries')}
           value={stats.comics.series}
           theme={{
-            card: 'bg-[#121929]/60 border-blue-500/20 hover:border-blue-400/40',
+            card: 'bg-[#121929]/20 border-blue-500/30 hover:border-blue-400/60',
             glow: 'bg-blue-500/30',
             chip: 'border-blue-500/40 text-blue-300',
             arrow: 'text-blue-300',
@@ -365,14 +365,14 @@ function PrimaryStatCard({ to, icon, label, value, bgImage, glow, frame, chip, n
 /**
  * BENTO — CARTE SECONDAIRE (Artistes / Groupes, Genres, Auteurs BD, Séries) :
  * AUCUNE photo de fond → STYLE VERRE DÉPOLI TRANSLUCIDE (glassmorphism) : fond
- * teinté du domaine à ~60 % d'opacité (hex + /60 dans `theme.card`) + BACKDROP-BLUR-MD
+ * teinté du domaine à ~20 % d'opacité (hex + /20 dans `theme.card`) + BACKDROP-BLUR-LG
  * qui dépolit l'arrière-plan de la page, comme les tuiles grises « À venir ».
  * Identité visuelle conservée par thème { card, glow, chip, arrow } :
  *   - marron/bordeaux chaud + accents AMBRE  → Artistes / Groupes,
  *   - violet/prune sombre + bordure assortie → Genres Musicaux,
  *   - vert sombre élégant + accents Émeraude → Auteurs BD,
  *   - bleu nuit sombre + accents bleus       → Séries BD.
- * Bordure FINE et translucente du thème (border-*-500/20) qui s'éclaire au survol,
+ * Bordure FINE et translucente du thème (border-*-500/30) qui s'éclaire au survol,
  * flèche ArrowRight du thème qui glisse en fin de ligne. La carte ENTIERE est un lien
  * direct vers la collection concernée (accessible au clavier, focus visible) — « Accès
  * direct sur chaque carte active » du spec. Contenu p-6, flèche masquée sur mobile
@@ -386,7 +386,7 @@ function SecondaryStatCard({ to, icon, label, value, theme = { card: '', glow: '
       <Link
         to={to}
         aria-label={`${label} — ${value}`}
-        className={`relative flex h-full min-h-[120px] items-center gap-4 overflow-hidden rounded-2xl border p-6 backdrop-blur-md transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/60 ${theme.card}`}
+        className={`relative flex h-full min-h-[120px] items-center gap-4 overflow-hidden rounded-2xl border p-6 backdrop-blur-lg transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/60 ${theme.card}`}
       >
         <span className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border bg-[#0b0f18]/40 shadow-lg shadow-black/30 backdrop-blur-sm ${theme.chip}`}>
           {icon}
