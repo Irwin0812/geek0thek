@@ -44,9 +44,9 @@
     "stats": {
       "vinyls": "Platten",
       "artists": "Künstler / Gruppen",
-      "genres": "Genres",
+      "musicalGenres": "Musik-Genres",
+      "comicSeries": "Comicserien",
       "comics": "Comics",
-      "series": "Serien",
       "comicAuthors": "Comic-Autoren",
       "videoGames": "Videospiele",
       "boardGames": "Rollen- / Brettspiele",

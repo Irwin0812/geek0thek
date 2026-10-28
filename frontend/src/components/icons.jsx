@@ -159,3 +159,12 @@ export const SearchIcon = (p) =>
       <path d="m20.5 20.5-4.5-4.5" />
     </>
   ))
+
+/** Cadenas (tuiles « PROCHAINEMENT » du tableau de bord). */
+export const LockIcon = (p) =>
+  base(p.size || 16, p.className, (
+    <>
+      <rect x="4.5" y="10.5" width="15" height="9.5" rx="2" />
+      <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+    </>
+  ))

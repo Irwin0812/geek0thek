@@ -8,6 +8,7 @@ import ComicCard from '../components/ComicCard.jsx'
 import ItemDetailModal from '../components/ItemDetailModal.jsx'
 import { useDisplay } from '../services/display.jsx'
 import { addedDateValue } from '../components/cards.js'
+import { LockIcon } from '../components/icons.jsx'
 import { useDismiss } from '../components/hooks.js'
 
 export default function Dashboard() {
@@ -89,42 +90,47 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* Statistiques — GRILLE DU DASHBOARD en 3 COLONNES × 3 TUILES (spec) :
-          Colonne 1 (gauche)  : DISQUES / ARTISTES-GROUPES / GENRES
-          Colonne 2 (milieu)  : BANDES DESSINÉES / AUTEURS BD / SÉRIES
-          Colonne 3 (droite)  : JEUX VIDÉO / JEUX DE RÔLE-PLATEAU / LIVRES-MAGAZINES
-                                — bases de données NON MIGRÉES : valeur textuelle
-                                « À venir » en GRIS CLAIR, à remplacer par les
-                                vrais compteurs dès l'ouverture des collections.
-          Les 9 tuiles partagent le MÊME composant StatCard : même format et
-          même style (centrage H+V), et la même hauteur stricte (flex-1).
-          Mobile : grille mono-colonne, les tuiles s'empilent dans l'ordre
-          CSS ci-dessous (colonne 1, puis colonne 2, puis colonne 3). */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Colonne 1 (gauche) — disques : 3 tuiles empilées verticalement.
-            h-full sur la colonne + flex-1 sur chaque StatCard = hauteurs
-            STRICTEMENT identiques des 9 tuiles, quel que soit le contenu. */}
-        <div className="flex h-full flex-col gap-4">
-          <StatCard label={t('dashboard.stats.vinyls')} value={stats.total} accent />
-          <StatCard label={t('dashboard.stats.artists')} value={stats.artists} />
-          <StatCard label={t('dashboard.stats.genres')} value={stats.genres} />
-        </div>
-        {/* Colonne 2 (milieu) — bandes dessinées : 3 tuiles empilées verticalement. */}
-        <div className="flex h-full flex-col gap-4">
-          <StatCard label={t('dashboard.stats.comics')} value={stats.comics.total} accent />
-          <StatCard label={t('dashboard.stats.comicAuthors')} value={stats.comics.authors} />
-          <StatCard label={t('dashboard.stats.series')} value={stats.comics.series} />
+      {/* Statistiques — GRILLE BENTO ASYMMÉTRIQUE 3 COLONNES (spec) :
+          Colonne 1 (gauche, DOUBLE LARGEUR md:col-span-2) : DISQUES et BANDES
+            DESSINÉES (cartes principales) + leurs compteurs secondaires
+            équilibrés (Artistes / Groupes, Auteurs BD, Genres Musicaux,
+            Séries BD). Chaque tuile porte sa PHOTO DÉDIÉE (img/bg_tuile_*.jpg,
+            servie par frontend/public/img/) assombrie par UN VEILLE NOIR
+            (overlay) garantissant la LISIBILITÉ du texte.
+          Colonne 3 (droite) : 3 tuiles « À venir » EMPILÉES — JEUX VIDÉO /
+            JEUX DE RÔLE-PLATEAU / LIVRES-MAGAZINES — bases de données NON
+            MIGRÉES : icône cadenas + badge « PROCHAINEMENT » sur style
+            GLASSMORPHISME SOMBRE (backdrop-blur-md + bordures subtiles), à
+            remplacer par les vrais compteurs dès l'ouverture des collections.
+          EFFETS AU SURVOL (toutes tuiles) : translation fluide hover:-translate-y-1,
+          halo lumineux coloré par domaine (halo blur-2xl derrière la carte,
+          prop `glow` du StatCard) et ombre prononcée (shadow-xl hover:shadow-black/50)
+          — transition-all 300ms pour un mouvement doux.
+          Toutes les tuiles partagent le MÊME composant StatCard ; `flex-1` sur
+          chaque tuile + grid-auto-rows minmax sur le conteneur = hauteurs
+          STRICTEMENT égales au sein de chaque colonne. Mobile : grille
+          mono-colonne, les tuiles s'empilent dans l'ordre CSS. */}
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-3 md:[grid-auto-rows:minmax(0,1fr)]">
+        {/* Colonne 1 (gauche) — disques + bandes dessinées : largeur double,
+            les 6 tuiles empilées verticalement à hauteurs égales. */}
+        <div className="flex h-full flex-col gap-4 md:col-span-2">
+          <StatCard label={t('dashboard.stats.vinyls')} value={stats.total} accent bgImage="/img/bg_tuile_disques.jpg" glow="bg-gold-500/40" />
+          <StatCard label={t('dashboard.stats.artists')} value={stats.artists} bgImage="/img/bg_tuile_disques.jpg" glow="bg-gold-500/40" />
+          <StatCard label={t('dashboard.stats.musicalGenres')} value={stats.genres} bgImage="/img/bg_tuile_disques.jpg" glow="bg-gold-500/40" />
+          <StatCard label={t('dashboard.stats.comics')} value={stats.comics.total} accent bgImage="/img/bg_tuile_bd.jpg" glow="bg-violet-500/35" />
+          <StatCard label={t('dashboard.stats.comicAuthors')} value={stats.comics.authors} bgImage="/img/bg_tuile_bd.jpg" glow="bg-violet-500/35" />
+          <StatCard label={t('dashboard.stats.comicSeries')} value={stats.comics.series} bgImage="/img/bg_tuile_bd.jpg" glow="bg-violet-500/35" />
         </div>
         {/* Colonne 3 (droite) — futures bibliothèques (MEDIA_SOURCES backend,
-            tables non migrées) : MÊMES StatCard que les colonnes 1 et 2, avec
-            une valeur textuelle « À venir » en GRIS CLAIR (prop `muted`) à la
-            place du compteur numérique.
-            Quand chaque collection ouvrira : passer le vrai number dans
-            `value` et retirer `muted` — rien d'autre à changer. */}
+            tables non migrées) : 3 tuiles « À venir » empilées en
+            GLASSMORPHISME SOMBRE (aucune photo derrière le verre : le voile
+            se bokeh sur les halos du fond global de la page). Quand chaque
+            collection ouvrira : retirer `locked` et passer le vrai number dans
+            `value` — rien d'autre à changer. */}
         <div className="flex h-full flex-col gap-4">
-          <StatCard label={t('dashboard.stats.videoGames')} value={t('dashboard.addMedia.soon')} muted />
-          <StatCard label={t('dashboard.stats.boardGames')} value={t('dashboard.addMedia.soon')} muted />
-          <StatCard label={t('dashboard.stats.books')} value={t('dashboard.addMedia.soon')} muted />
+          <StatCard label={t('dashboard.stats.videoGames')} locked bgImage="/img/bg_tuile_jv.jpg" glow="bg-cyan-500/30" />
+          <StatCard label={t('dashboard.stats.boardGames')} locked bgImage="/img/bg_tuile_jdr.jpg" glow="bg-emerald-500/30" />
+          <StatCard label={t('dashboard.stats.books')} locked bgImage="/img/bg_tuile_livreszines.jpg" glow="bg-amber-500/30" />
         </div>
       </section>
 
@@ -206,25 +212,110 @@ export default function Dashboard() {
 }
 
 /**
- * TUILE COMPTEUR DU DASHBOARD — bloc SUPERIEUR en GRILLE 3 COLONNES × 3 TUILES
- * (spec) : 6 compteurs actifs (Disques, Artistes/Groupes, Genres, BD, Auteurs
- * BD, Séries) + 3 tuiles « À venir » grises dans la colonne de droite (Jeux
- * vidéo, Jeux de Rôle-Plateau, Livres-Magazines — bases non migrées).
- * CENTRAGE : contenu centré horizontalement ET verticalement dans la tuile —
- * `flex flex-col items-center justify-center text-center` sur le conteneur.
- * `accent` : bordure/texte doré pour les deux « TOTAUX » (Disques, BD) ;
- * `muted` : valeur textuelle en GRIS CLAIR à la place du compteur (tuiles « à
- * venir », en prévision des futures bases de données). Toutes les 9 tuiles
- * partagent CE composant : même format, même style et même hauteur stricte
- * (flex-1) au sein de chaque colonne. Les cartes de la section basse « Derniers
- * ajouts » (jaquettes / couvertures) sont des composants distincts, NON
- * concernés par ce centrage.
+ * TUILE DE LA GRILLE BENTO DU DASHBOARD (spec + style Glassmorphism) :
+ * - Cartes PRINCIPALES à largeur double (colonne de gauche) : Disques, Bandes
+ *   dessinées — `accent` : bordure/texte doré pour les deux « TOTAUX ».
+ * - Cartes SECONDAIRES équilibrées : Artistes / Groupes, Auteurs BD, Genres
+ *   Musicaux, Séries BD — mêmes StatCard (valeur numérique) que les totaux.
+ * - Tuiles « À venir » (colonne de droite, 3 empilées) : `locked` — style
+ *   GLASSMORPHISME SOMBRE au lieu du fond photo : verre translucide
+ *   (bg-night-900/40 + backdrop-blur-md) + bordures subtiles (white/10) ; le
+ *   bokeh de l'effet vient des halos lumineux déjà présents dans le fond global
+ *   de la page (body). Icône cadenas (LockIcon) + badge « PROCHAINEMENT » à la
+ *   place du compteur numérique (bases non migrées). Quand une collection ouvre :
+ *   retirer `locked` et passer le vrai number dans `value` — rien d'autre.
+ * FONDS D'IMAGE PAR TUILE : prop `bgImage` (chemin /img/bg_tuile_*.jpg, photos
+ *   servies STATIQUEMENT par frontend/public/img/ — Vite les copie dans dist/ au
+ *   build, nginx les sert à la racine, comme /img/bg_dark.jpg pour le thème). La
+ *   photo est EN ARRIÈRE du contenu (overlay + texte en dessus) et VOILÉE par un
+ *   gradient sombre vertical (de-night-950/85 -> night-950/60 via, plus dense en
+ *   bas où vit le texte) : la LECTURE des étiquettes / compteurs reste lisible
+ *   sur n'importe quelle photo. À l'overlay, fade de 25 % au survol (la photo
+ *   « respire » sous le doigt sans jamais rendre le texte illisible).
+ * EFFETS AU SURVOL (spec) — TOUS les types de tuiles :
+ *   - translation fluide vers le haut : `hover:-translate-y-1` (transition-all 300ms) ;
+ *   - GLOW : halo absolutely-positionné DEHORS la carte (wrapper parent,
+ *     -inset-3, coloré par prop `glow`, ex. bg-gold-500/40), flou blur-2xl,
+ *     opacité 0 -> 75/100 au survol : auréole lumineuse autour du cadre ;
+ *   - ombres prononcées : `hover:shadow-xl hover:shadow-black/50` (wrapper =
+ *     boîte de la tuile, même rayon rounded-2xl => ombre bien découpée).
+ * ARCHITECTURE À DEUX NIVEAUX : le wrapper OUTER porte la translation, l'ombre
+ *   et le halo (il n'a PAS d'overflow-hidden — le halo doit pouvoir déborder) ;
+ *   la carte INNER (relative, overflow-hidden rounded-2xl) contient la photo,
+ *   l'overlay et le texte. Peinture en ordre DOM : halo d'abord (en dessous),
+ *   puis la carte avec son contenu par-dessus — pas besoin de z-index négatif.
+ * CENTRAGE H+V conservé ; `flex-1` sur le wrapper + grid-auto-rows minmax du
+ * conteneur = hauteurs STRICTEMENT égales au sein de chaque colonne.
  */
-function StatCard({ label, value, accent = false, muted = false }) {
+function StatCard({ label, value, accent = false, locked = false, bgImage = null, glow = 'bg-gold-500/30' }) {
+  const { t } = useTranslation()
+  /** CADRE de la carte intérieure : tuile verrière glassmorphism pour `locked`,
+      sinon bordure subtile (dorée pour les totaux accent). */
+  const frame = locked
+    ? 'border-white/10 bg-night-900/40 backdrop-blur-md'
+    : accent
+      ? 'border-gold-500/40 bg-night-950/40'
+      : 'border-white/5 bg-night-950/40'
   return (
-    <div className={`card p-4 flex-1 flex flex-col items-center justify-center text-center ${accent ? 'border-gold-500/30' : ''}`}>
-      <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
-      <p className={`mt-1 text-3xl font-extrabold ${muted ? 'text-slate-500' : accent ? 'text-gold-400' : 'text-white'}`}>{value}</p>
+    /** WRAPPER OUTER : `group` = le survol pilote descendants ; flex-1 = hauteur
+        égale dans la colonne ; translation + ombre prononcée au survol. */
+    <div className="group relative flex-1 rounded-2xl transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50">
+      {/* HALO DE GLOW (spéc) : première couche peinte => derrière la carte ;
+          déborde de 12px (-inset-3) au-delà du cadre, flou blur-2xl, couleur
+          du domaine `glow` — invisible au repos, s'éveille sur group-hover. */}
+      <span aria-hidden="true" className={`pointer-events-none absolute -inset-3 rounded-[24px] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-75 ${glow}`} />
+      {/* CARTE INTÉRIEURE : cadre (border/background), overflow-hidden pour
+          la photo aux coins arrondis, contenu centré H+V au-dessus. */}
+      <div className={`relative flex h-full flex-col items-center justify-center overflow-hidden rounded-2xl border p-4 text-center ${frame}`}>
+        {bgImage && (
+          <>
+            {/* PHOTO DE FOND : couverture complète (object-cover), lazy-load ;
+                sous l'overlay et le texte (ordre DOM = ordre de peinture). */}
+            <img
+              src={bgImage}
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
+            />
+            {/* OVERLAY SOMBRE (lisibilité) : gradient vertical plus dense en bas ;
+                fade léger au survol (75 %) pour révéler la photo « en respiration ». */}
+            <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-b from-night-950/85 via-night-950/60 to-night-950/90 transition-opacity duration-500 group-hover:opacity-75" />
+            {/* Contenu sur la photo : `relative` => peint au-dessus des 2 couches. */}
+            <div className="relative flex flex-col items-center">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200 drop-shadow-sm">{label}</p>
+              {locked ? (
+                /** Cadenas + badge « PROCHAINEMENT » sur verre sombre : slate-400,
+                    discret mais net même au-dessus du bokeh. */
+                <span className="mt-1.5 inline-flex items-center gap-2">
+                  <LockIcon size={18} className="text-slate-400" />
+                  <span className="inline-flex items-center rounded-full border border-white/10 bg-night-900/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 backdrop-blur-sm">
+                    {t('dashboard.addMedia.soon')}
+                  </span>
+                </span>
+              ) : (
+                <p className={`mt-1 text-3xl font-extrabold drop-shadow ${accent ? 'text-gold-400' : 'text-white'}`}>{value}</p>
+              )}
+            </div>
+          </>
+        )}
+        {/* Contenu des tuiles SANS photo (fallback si `bgImage` est manquant). */}
+        {!bgImage && (
+          <div className="relative flex flex-col items-center">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{label}</p>
+            {locked ? (
+              <span className="mt-1.5 inline-flex items-center gap-2">
+                <LockIcon size={18} className="text-slate-500" />
+                <span className="inline-flex items-center rounded-full border border-night-600/70 bg-night-900/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  {t('dashboard.addMedia.soon')}
+                </span>
+              </span>
+            ) : (
+              <p className={`mt-1 text-3xl font-extrabold ${accent ? 'text-gold-400' : 'text-white'}`}>{value}</p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

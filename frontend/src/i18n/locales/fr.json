@@ -44,9 +44,9 @@
     "stats": {
       "vinyls": "Disques",
       "artists": "Artistes / Groupes",
-      "genres": "Genres",
+      "musicalGenres": "Genres Musicaux",
+      "comicSeries": "Séries BD",
       "comics": "Bandes dessinées",
-      "series": "Séries",
       "comicAuthors": "Auteurs BD",
       "videoGames": "Jeux vidéo",
       "boardGames": "Jeux de Rôle / Plateau",
