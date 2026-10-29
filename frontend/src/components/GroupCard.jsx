@@ -43,11 +43,20 @@ export default function GroupCard({
   view = 'card',
   size = 'md',
   showTitle = true,
+  showAddedDate = false,
   onClick = null,
   actions = null,
 }) {
   const isVinyl = variant === 'vinyl'
   const jukebox = view === 'jukebox'
+  // Tuiles du Dashboard « Derniers ajouts » (mode `showAddedDate`) : même
+  // effet de SURVOL LUMINEUX ARGENTÉ que VinylCard / ComicCard — bordure gris
+  // argenté + halo clair subtil. Hors dashboard, rien ne change.
+  const silverHover =
+    showAddedDate && !jukebox
+      ? 'hover:border-slate-300 hover:shadow-[0_0_15px_rgba(203,213,225,0.25)]'
+      : ''
+
   // RÈGLE STRICTE (dissociation stricte) : l'image du groupe est EXCLUSIVEMENT
   // sa photo / logo DÉDIÉ — `artistImage` (disques) ou `seriesImage` (BD).
   // Si cette valeur est vide, null, non définie (ou porte le repli propre
@@ -78,7 +87,7 @@ export default function GroupCard({
       className={`group relative flex flex-col overflow-hidden transition duration-500 ${
         jukebox
           ? 'rounded-lg border-2 border-gold-500/60 bg-night-900 shadow-lg shadow-gold-500/10 outline outline-1 outline-gold-500/25 '
-          : 'card overflow-hidden '
+          : `card overflow-hidden ${silverHover}`
       }${onClick ? 'cursor-pointer' : ''}`}
       onClick={
         onClick

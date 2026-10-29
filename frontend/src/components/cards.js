@@ -5,9 +5,14 @@
  *  - `md` : pages de collections (carré commun aux jaquettes de disques et
  *    aux vignettes BD ; le ratio 2:3 d'une BD y est préservé par
  *    `object-contain`, cf. coverFit)
- *  - `sm` : dashboard ("Derniers ajouts") — hauteur d'image plafonnée à
- *    14rem (max-h-56 ≈ 224px) : sur un écran Full HD (1920×1080), les deux
- *    rangées de cartes (disques + BDs) tiennent sans scroll excessif.
+ *  - `sm` : dashboard (« Derniers ajouts ») — cadre d'image plafonné à ~14rem
+ *    de HAUTEUR sur grille Full HD (1920×1080, max-w-7xl : largeur de colonne
+ *    ≈ 315px → hauteur imposée 14rem ≈ 224px) : la vignette respecte donc
+ *    STRICTEMENT la taille de sa TUILE — jamais plus grande (plus large ni plus
+ *    haut que le slot de grille), et sur mobile la largeur reste le maître tout
+ *    en plafonnant la hauteur. L'image intérieure remplit ce cadre en
+ *    object-cover (jaquette)
+ *    ou object-contain (couverture 2:3 sur fond sombre), sans déborder.
  */
 export const GRID_SIZES = {
   md: {
@@ -22,13 +27,22 @@ export const GRID_SIZES = {
     chip: 'px-2 py-0.5',
   },
   sm: {
-    // Ratio 4:5 plafonné en hauteur : si la colonne de la grille est assez
-    // large (xl 1920×1080), la hauteur s'arrête à max-h-56 (224px) au lieu
-    // de suivre le ratio complet (~345px). Le disque remplit en
-    // object-cover (légère recadrure acceptée) et la BD en object-contain
-    // (fond sombre dans les marges, cf. coverFit).
-    vinylAspect: 'aspect-[4/5] max-h-56',
-    comicAspect: 'aspect-[4/5] max-h-56',
+    // Derniers ajouts : la vignette ne dépasse JAMAIS sa tuile. Règles en jeu :
+    //  - `overflow-hidden` sur le FRAME (et la carte) : tout débordement est
+    //    rogné, strict ;
+    //  - `max-h-56` (14rem ≈ 224px) plafonne la HAUTEUR du cadre en grille
+    //    desktop (Full HD / max-w-7xl : colonne ≈ 315px de large) — avant, le
+    //    ratio complet (≈ 1.25 × la largeur ≈ 345px+ de haut) surdéterminait
+    //    la boîte et faisait déborder les rangées ;
+    //  - `min-h-44` (11rem ≈ 176px) garantit un cadre toujours lisible sur les
+    //    écrans intermédiaires sans écraser le contenu de pied de carte ;
+    //  - mobile : la LARGUEUR de la colonne reste le maître, la hauteur suit le
+    //    ratio 4:5 tant qu'elle n'atteint pas le plafond max-h-56.
+    //   L'image intérieure remplit ensuite ce cadre : object-cover (jaquettes
+    //   disques, léger recadrage toléré) ou object-contain (couvertures BD 2:3
+    //   sur fond sombre, cf. coverFit).
+    vinylAspect: 'aspect-[4/5] min-h-44 max-h-56',
+    comicAspect: 'aspect-[4/5] min-h-44 max-h-56',
     body: 'p-3 gap-1',
     title: 'text-sm line-clamp-1',
     subtitle: 'text-[11px] line-clamp-1',

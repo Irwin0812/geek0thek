@@ -51,7 +51,15 @@ export default function VinylCard({
       className={`group relative flex flex-col overflow-hidden transition duration-500 ${
         jukebox
           ? 'rounded-lg border-2 border-gold-500/60 bg-night-900 shadow-lg shadow-gold-500/10 outline outline-1 outline-gold-500/25 '
-          : 'card overflow-hidden '
+          : `card overflow-hidden ${
+              // Tuiles du Dashboard « Derniers ajouts » (mode `showAddedDate`) :
+              // effet de SURVOL LUMINEUX ARGENTÉ — bordure gris argenté + halo
+              // clair subtil autour de toute la vignette. Hors dashboard
+              // (grilles des collections), rien ne change.
+              showAddedDate && !jukebox
+                ? 'hover:border-slate-300 hover:shadow-[0_0_15px_rgba(203,213,225,0.25)]'
+                : ''
+            }`}
       }${onClick ? 'cursor-pointer' : ''} ${jukebox ? 'aspect-[5/7]' : ''}`}
       onClick={
         onClick
