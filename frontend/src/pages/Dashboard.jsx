@@ -576,16 +576,20 @@ function TypeIcon({ opt }) {
 /*                                                                     */
 /*  - Visible UNIQUEMENT sur le Dashboard (monté ici), et seulement    */
 /*    après un défilement > 300px (seuil exigé).                       */
-/*  - Icône flèche vers le haut + mention textuelle « TOP ».           */
+/*  - Forme PARFAITEMENT RONDE : dimensions fixes égales (w-14 h-14)   */
+/*    + rounded-full, contenu (flèche « ^ » + mention textuelle        */
+/*    « TOP ») centré en FLEXBOX (flex-col items-center justify-center).
+/*  - Tons AMBRE / OR CHAUD du thème Geek0thek : bg-amber-500          */
+/*    hover:bg-amber-400 text-slate-950 — la teinte s'éclaircit au     */
+/*    survol, lueurs comprises.                                        */
+/*  - BRILLANCE DYNAMIQUE au survol : ombre halo doré                  */
+/*    shadow-[0_0_20px_rgba(251,191,36,0.6)] (cumulée à l'ombre        */
+/*    profonde de repos) + span HALO LUMINEUX flou (blur-xl,            */
+/*    amber-400) qui s'allume en fondu sous la main — transition       */
+/*    lumineuse portée par transition-all duration-300.                */
 /*  - Clic : window.scrollTo({ top: 0, behavior: 'smooth' }) — la page */
 /*    remonte tout en haut en flux doux (« Préférence de               */
 /*    mouvement réduit » respectée : saut immédiat).                   */
-/*  - DESIGN = mêmes teintes que le bouton « Ajouter un média »        */
-/*    (btn-primary) : ce dernier se colore via --accent-strong /       */
-/*    --accent-contrast (les 6 thèmes les définissent, cf. them/*.css) ; */
-/*    on consomme donc DIRECTEMENT les mêmes variables CSS — teinte     */
-/*    ambre / or chaud identique, mise à jour automatique au           */
-/*    changement de thème, sans interroger le DOM.                     */
 /* ------------------------------------------------------------------ */
 
 /** Respecte `prefers-reduced-motion: reduce` (saut immédiat si actif). */
@@ -623,22 +627,21 @@ function BackToTopButton() {
       aria-label={t('dashboard.backToTop')}
       title={t('dashboard.backToTop')}
       tabIndex={visible ? 0 : -1}
-      className={`fixed bottom-5 right-5 z-40 inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2.5 text-sm font-extrabold tracking-wider transition-all duration-300 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 ${
+      className={`group fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-amber-500 text-slate-950 shadow-[0_10px_25px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.18)_inset] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-amber-400 hover:shadow-[0_0_20px_rgba(251,191,36,0.6),0_4px_14px_rgba(251,191,36,0.4),0_0_0_1px_rgba(255,255,255,0.35)_inset] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${
         visible ? 'scale-100 opacity-100' : 'pointer-events-none scale-90 opacity-0'
       }`}
-      style={{
-        /* Mêmes sources de couleur que .btn-primary (« Ajouter un média ») —
-           les replis gold-500 / night-950 couvrent le cas où une variable
-           manquerait. Le halo est construit sur --ring (halo du thème). */
-        backgroundColor: 'var(--accent-strong, #d4a24e)',
-        color: 'var(--accent-contrast, #080b13)',
-        borderColor: 'rgba(255, 255, 255, 0.2)',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.45), 0 4px 14px var(--ring, rgba(212, 162, 78, 0.35))',
-      }}
     >
-      {/* Icône flèche vers le haut + mention textuelle explicite « TOP » */}
-      <ArrowUp size={15} strokeWidth={2.75} aria-hidden="true" />
-      <span>TOP</span>
+      {/* HALO DORÉ de brillance dynamique : flou amber-400 derrière la pastille,
+          allumé en fondu au survol (transition-opacity portée par le group). */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -inset-1.5 rounded-full bg-amber-400/60 opacity-0 blur-xl transition-opacity duration-300 ease-out group-hover:opacity-70"
+      />
+      {/* Contenu centré en flexbox : flèche « ^ » + mention textuelle « TOP ». */}
+      <span className="relative flex flex-col items-center justify-center gap-[1px]">
+        <ArrowUp size={16} strokeWidth={2.75} aria-hidden="true" />
+        <span className="text-[9px] font-extrabold leading-none tracking-wider">TOP</span>
+      </span>
     </button>
   )
 }

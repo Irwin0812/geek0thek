@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { GRID_SIZES, coverAspect, resolveCoverUrl, releaseDateFr } from './cards.js'
+import { GRID_SIZES, coverAspect, coverFit, resolveCoverUrl, releaseDateFr } from './cards.js'
 import { releaseYear } from './listData.js'
 
 /**
@@ -70,14 +70,19 @@ export default function VinylCard({
           : undefined
       }
     >
-      {/* Jaquette */}
-      <div className={`relative overflow-hidden bg-night-900 ${coverAspect('vinyl', size)}`}>
+      {/* Jaquette : même intégration que les couvertures de Bandes Dessinées —
+          fond sombre harmonisé (dégradé night) derrière la pochette affichée
+          INTÉGRALE en object-contain, centrée avec des marges intérieures
+          propres ; jamais rognée ni étirée sur toute la largeur de la tuile. */}
+      <div
+        className={`relative overflow-hidden bg-gradient-to-br from-night-800 to-night-900 ${coverAspect('vinyl', size)}`}
+      >
         {src ? (
           <img
             src={src}
             alt={`Jaquette — ${vinyl.title} (${vinyl.artist})`}
             loading="lazy"
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+            className={`h-full w-full ${coverFit('vinyl')} select-none transition duration-500 group-hover:scale-[1.04]`}
             onError={(e) => {
               e.currentTarget.style.visibility = 'hidden'
             }}

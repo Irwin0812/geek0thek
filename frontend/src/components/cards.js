@@ -10,9 +10,10 @@
  *    ≈ 315px → hauteur imposée 14rem ≈ 224px) : la vignette respecte donc
  *    STRICTEMENT la taille de sa TUILE — jamais plus grande (plus large ni plus
  *    haut que le slot de grille), et sur mobile la largeur reste le maître tout
- *    en plafonnant la hauteur. L'image intérieure remplit ce cadre en
- *    object-cover (jaquette)
- *    ou object-contain (couverture 2:3 sur fond sombre), sans déborder.
+ *    en plafonnant la hauteur. L'image intérieure est affichée INTÉGRALE en
+ *    object-contain (jaquette disques ET couverture 2:3) sur fond sombre, au
+ *    centre du cadre avec des marges intérieures propres — jamais rognée ni
+ *    étirée sur toute la largeur de la tuile, sans déborder.
  */
 export const GRID_SIZES = {
   md: {
@@ -38,9 +39,9 @@ export const GRID_SIZES = {
     //    écrans intermédiaires sans écraser le contenu de pied de carte ;
     //  - mobile : la LARGUEUR de la colonne reste le maître, la hauteur suit le
     //    ratio 4:5 tant qu'elle n'atteint pas le plafond max-h-56.
-    //   L'image intérieure remplit ensuite ce cadre : object-cover (jaquettes
-    //   disques, léger recadrage toléré) ou object-contain (couvertures BD 2:3
-    //   sur fond sombre, cf. coverFit).
+    //   L'image intérieure est affichée INTÉGRALE en object-contain (jaquettes
+    //   disques ET couvertures BD 2:3) sur fond sombre harmonisé, au centre
+    //   du cadre avec des marges intérieures propres — cf. coverFit.
     vinylAspect: 'aspect-[4/5] min-h-44 max-h-56',
     comicAspect: 'aspect-[4/5] min-h-44 max-h-56',
     body: 'p-3 gap-1',
@@ -58,14 +59,15 @@ export function coverAspect(type, size = 'md') {
 }
 
 /**
- * Mode de remplissage de la couverture :
- *  - vinyl : `object-cover` — la jaquette carrée remplit tout le cadre ;
- *  - comic : `object-contain` — la couverture verticale (2:3) conserve ses
- *    proportions d'origine sans être déformée ni tronquée, le solde du
- *    cadre étant assuré par le fond sombre du conteneur (night).
+ * Mode de remplissage de la couverture : `object-contain` pour les DEUX
+ * domaines — la jaquette disque et la couverture BD (2:3) conservent leurs
+ * proportions d'origine, intégrales, sans être rognées ni étirées sur toute
+ * la largeur de la tuile ; le solde du cadre (marges intérieures latérales)
+ * est assuré par le fond sombre harmonisé du conteneur (night), exactement
+ * comme pour les couvertures de Bandes Dessinées.
  */
-export function coverFit(type) {
-  return type === 'comic' ? 'object-contain' : 'object-cover'
+export function coverFit() {
+  return 'object-contain'
 }
 
 /**
