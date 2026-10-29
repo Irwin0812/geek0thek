@@ -72,6 +72,7 @@
     "emptyVinylSubtitle": "Añade tu primer disco manualmente o escaneando un código de barras (MusicBrainz + Discogs).",
     "emptyComicTitle": "Sin cómics",
     "emptyComicSubtitle": "Añade tu primer álbum manualmente o mediante un ISBN (Google Books / Open Library).",
+    "backToTop": "Volver arriba",
     "volume": "Tomo {{number}}"
   },
   "profile": {

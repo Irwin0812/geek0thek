@@ -70,8 +70,7 @@
     "comicsSection": "Bandes dessinées",
     "emptyVinylTitle": "Aucun disque",
     "emptyVinylSubtitle": "Ajoutez votre premier disque en saisie manuelle ou en scannant un code-barres (MusicBrainz + Discogs).",
-    "emptyComicTitle": "Aucune bande dessinée",
-    "emptyComicSubtitle": "Ajoutez votre premier album en saisie manuelle ou via un ISBN (Google Books / Open Library).",
+    "backToTop": "Retour en haut de page",
     "volume": "Tome {{number}}"
   },
   "profile": {

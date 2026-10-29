@@ -72,6 +72,7 @@
     "emptyVinylSubtitle": "Füge deine erste Platte manuell oder per Barcode-Scan hinzu (MusicBrainz + Discogs).",
     "emptyComicTitle": "Keine Comics",
     "emptyComicSubtitle": "Füge dein erstes Album manuell oder per ISBN hinzu (Google Books / Open Library).",
+    "backToTop": "Nach oben zur Seite",
     "volume": "Band {{number}}"
   },
   "profile": {

@@ -23,6 +23,28 @@ export default function App() {
   const [loading, setLoading] = useState(Boolean(getToken()))
   const location = useLocation()
 
+  // RETOUR AUTOMATIQUE EN HAUT DE PAGE : à CHAQUE changement de route
+  // (navigation Navbar / liens internes / clic sur les tuiles « À venir » /
+  // retour Dashboard / retour vers l'avant-arrière du navigateur), la page se
+  // réinitialise et défle TOUT EN HAUT, en flux doux :
+  //   window.scrollTo({ top: 0, behavior: 'smooth' })
+  // (les pages qui ne remplissent pas un écran restent trivialement au
+  // sommet ; les pages collections défilent longuement → la réinitialisation
+  // y est indispensable). Un seul cas d'exclusion : une URL portant un
+  // ancre (#id) qui désigne un élément réellement présent s'y repositionne,
+  // conformément au comportement standard des ancres. Exécuté dès que le
+  // nouvel emplacement est résolu (avant le rendu complet de la page cible).
+  useEffect(() => {
+    const { hash } = location
+    if (hash && document.getElementById(hash.slice(1))) {
+      requestAnimationFrame(() => {
+        document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+      return
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [location])
+
   useEffect(() => {
     async function bootstrap() {
       if (!getToken()) {

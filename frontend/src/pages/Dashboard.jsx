@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  ArrowRight, BookOpen, ChevronDown, Dices, Disc3, Gamepad2, Layers, Library, Lock, PenLine, Plus, Tags, Users,
+  ArrowRight, ArrowUp, BookOpen, ChevronDown, Dices, Disc3, Gamepad2, Layers, Library, Lock, PenLine, Plus, Tags, Users,
 } from 'lucide-react'
 
 import { api } from '../services/api.js'
@@ -217,6 +217,9 @@ export default function Dashboard() {
           }}
         />
       </div>
+
+      {/* Bouton flottant RETOUR EN HAUT (bas-droite) — requis. */}
+      <BackToTopButton />
 
       {/* Derniers ajouts */}
       <section>
@@ -566,4 +569,76 @@ function TypeIcon({ opt }) {
   if (opt.to.startsWith('/livres')) return <Library size={15} className={`${cls}`} aria-hidden="true" />
   if (opt.to.startsWith('/jeux-de-mesa')) return <Dices size={15} className={`${cls}`} aria-hidden="true" />
   return <Gamepad2 size={15} className={`${cls}`} aria-hidden="true" />
+}
+
+/* ------------------------------------------------------------------ */
+/*  BOUTON FLOTTANT « TOP » — RETOUR EN HAUT DE LA PAGE                */
+/*                                                                     */
+/*  - Visible UNIQUEMENT sur le Dashboard (monté ici), et seulement    */
+/*    après un défilement > 300px (seuil exigé).                       */
+/*  - Icône flèche vers le haut + mention textuelle « TOP ».           */
+/*  - Clic : window.scrollTo({ top: 0, behavior: 'smooth' }) — la page */
+/*    remonte tout en haut en flux doux (« Préférence de               */
+/*    mouvement réduit » respectée : saut immédiat).                   */
+/*  - DESIGN = mêmes teintes que le bouton « Ajouter un média »        */
+/*    (btn-primary) : ce dernier se colore via --accent-strong /       */
+/*    --accent-contrast (les 6 thèmes les définissent, cf. them/*.css) ; */
+/*    on consomme donc DIRECTEMENT les mêmes variables CSS — teinte     */
+/*    ambre / or chaud identique, mise à jour automatique au           */
+/*    changement de thème, sans interroger le DOM.                     */
+/* ------------------------------------------------------------------ */
+
+/** Respecte `prefers-reduced-motion: reduce` (saut immédiat si actif). */
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(
+    () => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const onChange = (e) => setReduced(e.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  return reduced
+}
+
+function BackToTopButton() {
+  const { t } = useTranslation()
+  const [visible, setVisible] = useState(false)
+  const reducedMotion = useReducedMotion()
+
+  /* Apparition / disparition à partir du SEUIL DE 300 PX de défilement. */
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 300)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  return (
+    <button
+      id="top-button"
+      type="button"
+      onClick={() => window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' })}
+      aria-label={t('dashboard.backToTop')}
+      title={t('dashboard.backToTop')}
+      tabIndex={visible ? 0 : -1}
+      className={`fixed bottom-5 right-5 z-40 inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2.5 text-sm font-extrabold tracking-wider transition-all duration-300 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 ${
+        visible ? 'scale-100 opacity-100' : 'pointer-events-none scale-90 opacity-0'
+      }`}
+      style={{
+        /* Mêmes sources de couleur que .btn-primary (« Ajouter un média ») —
+           les replis gold-500 / night-950 couvrent le cas où une variable
+           manquerait. Le halo est construit sur --ring (halo du thème). */
+        backgroundColor: 'var(--accent-strong, #d4a24e)',
+        color: 'var(--accent-contrast, #080b13)',
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.45), 0 4px 14px var(--ring, rgba(212, 162, 78, 0.35))',
+      }}
+    >
+      {/* Icône flèche vers le haut + mention textuelle explicite « TOP » */}
+      <ArrowUp size={15} strokeWidth={2.75} aria-hidden="true" />
+      <span>TOP</span>
+    </button>
+  )
 }
