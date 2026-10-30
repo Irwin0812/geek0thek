@@ -106,13 +106,14 @@ export default function GroupCard({
         className={`relative overflow-hidden ${isVinyl ? 'bg-night-900' : 'bg-gradient-to-br from-night-800 to-night-900'} ${coverAspect(isVinyl ? 'vinyl' : 'comic', size)}`}
       >
         {resolvedCover ? (
+          // Même zoom fluide au survol que les jaquettes de disques (VinylCard) :
+          // transition 500 ms + scale 1.04, confiné dans le cadre par son
+          // overflow-hidden — quel que soit le domaine (disques / BD).
           <img
             src={resolvedCover}
             alt={`« ${name} »`}
             loading="lazy"
-            className={`h-full w-full object-cover ${
-              isVinyl ? 'transition duration-500 group-hover:scale-[1.04]' : 'select-none'
-            }`}
+            className="h-full w-full object-cover select-none transition duration-500 group-hover:scale-[1.04]"
             onError={(e) => {
               e.currentTarget.style.visibility = 'hidden'
             }}

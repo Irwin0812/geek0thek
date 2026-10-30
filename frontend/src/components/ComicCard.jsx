@@ -78,7 +78,7 @@ export default function ComicCard({
             src={src}
             alt={`Couverture — ${comic.title}`}
             loading="lazy"
-            className={`h-full w-full ${coverFit('comic')} select-none`}
+            className={`h-full w-full ${coverFit('comic')} select-none transition duration-500 group-hover:scale-[1.04]`}
             onError={(e) => {
               e.currentTarget.style.visibility = 'hidden'
             }}
