@@ -14,6 +14,7 @@ import Profile from './pages/Profile.jsx'
 import { DisplayProvider } from './services/display.jsx'
 import { switchTheme } from './services/theme.js'
 import Footer from './components/Footer.jsx'
+import TopButton from './components/TopButton.jsx'
 
 const AuthContext = createContext(null)
 export const useAuth = () => useContext(AuthContext)
@@ -135,6 +136,11 @@ export default function App() {
             </Routes>
           </div>
         </main>
+        {/* BOUTON « TOP » GLOBAL : monté une SEULE fois dans le layout, au
+            niveau de la page (frère de main/Footer) — présent sur toutes les
+            pages et sections (Mes Disques, Mes BD, …), JAMAIS à l'intérieur
+            d'une modale. Visible uniquement après 300 px de défilement. */}
+        {user && <TopButton />}
         <Footer />
       </div>
       </DisplayProvider>

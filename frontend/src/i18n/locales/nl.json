@@ -4,7 +4,8 @@
     "save": "Opslaan",
     "saving": "Word opgeslagen…",
     "cancel": "Annuleren",
-    "viewAll": "Alles bekijken →"
+    "viewAll": "Alles bekijken →",
+    "backToTop": "Terug naar boven"
   },
   "navbar": {
     "dashboard": "Dashboard",
@@ -72,7 +73,6 @@
     "emptyVinylSubtitle": "Voeg je eerste plaat handmatig toe of scan een streepjescode (MusicBrainz + Discogs).",
     "emptyComicTitle": "Geen strips",
     "emptyComicSubtitle": "Voeg je eerste album handmatig toe of via een ISBN (Google Books / Open Library).",
-    "backToTop": "Terug naar boven",
     "volume": "Deel {{number}}"
   },
   "profile": {

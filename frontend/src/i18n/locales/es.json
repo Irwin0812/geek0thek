@@ -4,7 +4,8 @@
     "save": "Guardar",
     "saving": "Guardando…",
     "cancel": "Cancelar",
-    "viewAll": "Ver todo →"
+    "viewAll": "Ver todo →",
+    "backToTop": "Volver arriba"
   },
   "navbar": {
     "dashboard": "Panel de control",
@@ -72,7 +73,6 @@
     "emptyVinylSubtitle": "Añade tu primer disco manualmente o escaneando un código de barras (MusicBrainz + Discogs).",
     "emptyComicTitle": "Sin cómics",
     "emptyComicSubtitle": "Añade tu primer álbum manualmente o mediante un ISBN (Google Books / Open Library).",
-    "backToTop": "Volver arriba",
     "volume": "Tomo {{number}}"
   },
   "profile": {
