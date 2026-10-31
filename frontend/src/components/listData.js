@@ -44,24 +44,25 @@ export function isVerified(type, item) {
 /**
  * Badges d'information de la ligne (alignés à droite).
  * Retourne [{ label, tone }] où tone ∈ 'gold' | 'muted' | 'check'.
+ * `t` (react-i18next) est requis pour les libellés traduits.
  */
-export function itemBadges(type, item) {
+export function itemBadges(type, item, t) {
   if (!item) return []
   if (type === 'vinyl') {
     const badges = []
-    if (item.trackCount > 0) badges.push({ label: `${item.trackCount} titre${item.trackCount > 1 ? 's' : ''}`, tone: 'muted' })
+    if (item.trackCount > 0) badges.push({ label: t('collection.tracksBadge', { count: item.trackCount }), tone: 'muted' })
     if (item.genre) badges.push({ label: String(item.genre).split('/')[0].trim(), tone: 'gold' })
-    if (isVerified('vinyl', item)) badges.push({ label: 'Validé', tone: 'check' })
-    if (item.owner) badges.push({ label: `Coll. ${item.owner.lastName}`, tone: 'gold' })
+    if (isVerified('vinyl', item)) badges.push({ label: t('collection.verifiedBadge'), tone: 'check' })
+    if (item.owner) badges.push({ label: t('collection.collectionOwner', { name: item.owner.lastName }), tone: 'gold' })
     return badges.slice(0, 3)
   }
   const badges = []
-  if (item.tomeNumber) badges.push({ label: `Tome ${item.tomeNumber}`, tone: 'muted' })
+  if (item.tomeNumber) badges.push({ label: t('collection.volumeBadge', { number: item.tomeNumber }), tone: 'muted' })
   // L'ancien badge « état » a été retiré (champ remplacé par la date d'ajout) ;
   // on y substitue le badge « Dédicacé » (is_signed) du formulaire BD.
-  if (item.isSigned) badges.push({ label: 'Dédicacé', tone: 'check' })
-  if (item.isSpecialEdition) badges.push({ label: 'Éd. spéciale', tone: 'check' })
-  if (item.owner) badges.push({ label: `Coll. ${item.owner.lastName}`, tone: 'gold' })
+  if (item.isSigned) badges.push({ label: t('collection.signedBadge'), tone: 'check' })
+  if (item.isSpecialEdition) badges.push({ label: t('collection.specialEditionBadge'), tone: 'check' })
+  if (item.owner) badges.push({ label: t('collection.collectionOwner', { name: item.owner.lastName }), tone: 'gold' })
   return badges.slice(0, 3)
 }
 

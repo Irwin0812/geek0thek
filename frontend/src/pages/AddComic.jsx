@@ -548,7 +548,7 @@ export default function AddComic() {
             : ''
         )
       }
-      navigate('/comics', { state: { toast: `${isEdit ? 'BD mise à jour.' : `« ${result.comic.title} » ajoutée à votre collection.`}` } })
+      navigate('/comics', { state: { toastKey: isEdit ? 'collection.updatedComic' : 'collection.addedComic', title: isEdit ? undefined : result.comic.title } })
     } catch (err) {
       setError(err.message)
     } finally {
@@ -835,7 +835,7 @@ export default function AddComic() {
         // backend (api.comics.importByIsbn) ; aucun pré-remplissage n'est
         // nécessaire — on quitte le formulaire et on confirme via le toast.
         onImport={(comic) => {
-          navigate('/comics', { state: { toast: `« ${comic?.title || 'BD'} » importée par code-barres et ajoutée à votre collection.` } })
+          navigate('/comics', { state: { toastKey: 'collection.importedComic', title: comic?.title || 'BD' } })
         }}
         onPrefill={(payload) => {
           // Mapping exhaustif : chaque champ renvoyé par IsbnModal est

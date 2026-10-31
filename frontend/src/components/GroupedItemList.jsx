@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import ItemList from './ItemList.jsx'
 import { resolveGroupImage } from './collection.js'
 
@@ -74,6 +75,11 @@ function GroupRow({ type, group, open, onToggle, actions, onAction, onDetail, sh
     if (!open) setElevated(false)
   }, [open])
 
+  const { t } = useTranslation()
+  const isVinyl = type === 'vinyl'
+  // « Hors série » / « Divers » : affichage traduit via `isUnlabeled` (le nom
+  // interne reste inchangé pour la logique de regroupement).
+  const displayName = group.isUnlabeled ? t(isVinyl ? 'collection.groupNoArtist' : 'collection.groupNoSeries') : group.name
   const count = group.items.length
 
   /* Image de SÉRIE (BD) ou d'ARTISTE (disques). RÈGLE STRICTE : l'image de la
@@ -94,7 +100,7 @@ function GroupRow({ type, group, open, onToggle, actions, onAction, onDetail, sh
   )
   // Monogramme d'initiale — garde ultime si l'image de secours locale manque
   // (onError -> <img> masqué).
-  const initial = (group.name || '?').trim().charAt(0).toUpperCase() || '?'
+  const initial = (displayName || '?').trim().charAt(0).toUpperCase() || '?'
 
   return (
     <li className="relative">
@@ -109,7 +115,7 @@ function GroupRow({ type, group, open, onToggle, actions, onAction, onDetail, sh
           type="button"
           onClick={onToggle}
           aria-expanded={open}
-          title={open ? 'Replier' : 'Afficher les éléments'}
+          title={open ? t('collection.collapse') : t('collection.expandItems')}
           className="flex min-w-0 flex-1 items-center gap-3 text-left"
         >
           {/* Image du groupe (logo d'artiste / image de série) */}
@@ -134,16 +140,14 @@ function GroupRow({ type, group, open, onToggle, actions, onAction, onDetail, sh
           </div>
 
           {/* Nom du groupe + compteur d'albums / de tomes */}
-          <span className="min-w-0 flex-1 truncate font-semibold text-slate-100" title={group.name}>
-            {group.name}
+          <span className="min-w-0 flex-1 truncate font-semibold text-slate-100" title={displayName}>
+            {displayName}
           </span>
           <span
             className="shrink-0 rounded border border-night-500/60 bg-night-700/80 px-1.5 py-0.5 text-[11px] font-medium text-slate-300"
-            title={`${count} ${type === 'vinyl' ? (count > 1 ? 'albums' : 'album') : count > 1 ? 'tomes' : 'tome'}`}
+            title={t(isVinyl ? 'collection.albumsCount' : 'collection.tomesCount', { count })}
           >
-            {type === 'vinyl'
-              ? `${count} album${count > 1 ? 's' : ''}`
-              : `${count} tome${count > 1 ? 's' : ''}`}
+            {t(isVinyl ? 'collection.albumsCount' : 'collection.tomesCount', { count })}
           </span>
 
           {/* Chevron — même motif (▾ en transition) que les menus de la Navbar */}

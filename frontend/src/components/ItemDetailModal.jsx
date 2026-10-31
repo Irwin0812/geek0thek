@@ -11,6 +11,8 @@
  *    s'élargit (max-w-3xl → max-w-5xl) pour équilibrer ratio texte/image.
  */
 
+import { useTranslation } from 'react-i18next'
+
 /** Formate une date (ISO « AAAA-MM-JJ » de comics.added_date ou ISO8601) en jj/mm/aaaa. */
 function addDateFr(value) {
   const s = String(value)
@@ -20,6 +22,7 @@ function addDateFr(value) {
 }
 
 export default function ItemDetailModal({ type, item, onClose, onEdit }) {
+  const { t } = useTranslation()
   if (!item) return null
 
   const isVinyl = type === 'vinyl'
@@ -29,13 +32,14 @@ export default function ItemDetailModal({ type, item, onClose, onEdit }) {
       : `${window.location.origin}${item.coverUrl}`
     : null
 
+  // « MusicBrainz » / « Discogs » = noms propres, non traduits.
   const rows = isVinyl
     ? [
-        ['Genre', item.genre],
-        ['Label', item.label],
-        ['Année de sortie', item.releaseDate ? String(item.releaseDate).slice(0, 4) : null],
-        ['Titres', item.trackCount > 0 ? item.trackCount : null],
-        ['Code-barres', item.barcode],
+        [t('collection.fieldGenre'), item.genre],
+        [t('collection.fieldLabel'), item.label],
+        [t('collection.fieldReleaseYear'), item.releaseDate ? String(item.releaseDate).slice(0, 4) : null],
+        [t('collection.fieldTracks'), item.trackCount > 0 ? item.trackCount : null],
+        [t('collection.fieldBarcode'), item.barcode],
         // Identifiants externes cliquables vers la fiche de référence
         ['MusicBrainz', item.mbid ? (
           <a
@@ -62,23 +66,24 @@ export default function ItemDetailModal({ type, item, onClose, onEdit }) {
             `#${item.discogsReleaseId}`
           )
         ) : null],
-        ['Date d’ajout', item.addedDate ? addDateFr(item.addedDate) : null],
+        [t('collection.fieldAddedDate'), item.addedDate ? addDateFr(item.addedDate) : null],
       ]
     : [
-        ['Série', item.series ? `${item.series}${item.tomeNumber ? ` · Tome ${item.tomeNumber}` : ''}` : null],
-        ['Auteur(s)', item.authors],
-        ['Dessinateur(s)', item.illustrators],
-        ['Éditeur', item.publisher],
-        ['Date de sortie', item.releaseDate ? String(item.releaseDate).slice(0, 10) : null],
-        ['Genre', item.genre],
+        // Série + tome (« Tome 3 » via collection.volumeBadge, cohérent cartes/liste).
+        [t('collection.fieldSeries'), item.series ? `${item.series}${item.tomeNumber ? ` · ${t('collection.volumeBadge', { number: item.tomeNumber })}` : ''}` : null],
+        [t('collection.fieldAuthors'), item.authors],
+        [t('collection.fieldIllustrators'), item.illustrators],
+        [t('collection.fieldPublisher'), item.publisher],
+        [t('collection.fieldReleaseDate'), item.releaseDate ? String(item.releaseDate).slice(0, 10) : null],
+        [t('collection.fieldGenre'), item.genre],
         // Remplace l'ancien champ « État » : date d'ajout à la collection.
-        ['Date d’ajout', item.addedDate ? addDateFr(item.addedDate) : null],
-        ['ISBN', item.isbn],
+        [t('collection.fieldAddedDate'), item.addedDate ? addDateFr(item.addedDate) : null],
+        [t('collection.fieldIsbn'), item.isbn],
       ]
 
   const subtitle = isVinyl ? item.artist : item.authors
   const longText = isVinyl ? item.notes || item.tracklist : item.synopsis
-  const longLabel = isVinyl ? (item.tracklist ? 'Pistes' : 'Notes') : 'Synopsis'
+  const longLabel = isVinyl ? (item.tracklist ? t('collection.tracksSection') : t('collection.notesSection')) : t('collection.synopsisSection')
 
   return (
     <div
@@ -98,9 +103,9 @@ export default function ItemDetailModal({ type, item, onClose, onEdit }) {
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-400/90">
             {/* Nomenclature officielle : « Détails du Disque » (et
                 « Détails de la bande dessinée » pour les BD). */}
-            {isVinyl ? 'Détails du Disque' : 'Détails de la bande dessinée'}
+            {t(isVinyl ? 'collection.detailVinylTitle' : 'collection.detailComicTitle')}
           </h2>
-          <button onClick={onClose} className="btn-ghost !p-1.5" aria-label="Fermer">✕</button>
+          <button onClick={onClose} className="btn-ghost !p-1.5" aria-label={t('common.close')}>✕</button>
         </div>
 
         {/* Corps : scroll interne si le contenu dépasse (longue tracklist…) */}
@@ -121,7 +126,7 @@ export default function ItemDetailModal({ type, item, onClose, onEdit }) {
             {cover ? (
               <img
                 src={cover}
-                alt={`Couverture — ${item.title}`}
+                alt={t(isVinyl ? 'collection.coverAltVinyl' : 'collection.coverAltComic', { title: item.title, artist: item.artist })}
                 className={`h-full w-full ${isVinyl ? 'object-cover' : 'object-contain'}`}
                 onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
               />
@@ -130,7 +135,7 @@ export default function ItemDetailModal({ type, item, onClose, onEdit }) {
               <div className="grid h-full w-full place-items-center text-slate-500">
                 <div className="flex flex-col items-center gap-2">
                   <span className="text-4xl" aria-hidden="true">{isVinyl ? '💿' : '📖'}</span>
-                  <span className="text-xs">Aucune image</span>
+                  <span className="text-xs">{t('collection.noImage')}</span>
                 </div>
               </div>
             )}
@@ -154,12 +159,12 @@ export default function ItemDetailModal({ type, item, onClose, onEdit }) {
               <div className="mt-3 flex flex-wrap gap-2">
                 {item.isSpecialEdition && (
                   <span className="badge bg-gold-500/90 text-night-950 border border-gold-400/60 font-bold">
-                    Édition Spéciale
+                    {t('collection.specialEdition')}
                   </span>
                 )}
                 {item.isSigned && (
                   <span className="badge bg-orange-500/90 text-night-950 border border-orange-400/70 font-bold">
-                    Dédicacé
+                    {t('collection.signed')}
                   </span>
                 )}
               </div>
@@ -179,8 +184,10 @@ export default function ItemDetailModal({ type, item, onClose, onEdit }) {
             </dl>
 
             {item.owner && (
+              // Nom complet « Prénom Nom » (nom seul si prénom vide) pour la
+              // mention de propriété de la collection.
               <p className="mt-4 text-xs text-slate-500">
-                Collection {item.owner.firstName} {item.owner.lastName}
+                {t('collection.collectionOf', { name: [item.owner.firstName, item.owner.lastName].filter(Boolean).join(' ') })}
               </p>
             )}
 
@@ -205,12 +212,12 @@ export default function ItemDetailModal({ type, item, onClose, onEdit }) {
             <button
               onClick={() => onEdit(item)}
               className="btn-primary"
-              aria-label={`Modifier — ${item.title}`}
+              aria-label={`${t('common.edit')} — ${item.title}`}
             >
-              Modifier
+              {t('common.edit')}
             </button>
           )}
-          <button onClick={onClose} className="btn-ghost">Annuler</button>
+          <button onClick={onClose} className="btn-ghost">{t('common.cancel')}</button>
         </div>
       </div>
     </div>

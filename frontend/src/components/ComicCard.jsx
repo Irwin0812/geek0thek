@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { GRID_SIZES, coverAspect, coverFit, resolveCoverUrl, releaseDateFr } from './cards.js'
 import { releaseYear } from './listData.js'
 
@@ -25,6 +26,11 @@ export default function ComicCard({
   actions = null,
   onClick = null,
 }) {
+  // COMPOSANT PARTAGÉ (collections + Dashboard « Derniers ajouts ») : un libellé
+  // est traduit seulement si la clé EXISTE déjà dans les 6 locales (viewSheet,
+  // coverAltComic, collectionOf, releasedOn, volumeBadge, specialEdition,
+  // signed) — pas de clé neuve.
+  const { t } = useTranslation()
   const s = GRID_SIZES[size] || GRID_SIZES[compact ? 'sm' : 'md']
   const src = resolveCoverUrl('comic', comic.coverUrl)
   // Disposition des dates — sur le Dashboard (« Derniers ajouts »,
@@ -45,7 +51,7 @@ export default function ComicCard({
   return (
     <article
       data-card="comic"
-      aria-label={onClick ? `Voir la fiche de ${comic.title}` : undefined}
+      aria-label={onClick ? t('collection.viewSheet', { title: comic.title }) : undefined}
       className={`group relative flex flex-col overflow-hidden transition duration-500 ${
         jukebox
           ? 'rounded-lg border-2 border-gold-500/60 bg-night-900 shadow-lg shadow-gold-500/10 outline outline-1 outline-gold-500/25 '
@@ -76,7 +82,7 @@ export default function ComicCard({
         {src ? (
           <img
             src={src}
-            alt={`Couverture — ${comic.title}`}
+            alt={t('collection.coverAltComic', { title: comic.title })}
             loading="lazy"
             className={`h-full w-full ${coverFit('comic')} select-none transition duration-500 group-hover:scale-[1.04]`}
             onError={(e) => {
@@ -100,19 +106,19 @@ export default function ComicCard({
               )}
               {comic.isSpecialEdition && (
                 <span className="badge border border-gold-400/60 bg-gold-500/90 font-bold text-night-950">
-                  Édition Spéciale
+                  {t('collection.specialEdition')}
                 </span>
               )}
               {/* « Livre dédicacé » : badge distinct de l'édition spéciale */}
               {comic.isSigned && (
                 <span className="badge border border-orange-400/70 bg-orange-500/90 font-bold text-night-950">
-                  Dédicacé
+                  {t('collection.signed')}
                 </span>
               )}
             </div>
             {comic.owner && (
               <span className="badge border border-gold-500/30 bg-gold-500/15 text-gold-300 backdrop-blur">
-                Collection {comic.owner.lastName}
+                {t('collection.collectionOf', { name: comic.owner.lastName })}
               </span>
             )}
           </div>
@@ -122,9 +128,11 @@ export default function ComicCard({
         {jukebox && (
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-night-950/95 via-night-950/60 to-transparent px-3 pb-3 pt-10">
             {(comic.series || comic.tomeNumber) && (
+              // « Série · Tome N » — le tome passe par collection.volumeBadge
+              // (même clé que liste / modale détail).
               <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-gold-400/90">
                 {comic.series}
-                {comic.tomeNumber ? ` · Tome ${comic.tomeNumber}` : ''}
+                {comic.tomeNumber ? ` · ${t('collection.volumeBadge', { number: comic.tomeNumber })}` : ''}
               </p>
             )}
             {showTitle ? (
@@ -136,7 +144,7 @@ export default function ComicCard({
                 (dashboard) : seul repère de date de la vignette, le badge
                 d'année/d'ajout haut-gauche ayant été retiré sur le Dashboard. */}
             {showAddedDate && bottomLabel && (
-              <p className="mt-1 truncate text-[10px] font-medium text-gold-300/80">Sorti le {bottomLabel}</p>
+              <p className="mt-1 truncate text-[10px] font-medium text-gold-300/80">{t('collection.releasedOn', { date: bottomLabel })}</p>
             )}
           </div>
         )}
@@ -151,7 +159,7 @@ export default function ComicCard({
               title={comic.series}
             >
               {comic.series}
-              {comic.tomeNumber ? ` · Tome ${comic.tomeNumber}` : ''}
+              {comic.tomeNumber ? ` · ${t('collection.volumeBadge', { number: comic.tomeNumber })}` : ''}
             </p>
           )}
           {showTitle && (
@@ -177,7 +185,7 @@ export default function ComicCard({
               d'ajout haut-gauche ayant été retiré sur le Dashboard). */}
           {showAddedDate && bottomLabel && !actions && (
             <p className="mt-auto pt-1 text-[11px] font-medium text-slate-400" title={bottomLabel}>
-              Sorti le {bottomLabel}
+              {t('collection.releasedOn', { date: bottomLabel })}
             </p>
           )}
 

@@ -474,7 +474,7 @@ export default function AddVinyl() {
         }
         result = isEdit ? await api.vinyls.update(id, payload) : await api.vinyls.create(payload)
       }
-      navigate('/collection', { state: { toast: `${isEdit ? 'Disque mis à jour.' : '« ' + result.vinyl.title + ' » ajouté à votre collection.'}` } })
+      navigate('/collection', { state: { toastKey: isEdit ? 'collection.updatedVinyl' : 'collection.addedVinyl', title: isEdit ? undefined : result.vinyl.title } })
     } catch (err) {
       setError(err.message)
     } finally {

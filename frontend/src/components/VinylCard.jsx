@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { GRID_SIZES, coverAspect, coverFit, resolveCoverUrl, releaseDateFr } from './cards.js'
 import { releaseYear } from './listData.js'
@@ -25,6 +26,11 @@ export default function VinylCard({
   actions = null,
   onClick = null,
 }) {
+  // COMPOSANT PARTAGÉ (collections + Dashboard « Derniers ajouts ») : un libellé
+  // est traduit seulement si la clé EXISTE déjà dans les 6 locales (viewSheet,
+  // coverAltVinyl, collectionOf, releasedOn, tracksBadge) — pas de clé neuve
+  // « disques » qui y introduirait du vocabulaire de collection.
+  const { t } = useTranslation()
   const s = GRID_SIZES[size] || GRID_SIZES[compact ? 'sm' : 'md']
   const src = resolveCoverUrl('vinyl', vinyl.coverUrl)
   // Disposition des dates — sur le Dashboard (« Derniers ajouts »,
@@ -47,7 +53,7 @@ export default function VinylCard({
   return (
     <article
       data-card="vinyl"
-      aria-label={onClick ? `Voir la fiche de ${vinyl.title}` : undefined}
+      aria-label={onClick ? t('collection.viewSheet', { title: vinyl.title }) : undefined}
       className={`group relative flex flex-col overflow-hidden transition duration-500 ${
         jukebox
           ? 'rounded-lg border-2 border-gold-500/60 bg-night-900 shadow-lg shadow-gold-500/10 outline outline-1 outline-gold-500/25 '
@@ -80,7 +86,7 @@ export default function VinylCard({
         {src ? (
           <img
             src={src}
-            alt={`Jaquette — ${vinyl.title} (${vinyl.artist})`}
+            alt={t('collection.coverAltVinyl', { title: vinyl.title, artist: vinyl.artist })}
             loading="lazy"
             className={`h-full w-full ${coverFit('vinyl')} select-none transition duration-500 group-hover:scale-[1.04]`}
             onError={(e) => {
@@ -108,7 +114,7 @@ export default function VinylCard({
             )}
             {vinyl.owner && (
               <span className="badge border border-gold-500/30 bg-gold-500/15 text-gold-300 backdrop-blur">
-                Collection {vinyl.owner.lastName}
+                {t('collection.collectionOf', { name: vinyl.owner.lastName })}
               </span>
             )}
           </div>
@@ -127,7 +133,7 @@ export default function VinylCard({
                 (dashboard) : le badge d'année haut-gauche ayant été retiré,
                 elle est la seule information de date sur la vignette. */}
             {showAddedDate && bottomLabel && (
-              <p className="mt-1 truncate text-[10px] font-medium text-gold-300/80">Sorti le {bottomLabel}</p>
+              <p className="mt-1 truncate text-[10px] font-medium text-gold-300/80">{t('collection.releasedOn', { date: bottomLabel })}</p>
             )}
           </div>
         )}
@@ -160,8 +166,10 @@ export default function VinylCard({
           )}
 
           {size === 'md' && vinyl.trackCount > 0 && (
+            // « N titre(s) » traduit (clé plurielle existante) + suffixe brut
+            // « · n° {code-barres} » tel quel (comportement d'origine gardé).
             <p className="mt-1 text-xs text-slate-500">
-              {vinyl.trackCount} titre{vinyl.trackCount > 1 ? 's' : ''}
+              {t('collection.tracksBadge', { count: vinyl.trackCount })}
               {vinyl.barcode ? ` · n° ${vinyl.barcode}` : ''}
             </p>
           )}
@@ -171,7 +179,7 @@ export default function VinylCard({
               haut-gauche ayant été retiré sur le Dashboard. */}
           {showAddedDate && bottomLabel && !actions && (
             <p className="mt-auto pt-1 text-[11px] font-medium text-slate-400" title={bottomLabel}>
-              Sorti le {bottomLabel}
+              {t('collection.releasedOn', { date: bottomLabel })}
             </p>
           )}
 

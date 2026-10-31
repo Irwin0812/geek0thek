@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SearchIcon } from './icons.jsx'
-
-const BASE_PLACEHOLDER = 'Rechercher dans ma collection…'
 
 /**
  * Champ de recherche des pages de collection (« Mes Disques », « Mes BD »).
@@ -23,7 +22,9 @@ const BASE_PLACEHOLDER = 'Rechercher dans ma collection…'
  *   texte (invisible, mêmes contraintes de largeur que le champ) permet de
  *   calculer la distance et d'animer uniquement si le texte déborde.
  */
-export default function CollectionSearch({ value, onChange, placeholder = BASE_PLACEHOLDER }) {
+export default function CollectionSearch({ value, onChange, placeholder }) {
+  const { t } = useTranslation()
+  const effectivePlaceholder = placeholder ?? t('collection.searchPlaceholder')
   const measureRef = useRef(null)
   const [marquee, setMarquee] = useState(null) // { distance, duration } | null
 
@@ -63,7 +64,7 @@ export default function CollectionSearch({ value, onChange, placeholder = BASE_P
       {marquee && (
         <span aria-hidden="true" className="pointer-events-none absolute left-10 right-10 top-0 z-10 flex h-full items-center overflow-hidden">
           <span className="animate-marquee block w-max whitespace-nowrap text-sm text-slate-500" style={style}>
-            {placeholder}
+            {effectivePlaceholder}
           </span>
         </span>
       )}
@@ -73,7 +74,7 @@ export default function CollectionSearch({ value, onChange, placeholder = BASE_P
       <input
         tabIndex={marquee ? -1 : undefined}
         className="input h-12 !px-10 !rounded-xl"
-        placeholder={marquee ? '' : placeholder}
+        placeholder={marquee ? '' : effectivePlaceholder}
         value={value}
         onChange={onChange}
       />
@@ -85,7 +86,7 @@ export default function CollectionSearch({ value, onChange, placeholder = BASE_P
         aria-hidden="true"
         className="pointer-events-none absolute left-10 right-10 top-1/2 -translate-y-1/2 overflow-hidden opacity-0"
       >
-        <span className="block w-max whitespace-nowrap text-sm">{placeholder}</span>
+        <span className="block w-max whitespace-nowrap text-sm">{effectivePlaceholder}</span>
       </span>
     </div>
   )

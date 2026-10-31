@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FallbackCover as ComicFallback } from './ComicCard.jsx'
 import { FallbackCover as VinylFallback } from './VinylCard.jsx'
 import { coverAspect, resolveCoverUrl } from './cards.js'
@@ -44,10 +45,17 @@ export default function GroupCard({
   size = 'md',
   showTitle = true,
   showAddedDate = false,
+  isUnlabeled = false,
   onClick = null,
   actions = null,
 }) {
+  const { t } = useTranslation()
   const isVinyl = variant === 'vinyl'
+  // « Hors série » / « Divers » : le NOM interne (NO_SERIES_LABEL / NO_ARTIST_LABEL)
+  // reste inchangé pour la logique (groupement, pré-remplissage) ; seul l'affichage
+  // est traduit via `isUnlabeled` (flag posé par groupComicsBySeries /
+  // groupVinylsByArtist).
+  const displayName = isUnlabeled ? t(isVinyl ? 'collection.groupNoArtist' : 'collection.groupNoSeries') : name
   const jukebox = view === 'jukebox'
   // Tuiles du Dashboard « Derniers ajouts » (mode `showAddedDate`) : même
   // effet de SURVOL LUMINEUX ARGENTÉ que VinylCard / ComicCard — bordure gris
@@ -83,7 +91,7 @@ export default function GroupCard({
 
   return (
     <article
-      aria-label={onClick ? `Voir les ${isVinyl ? 'disques' : 'albums'} de ${name}` : undefined}
+      aria-label={onClick ? t(isVinyl ? 'collection.viewGroupVinyls' : 'collection.viewGroupComics', { name: displayName }) : undefined}
       className={`group relative flex flex-col overflow-hidden transition duration-500 ${
         jukebox
           ? 'rounded-lg border-2 border-gold-500/60 bg-night-900 shadow-lg shadow-gold-500/10 outline outline-1 outline-gold-500/25 '
@@ -111,7 +119,7 @@ export default function GroupCard({
           // overflow-hidden — quel que soit le domaine (disques / BD).
           <img
             src={resolvedCover}
-            alt={`« ${name} »`}
+            alt={`« ${displayName} »`}
             loading="lazy"
             className="h-full w-full object-cover select-none transition duration-500 group-hover:scale-[1.04]"
             onError={(e) => {
@@ -119,9 +127,9 @@ export default function GroupCard({
             }}
           />
         ) : isVinyl ? (
-          <VinylFallback artist={name} />
+          <VinylFallback artist={displayName} />
         ) : (
-          <ComicFallback title={name} />
+          <ComicFallback title={displayName} />
         )}
 
         {/* Bandeau dégradé : nom du groupe + nombre d'éléments */}
@@ -130,13 +138,13 @@ export default function GroupCard({
             {showTitle && (
               <h3 className={`line-clamp-2 font-extrabold leading-tight text-white ${
                 size === 'sm' ? 'text-sm' : 'text-base'
-              }`} title={name}>
-                {name}
+              }`} title={displayName}>
+                {displayName}
               </h3>
             )}
             {count != null && (
               <p className={`mt-0.5 font-semibold text-gold-300 ${size === 'sm' ? 'text-[10px]' : 'text-xs'}`}>
-                {count} {count > 1 ? (isVinyl ? 'disques' : 'albums') : isVinyl ? 'disque' : 'album'}
+                {t(isVinyl ? 'collection.vinylsCount' : 'collection.albumsCount', { count })}
               </p>
             )}
           </div>

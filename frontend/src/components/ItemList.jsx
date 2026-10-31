@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useDismiss } from './hooks.js'
 import {
   releaseYear,
@@ -62,10 +63,11 @@ function Row({ type, item, actions, onAction, onDetail, showTitle, showYear, sho
      z-10 (voir className de <article>) pour que le panneau absolu s'affiche
      au-dessus des cartes des lignes suivantes. */
   const [menuOpen, setMenuOpen] = useState(false)
+  const { t } = useTranslation()
   const verified = isVerified(type, item)
   const subtitles = hasSubtitles(type, item)
   const year = releaseYear(item)
-  const badges = itemBadges(type, item)
+  const badges = itemBadges(type, item, t)
   const src = resolveImageUrl(type, item.coverUrl)
   const title = item.title
   const subtitle = type === 'vinyl' ? item.artist : item.authors
@@ -87,7 +89,7 @@ function Row({ type, item, actions, onAction, onDetail, showTitle, showYear, sho
         className={`group/item card flex items-center gap-3 px-3 py-2 cursor-pointer transition
           hover:border-gold-500/40 hover:bg-night-700/40 ${menuOpen ? 'relative z-10' : ''}`}
         onClick={() => onDetail?.(item)}
-        aria-label={showTitle ? `Voir la fiche de ${title}` : undefined}
+        aria-label={showTitle ? t('collection.viewSheet', { title }) : undefined}
       >
         {/* Miniature */}
         <div
@@ -136,7 +138,7 @@ function Row({ type, item, actions, onAction, onDetail, showTitle, showYear, sho
               {subtitle}
             </span>
           )}
-          {showTitle && <StarIcon placeholder />}
+          {showTitle && <StarIcon title={t('collection.rateSoon')} />}
         </div>
 
         {/* Badges d'information (alignés à droite) */}
@@ -155,20 +157,20 @@ function Row({ type, item, actions, onAction, onDetail, showTitle, showYear, sho
           {verified && (
             <button
               className="icon-btn"
-              title="Validé — identifiant vérifié présent"
+              title={t('collection.verifiedHint')}
               onClick={stop(() => onDetail?.(item))}
             >
               <CheckIcon size={15} className="text-gold-400" />
             </button>
           )}
           {subtitles && (
-            <span className="icon-btn" title="Sous-titres mentionnés">
+            <span className="icon-btn" title={t('collection.subtitlesHint')}>
               <CCIcon size={15} className="text-slate-400" />
             </span>
           )}
           <button
             className="icon-btn"
-            title={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            title={fav ? t('collection.removeFavorite') : t('collection.addFavorite')}
             onClick={stop(() => setFav((v) => !v))}
           >
             <HeartIcon size={15} filled={fav} className={fav ? 'text-rose-400' : 'text-slate-400'} />
@@ -195,11 +197,11 @@ function Row({ type, item, actions, onAction, onDetail, showTitle, showYear, sho
 }
 
 /** Étoile de note (réservée — les notes n'existent pas encore en données). */
-function StarIcon({ placeholder = true }) {
+function StarIcon({ title }) {
   return (
     <span
       className="hidden shrink-0 text-slate-600 lg:inline"
-      title={placeholder ? 'Note — à venir' : undefined}
+      title={title}
     >
       <svg
         width="13"
@@ -237,6 +239,7 @@ function Badge({ badge }) {
  *  on notifie la ligne (onOpenChange → z-index de la carte active : voir Row). */
 function ActionsMenu({ actions, onAction, onOpenChange }) {
   const [open, setOpen] = useState(false)
+  const { t } = useTranslation()
 
   /* Notifie la ligne : tant que le menu est ouvert, la carte active de la
      ligne se peint au-dessus des cartes suivantes (z-10 sur <article>, voir Row). */
@@ -254,7 +257,7 @@ function ActionsMenu({ actions, onAction, onOpenChange }) {
     <div className="relative flex" ref={ref}>
       <button
         className="icon-btn"
-        title="Plus d'actions"
+        title={t('collection.moreActions')}
         aria-haspopup="true"
         aria-expanded={open}
         onClick={(e) => {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
 import VinylCard, { EmptyState } from '../components/VinylCard.jsx'
 import GroupCard from '../components/GroupCard.jsx'
@@ -22,20 +23,24 @@ import { PencilIcon, TrashIcon } from '../components/icons.jsx'
 export default function Collection() {
   const location = useLocation()
   const { settings } = useDisplay()
+  const { t } = useTranslation()
   const [vinyls, setVinyls] = useState([])
   const [q, setQ] = useState('')
   const [loadError, setLoadError] = useState('')
   const [detailVinyl, setDetailVinyl] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
-  const [toast, setToast] = useState('')
+  // Toast structural { key, params } → `t(key, params)` traduit en langue
+  // courante. Sources : `location.state` émise par AddVinyl ({ toastKey,
+  // title }) et la suppression locale de cette page (common.retiredVinyl).
+  const [toast, setToast] = useState(null)
   // Clé du groupe (artiste) ouvert au niveau 2, null pour la vue principale (niveau 1)
   const [openGroup, setOpenGroup] = useState(null)
 
   useEffect(() => {
-    if (location.state?.toast) {
-      setToast(location.state.toast)
-      const t = setTimeout(() => setToast(''), 4000)
-      return () => clearTimeout(t)
+    if (location.state?.toastKey) {
+      setToast({ key: location.state.toastKey, params: location.state.title ? { title: location.state.title } : null })
+      const timer = setTimeout(() => setToast(null), 4000)
+      return () => clearTimeout(timer)
     }
   }, [location.state])
 
@@ -65,8 +70,8 @@ export default function Collection() {
     try {
       await api.vinyls.remove(vinyl.id)
       setConfirmDelete(null)
-      setToast(`« ${vinyl.title} » a été retiré de votre collection.`)
-      setTimeout(() => setToast(''), 3500)
+      setToast({ key: 'common.retiredVinyl', params: { title: vinyl.title } })
+      setTimeout(() => setToast(null), 3500)
       load()
     } catch (err) {
       alert(err.message)
@@ -83,8 +88,8 @@ export default function Collection() {
   const isList = settings.view === 'list'
   const cardView = settings.jukebox ? 'jukebox' : 'card'
   const listActions = [
-    { value: 'edit', label: 'Modifier', icon: <PencilIcon size={15} /> },
-    { value: 'remove', label: 'Supprimer', icon: <TrashIcon size={15} />, danger: true },
+    { value: 'edit', label: t('common.edit'), icon: <PencilIcon size={15} /> },
+    { value: 'remove', label: t('common.delete'), icon: <TrashIcon size={15} />, danger: true },
   ]
   const onAction = (value, v) => (value === 'edit' ? window.location.assign(`/vinyles/${v.id}`) : setConfirmDelete(v))
   const openDetail = (v) => setDetailVinyl(v)
@@ -94,15 +99,33 @@ export default function Collection() {
     showYear: settings.showYear,
   }
   const gridCls = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+  // Nom AFFICHÉ du groupe niveau 2 : « Divers » si non étiqueté, sinon son nom.
+  const currentGroupName = currentGroup
+    ? (currentGroup.isUnlabeled ? t('collection.groupNoArtist') : currentGroup.name)
+    : ''
+
+  // Modale de suppression : fragments traduits (titre isolé dans parts[1] pour
+  // être rendu en `<span>` en gras) ; le 4ᵉ fragment (« jaquette locale… »)
+  // n'apparaît que si la cover est une image LOCALE (/uploads/…).
+  const vinylDeleteParts = confirmDelete
+    ? t('collection.deleteVinylBodyParts', {
+        title: confirmDelete.title,
+        artist: confirmDelete.artist,
+        returnObjects: true,
+      }) || []
+    : []
+  const vinylDeleteHasLocalCover = confirmDelete
+    ? String(confirmDelete.coverUrl || '').startsWith('/uploads/')
+    : false
   const gridActions = (v) => (
     <div className="flex gap-2">
-      <Link to={`/vinyles/${v.id}`} className="btn-ghost flex-1 !py-1.5">Modifier</Link>
+      <Link to={`/vinyles/${v.id}`} className="btn-ghost flex-1 !py-1.5">{t('common.edit')}</Link>
       <button
         className="btn-danger !py-1.5"
         onClick={() => setConfirmDelete(v)}
         disabled={confirmDelete?.id === v.id}
       >
-        Supprimer
+        {t('common.delete')}
       </button>
     </div>
   )
@@ -112,10 +135,14 @@ export default function Collection() {
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           {/* Nomenclature officielle (i18n navbar.myVinyls) : « Mes Disques ». */}
-           <h1 className="text-2xl md:text-3xl font-extrabold text-white">Mes Disques</h1>
+           <h1 className="text-2xl md:text-3xl font-extrabold text-white">{t('navbar.myVinyls')}</h1>
+          {/* Introduction composée : compteur disques + « regroupé(s) en » +
+              compteur artistes + phrase d'aide (4 clés au lieu d'une monolithe). */}
           <p className="text-sm text-slate-400 mt-1">
-            {vinyls.length} disque{vinyls.length > 1 ? 's' : ''} regroupé{vinyls.length > 1 ? 's' : ''} en{' '}
-            {groups.length} artist{groups.length > 1 ? 'es' : 'e'} — cliquez sur un artiste pour voir ses disques.
+            {t('collection.vinylsCount', { count: vinyls.length })}{' '}
+            {(vinyls.length === 1 ? t('collection.groupedOne') : t('collection.groupedOther'))}{' '}
+            {t('collection.artistsCount', { count: groups.length })}
+            {t('collection.introVinylsTail')}
           </p>
         </div>
         {/* Barre d'actions : UNE seule ligne (recherche → vue → ajout), hauteurs
@@ -124,13 +151,13 @@ export default function Collection() {
         <div className="flex flex-wrap items-center gap-3">
           <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
           <ViewToolbar />
-          <Link to="/vinyles/nouveau" className="btn-primary !h-12">Ajouter un disque</Link>
+          <Link to="/vinyles/nouveau" className="btn-primary !h-12">{t('dashboard.addVinyl')}</Link>
         </div>
       </header>
 
       {toast && (
         <p className="text-sm text-amber-800 bg-amber-100 border border-amber-500/30 rounded-lg px-3 py-2">
-          {toast}
+          {t(toast.key, toast.params ?? {})}
         </p>
       )}
 
@@ -139,15 +166,15 @@ export default function Collection() {
       ) : vinyls.length === 0 ? (
         <div className="grid grid-cols-1 gap-4">
           <EmptyState
-            title={q ? 'Aucun résultat' : 'Aucun disque pour l’instant'}
+            title={q ? t('collection.noResults') : t('collection.emptyVinylTitle')}
             subtitle={q
-              ? `Aucun disque ne correspond à « ${q} ».`
-              : 'Commencez par ajouter un disque en saisie manuelle ou via un code-barres (MusicBrainz + Discogs).'}
+              ? t('collection.noVinylMatch', { q })
+              : t('collection.emptyVinylSubtitle')}
             action={
               q ? (
-                <button className="btn-ghost" onClick={() => setQ('')}>Réinitialiser la recherche</button>
+                <button className="btn-ghost" onClick={() => setQ('')}>{t('collection.resetSearch')}</button>
               ) : (
-                <Link to="/vinyles/nouveau" className="btn-primary">Ajouter un disque</Link>
+                <Link to="/vinyles/nouveau" className="btn-primary">{t('dashboard.addVinyl')}</Link>
               )
             }
           />
@@ -183,30 +210,31 @@ export default function Collection() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <button className="btn-ghost" onClick={() => setOpenGroup(null)}>← Tous les artistes</button>
+              <button className="btn-ghost" onClick={() => setOpenGroup(null)}>{t('collection.allArtists')}</button>
               <div>
-                <h2 className="text-xl font-extrabold text-white" title={currentGroup.name}>
-                  {currentGroup.name}
+                {/* Nom du groupe (« Divers » si non étiqueté) + compteur disques. */}
+                <h2 className="text-xl font-extrabold text-white" title={currentGroupName}>
+                  {currentGroupName}
                 </h2>
                 <p className="text-sm text-slate-400">
-                  {currentGroup.items.length} disque{currentGroup.items.length > 1 ? 's' : ''}
+                  {t('collection.vinylsCount', { count: currentGroup.items.length })}
                   {currentGroup.items[0]?.label ? ` — ${currentGroup.items[0].label}` : ''}
                 </p>
               </div>
             </div>
             <button className="btn-ghost" onClick={() => addForGroup(currentGroup)}>
-              + Ajouter pour cet artiste
+              {t('collection.addForArtist')}
             </button>
           </div>
 
           {currentGroup.items.length === 0 ? (
             <div className="grid grid-cols-1 gap-4">
               <EmptyState
-                title="Artiste vide"
-                subtitle={`Aucun disque n'est attribué à « ${currentGroup.name} » pour le moment.`}
+                title={t('collection.emptyArtistTitle')}
+                subtitle={t('collection.emptyArtistSubtitle', { name: currentGroupName })}
                 action={
                   <button className="btn-primary" onClick={() => addForGroup(currentGroup)}>
-                    + Ajouter un disque
+                    {t('dashboard.addVinyl')}
                   </button>
                 }
               />
@@ -266,6 +294,7 @@ export default function Collection() {
                 variant="vinyl"
                 view={cardView}
                 showTitle={settings.showTitle}
+                isUnlabeled={g.isUnlabeled}
                 onClick={() => setOpenGroup(g.key)}
               />
             ))}
@@ -282,16 +311,14 @@ export default function Collection() {
       {confirmDelete && (
         <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-slate-900/40 backdrop-blur-sm">
           <div className="card w-full max-w-md p-6">
-            <h2 className="text-lg font-bold text-white text-center">Supprimer ce disque ?</h2>
+            <h2 className="text-lg font-bold text-white text-center">{t('collection.deleteVinylTitle')}</h2>
             <p className="mt-2 text-sm text-slate-400">
-              « <span className="font-semibold text-white">{confirmDelete.title}</span> » de {confirmDelete.artist} sera
-              définitivement retiré.{String(confirmDelete.coverUrl || '').startsWith('/uploads/') &&
-                ' Sa jaquette locale sera également supprimée du disque.'}
+              {vinylDeleteParts[0]}<span className="font-semibold text-white">{vinylDeleteParts[1]}</span>{vinylDeleteParts[2] || ''}{vinylDeleteHasLocalCover ? (vinylDeleteParts[3] || '') : ''}
             </p>
             <div className="mt-5 flex justify-end gap-2">
-              <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>Annuler</button>
+              <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>{t('common.cancel')}</button>
               <button className="btn-danger" disabled={confirmDelete.deleting} onClick={() => remove(confirmDelete)}>
-                Oui, supprimer
+                {t('common.confirmDelete')}
               </button>
             </div>
           </div>

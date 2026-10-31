@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
 import { useAuth } from '../App.jsx'
 import { SUPPORTED_LANGUAGES } from '../i18n/i18n.js'
 import Avatar, { AvatarCropModal, revokePreviewUrl } from '../components/Avatar.jsx'
 
-const GENDERS = [
-  { value: 'H', label: 'H' },
-  { value: 'F', label: 'F' },
-  { value: 'O', label: 'Autre' },
-]
+// Valeurs stockées (colonnes `users.gender`) ; H / F sont des valeurs de
+// données affichées telles quelles — seul « Autre » passe par i18n.
+const GENDER_VALUES = ['H', 'F', 'O']
 
 // Contrôles client des images de profil (re-faits côté backend)
 const AVATAR_ACCEPTED = {
@@ -20,11 +19,15 @@ const AVATAR_ACCEPTED = {
 const AVATAR_MAX_MB = 10
 
 function validateAvatarFile(file) {
+  // Renvoie { key, params } — la traduction est faite par l'appelant (t()).
   if (!AVATAR_ACCEPTED[file.type]) {
-    return `Format non accepté : ${file.type || 'inconnu'}. Formats acceptés : JPG, PNG, WEBP ou GIF.`
+    return { key: 'profile.formatNotAccepted', params: { type: file.type || 'inconnu' } }
   }
   if (file.size > AVATAR_MAX_MB * 1024 * 1024) {
-    return `Fichier trop volumineux (${(file.size / 1024 / 1024).toFixed(1)} Mo). Maximum : ${AVATAR_MAX_MB} Mo.`
+    return {
+      key: 'profile.fileTooLarge',
+      params: { size: (file.size / 1024 / 1024).toFixed(1), max: AVATAR_MAX_MB },
+    }
   }
   return null
 }
@@ -45,19 +48,20 @@ const EMPTY = {
 
 export default function AdminUsers() {
   const { user: me, refresh } = useAuth()
+  const { t } = useTranslation()
   const [users, setUsers] = useState([])
   const [loadError, setLoadError] = useState('')
   const [form, setForm] = useState(EMPTY)
   const [formOpen, setFormOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState(null) // { key, params } → traduit via t()
   const [editTarget, setEditTarget] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [editForm, setEditForm] = useState({})
   const [editAvatarFile, setEditAvatarFile] = useState(null) // { url, file }
   const [editAvatarRemoving, setEditAvatarRemoving] = useState(false)
-  const [editAvatarError, setEditAvatarError] = useState('')
+  const [editAvatarError, setEditAvatarError] = useState(null) // { key, params }
   const [editCropOpen, setEditCropOpen] = useState(false)
   const editFileInput = useRef(null)
 
@@ -86,9 +90,11 @@ export default function AdminUsers() {
   }
   useEffect(() => { load() }, [])
 
-  const flash = (msg) => {
-    setToast(msg)
-    setTimeout(() => setToast(''), 3500)
+  // Toast structural { key, params } : traduit via t() au rendu (la
+  // langue est celle en vigueur à l'affichage, pas au déclenchement).
+  const flash = (key, params = null) => {
+    setToast({ key, params })
+    setTimeout(() => setToast(null), 3500)
   }
 
   const set = (key) => (e) =>
@@ -112,7 +118,7 @@ export default function AdminUsers() {
       })
       setForm(EMPTY)
       setFormOpen(false)
-      flash(`Compte ${created.login} créé.`)
+      flash('adminUsers.toastCreated', { login: created.login })
       load()
     } catch (err) {
       setError(err.message)
@@ -142,7 +148,7 @@ export default function AdminUsers() {
     })
     setEditAvatarFile(null)
     setEditAvatarRemoving(false)
-    setEditAvatarError('')
+    setEditAvatarError(null)
     setEditCropOpen(false)
     setError('')
   }
@@ -158,7 +164,7 @@ export default function AdminUsers() {
     setEditTarget(null)
     setEditAvatarFile(null)
     setEditAvatarRemoving(false)
-    setEditAvatarError('')
+    setEditAvatarError(null)
     setError('')
   }
 
@@ -177,7 +183,7 @@ export default function AdminUsers() {
     const file = e.target.files && e.target.files[0]
     e.target.value = '' // permet de re-sélectionner le même fichier
     if (!file) return
-    setEditAvatarError('')
+    setEditAvatarError(null)
     setError('')
     const problem = validateAvatarFile(file)
     if (problem) {
@@ -213,7 +219,7 @@ export default function AdminUsers() {
     if (previous) revokePreviewUrl(previous.url)
     setEditAvatarFile({ url: URL.createObjectURL(croppedFile), file: croppedFile })
     setEditAvatarRemoving(false)
-    setEditAvatarError('')
+    setEditAvatarError(null)
     if (editFileInput.current) editFileInput.current.value = ''
   }
 
@@ -249,7 +255,7 @@ export default function AdminUsers() {
     } else {
       setEditAvatarRemoving(!editAvatarRemoving)
     }
-    setEditAvatarError('')
+    setEditAvatarError(null)
     setError('')
     if (editFileInput.current) editFileInput.current.value = ''
   }
@@ -316,9 +322,9 @@ export default function AdminUsers() {
       setEditTarget(null)
       setEditAvatarRemoving(false)
       setError('')
-      setEditAvatarError('')
+      setEditAvatarError(null)
       if (editFileInput.current) editFileInput.current.value = ''
-      flash('Compte mis à jour.')
+      flash('adminUsers.accountUpdated')
       load()
       // L'admin a modifié ses propres infos (nom, email, avatar…) ?
       if (updated.id === me.id) refresh()
@@ -332,7 +338,7 @@ export default function AdminUsers() {
   const remove = async () => {
     try {
       await api.users.remove(deleteTarget.id)
-      flash(`Compte ${deleteTarget.login} supprimé (et sa collection).`)
+      flash('adminUsers.toastDeleted', { login: deleteTarget.login })
       setDeleteTarget(null)
       load()
       if (deleteTarget.id === me.id) refresh()
@@ -341,55 +347,65 @@ export default function AdminUsers() {
     }
   }
 
+  // Corps de la modale de suppression : fragments traduits via deleteBody{count}
+  // (tableau — login isolé dans [1] pour `<span>`), pluriel disques géré par i18n.
+  const deleteAccountParts = deleteTarget
+    ? t('adminUsers.deleteBody', {
+        login: deleteTarget.login,
+        count: deleteTarget.vinylCount || 0,
+        returnObjects: true,
+      }) || []
+    : []
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-white">Gestion des utilisateurs</h1>
+          <h1 className="text-2xl font-extrabold text-white">{t('adminUsers.title')}</h1>
           <p className="text-sm text-slate-400 mt-1">
-            {users.length} compte{users.length > 1 ? 's' : ''} — seuls les administrateurs peuvent créer des comptes.
+            {t('adminUsers.subtitle', { count: users.length })}
           </p>
         </div>
         <button className="btn-primary" onClick={() => setFormOpen((v) => !v)}>
-          + Nouvel utilisateur
+          {t('adminUsers.newUser')}
         </button>
       </header>
 
       {toast && (
-        <p className="text-sm text-gold-300 bg-gold-500/10 border border-gold-500/30 rounded-lg px-3 py-2">{toast}</p>
+        <p className="text-sm text-gold-300 bg-gold-500/10 border border-gold-500/30 rounded-lg px-3 py-2">{t(toast.key, toast.params ?? {})}</p>
       )}
 
       {formOpen && (
         <form onSubmit={submitCreate} className="card p-6 space-y-4">
-          <h2 className="font-bold text-white">Créer un compte</h2>
+          <h2 className="font-bold text-white">{t('adminUsers.createTitle')}</h2>
           {error && <p className="text-sm text-rose-400">{error}</p>}
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Nom *"><input className="input" value={form.lastName} onChange={set('lastName')} required /></Field>
-            <Field label="Prénom *"><input className="input" value={form.firstName} onChange={set('firstName')} required /></Field>
-            <Field label="E-mail *"><input className="input" type="email" value={form.email} onChange={set('email')} required /></Field>
-            <Field label="Identifiant (login) *"><input className="input" value={form.login} onChange={set('login')} required /></Field>
-            <Field label="Mot de passe *">
-              <input className="input" type="password" value={form.password} onChange={set('password')} minLength="8" required placeholder="8 caractères minimum" />
+            <Field label={t('profile.lastName')}><input className="input" value={form.lastName} onChange={set('lastName')} required /></Field>
+            <Field label={t('profile.firstName')}><input className="input" value={form.firstName} onChange={set('firstName')} required /></Field>
+            <Field label={t('profile.email')}><input className="input" type="email" value={form.email} onChange={set('email')} required /></Field>
+            <Field label={t('adminUsers.loginField')}><input className="input" value={form.login} onChange={set('login')} required /></Field>
+            <Field label={t('adminUsers.passwordField')}>
+              <input className="input" type="password" value={form.password} onChange={set('password')} minLength="8" required placeholder={t('profile.minChars')} />
             </Field>
-            <Field label="Rôle">
+            <Field label={t('adminUsers.role')}>
               <select className="input" value={form.role} onChange={set('role')}>
-                <option value="user">user</option>
-                <option value="admin">admin</option>
+                <option value="user">{t('navbar.roleUser')}</option>
+                <option value="admin">{t('navbar.roleAdmin')}</option>
               </select>
             </Field>
-            <Field label="Langue préférée">
+            <Field label={t('adminUsers.preferredLanguage')}>
               <select className="input" value={form.language} onChange={set('language')}>
                 {SUPPORTED_LANGUAGES.map((lang) => (
                   <option key={lang.code} value={lang.code}>{lang.label}</option>
                 ))}
               </select>
             </Field>
-            <Field label="Téléphone (optionnel)"><input className="input" value={form.phone} onChange={set('phone')} /></Field>
-            <Field label="Bio / note (optionnel)"><input className="input" value={form.bio} onChange={set('bio')} /></Field>
+            <Field label={t('adminUsers.phoneOptional')}><input className="input" value={form.phone} onChange={set('phone')} /></Field>
+            <Field label={t('adminUsers.bioOptional')}><input className="input" value={form.bio} onChange={set('bio')} /></Field>
           </div>
           <div className="flex gap-2">
-            <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Création…' : 'Créer le compte'}</button>
-            <button type="button" className="btn-ghost" onClick={() => { setFormOpen(false); setError('') }}>Annuler</button>
+            <button type="submit" className="btn-primary" disabled={saving}>{saving ? t('adminUsers.creating') : t('adminUsers.createBtn')}</button>
+            <button type="button" className="btn-ghost" onClick={() => { setFormOpen(false); setError('') }}>{t('common.cancel')}</button>
           </div>
         </form>
       )}
@@ -401,13 +417,13 @@ export default function AdminUsers() {
           <table className="w-full text-sm min-w-[760px]">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wider text-slate-500 border-b border-night-600/60">
-                <th className="px-4 py-3">Membre</th>
-                <th className="px-4 py-3">Login</th>
-                <th className="px-4 py-3">Rôle</th>
-                <th className="px-4 py-3">Collection</th>
-                <th className="px-4 py-3">Statut</th>
-                <th className="px-4 py-3">Disques</th>
-                <th className="px-4 py-3">BD</th>
+                <th className="px-4 py-3">{t('adminUsers.colMember')}</th>
+                <th className="px-4 py-3">{t('adminUsers.colLogin')}</th>
+                <th className="px-4 py-3">{t('adminUsers.colRole')}</th>
+                <th className="px-4 py-3">{t('adminUsers.colCollection')}</th>
+                <th className="px-4 py-3">{t('adminUsers.colStatus')}</th>
+                <th className="px-4 py-3">{t('adminUsers.colVinyls')}</th>
+                <th className="px-4 py-3">{t('adminUsers.colComics')}</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -420,7 +436,7 @@ export default function AdminUsers() {
                       <div>
                         <div className="font-semibold text-slate-100">
                           {u.firstName} {u.lastName}
-                          {u.id === me.id && <span className="ml-2 text-xs text-slate-500">(vous)</span>}
+                          {u.id === me.id && <span className="ml-2 text-xs text-slate-500">{t('adminUsers.you')}</span>}
                         </div>
                         <div className="text-xs text-slate-500">{u.email}{u.phone ? ` · ${u.phone}` : ''}</div>
                       </div>
@@ -434,12 +450,12 @@ export default function AdminUsers() {
                   </td>
                   <td className="px-4 py-3">
                     <span className={`badge ${u.isPublic ? 'bg-emerald-500/15 text-emerald-300' : 'bg-night-700 text-slate-400'}`}>
-                      {u.isPublic ? 'publique' : 'privée'}
+                      {t(u.isPublic ? 'adminUsers.collectionPublic' : 'adminUsers.collectionPrivate')}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`badge ${u.isActive ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}>
-                      {u.isActive ? 'actif' : 'désactivé'}
+                      {t(u.isActive ? 'adminUsers.statusActive' : 'adminUsers.statusDisabled')}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-slate-300">{u.vinylCount ?? '—'}</td>
@@ -447,11 +463,11 @@ export default function AdminUsers() {
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     {u.id !== me.id ? (
                       <>
-                        <button className="btn-ghost !py-1 !px-2 mr-1" onClick={() => openEdit(u)}>Modifier</button>
-                        <button className="btn-danger !py-1 !px-2" onClick={() => setDeleteTarget(u)}>Supprimer</button>
+                        <button className="btn-ghost !py-1 !px-2 mr-1" onClick={() => openEdit(u)}>{t('common.edit')}</button>
+                        <button className="btn-danger !py-1 !px-2" onClick={() => setDeleteTarget(u)}>{t('common.delete')}</button>
                       </>
                     ) : (
-                      <span className="text-xs text-slate-600">votre compte</span>
+                      <span className="text-xs text-slate-600">{t('adminUsers.yourAccount')}</span>
                     )}
                   </td>
                 </tr>
@@ -465,39 +481,40 @@ export default function AdminUsers() {
       {editTarget && (
         <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-night-950/80 backdrop-blur-sm overflow-y-auto">
           <form onSubmit={submitEdit} className="card w-full max-w-xl p-6 space-y-4">
-            <h2 className="font-bold text-white">Modifier {editTarget.login}</h2>
+            <h2 className="font-bold text-white">{t('adminUsers.editModalTitle', { login: editTarget.login })}</h2>
             {error && <p className="text-sm text-rose-400">{error}</p>}
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Nom"><input className="input" value={editForm.lastName} onChange={setEdit('lastName')} /></Field>
-              <Field label="Prénom"><input className="input" value={editForm.firstName} onChange={setEdit('firstName')} /></Field>
-              <Field label="E-mail"><input className="input" type="email" value={editForm.email} onChange={setEdit('email')} /></Field>
-              <Field label="Login"><input className="input" value={editForm.login} onChange={setEdit('login')} /></Field>
-              <Field label="Téléphone"><input className="input" value={editForm.phone} onChange={setEdit('phone')} /></Field>
-              <Field label="Sexe">
+              <Field label={t('adminUsers.lastName')}><input className="input" value={editForm.lastName} onChange={setEdit('lastName')} /></Field>
+              <Field label={t('adminUsers.firstName')}><input className="input" value={editForm.firstName} onChange={setEdit('firstName')} /></Field>
+              <Field label={t('adminUsers.emailLabel')}><input className="input" type="email" value={editForm.email} onChange={setEdit('email')} /></Field>
+              <Field label={t('adminUsers.loginLabel')}><input className="input" value={editForm.login} onChange={setEdit('login')} /></Field>
+              <Field label={t('adminUsers.phoneLabel')}><input className="input" value={editForm.phone} onChange={setEdit('phone')} /></Field>
+              <Field label={t('adminUsers.genderField')}>
                 <select className="input" value={editForm.gender} onChange={setEdit('gender')}>
-                  <option value="">— Indifférent —</option>
-                  {GENDERS.map((g) => (
-                    <option key={g.value} value={g.value}>{g.label}</option>
+                  <option value="">{t('adminUsers.genderIndiff')}</option>
+                  {GENDER_VALUES.filter((g) => g !== 'O').map((g) => (
+                    <option key={g} value={g}>{g}</option>
                   ))}
+                  <option value="O">{t('profile.genderOther')}</option>
                 </select>
               </Field>
-              <Field label="Date de naissance">
+              <Field label={t('adminUsers.birthDate')}>
                 <input className="input" type="date" value={editForm.birthDate} onChange={setEdit('birthDate')} />
               </Field>
-              <Field label="Pays"><input className="input" value={editForm.country} onChange={setEdit('country')} /></Field>
+              <Field label={t('adminUsers.country')}><input className="input" value={editForm.country} onChange={setEdit('country')} /></Field>
             </div>
-            <Field label="Adresse"><input className="input" value={editForm.address} onChange={setEdit('address')} /></Field>
-            <Field label="Bio / note"><input className="input" value={editForm.bio} onChange={setEdit('bio')} /></Field>
+            <Field label={t('adminUsers.address')}><input className="input" value={editForm.address} onChange={setEdit('address')} /></Field>
+            <Field label={t('adminUsers.bioLabel')}><input className="input" value={editForm.bio} onChange={setEdit('bio')} /></Field>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Rôle">
+              <Field label={t('adminUsers.role')}>
                 <select className="input" value={editForm.role} onChange={setEdit('role')}>
-                  <option value="user">user</option>
-                  <option value="admin">admin</option>
+                  <option value="user">{t('navbar.roleUser')}</option>
+                  <option value="admin">{t('navbar.roleAdmin')}</option>
                 </select>
               </Field>
-              <Field label="Langue préférée">
+              <Field label={t('adminUsers.preferredLanguage')}>
                 <select className="input" value={editForm.language} onChange={setEdit('language')}>
                   {SUPPORTED_LANGUAGES.map((lang) => (
                     <option key={lang.code} value={lang.code}>{lang.label}</option>
@@ -512,7 +529,7 @@ export default function AdminUsers() {
                 user={{ firstName: editForm.firstName, lastName: editForm.lastName, avatarUrl: editPreviewUrl }}
                 size={48}
                 onImageError={() =>
-                  setEditAvatarError("Impossible de charger l'image de profil. Choisissez une autre image ou retirez l'image actuelle.")
+                  setEditAvatarError({ key: 'profile.imageLoadError', params: {} })
                 }
               />
               <div className="space-y-1">
@@ -523,7 +540,7 @@ export default function AdminUsers() {
                     onClick={() => editFileInput.current && editFileInput.current.click()}
                     disabled={saving}
                   >
-                    {editPreviewUrl ? 'Changer l’image' : 'Choisir une image'}
+                    {t(editPreviewUrl ? 'profile.changeImage' : 'profile.chooseImage')}
                   </button>
                   {editAvatarFile && !(editCropOpen && editCropOpen.url) && (
                     <button
@@ -536,7 +553,7 @@ export default function AdminUsers() {
                       }}
                       disabled={saving}
                     >
-                      Ajuster / recentrer
+                      {t('profile.adjustCrop')}
                     </button>
                   )}
                   {!editAvatarFile && editTarget && editTarget.avatarUrl && !(editCropOpen && editCropOpen.url) && (
@@ -546,7 +563,7 @@ export default function AdminUsers() {
                       onClick={openExistingCrop}
                       disabled={saving}
                     >
-                      Ajuster / recentrer
+                      {t('profile.adjustCrop')}
                     </button>
                   )}
                   {(editPreviewUrl || editAvatarRemoving) && (
@@ -556,22 +573,24 @@ export default function AdminUsers() {
                       onClick={removeEditAvatarFile}
                       disabled={saving}
                     >
-                      {editAvatarFile ? 'Annuler le nouveau fichier' : editAvatarRemoving ? 'Annuler la suppression' : 'Retirer l’image'}
+                      {t(editAvatarFile ? 'profile.cancelNewFile' : editAvatarRemoving ? 'profile.cancelRemoval' : 'profile.removeImage')}
                     </button>
                   )}
                 </div>
                 {editAvatarFile && (
                   <p className="text-[11px] text-gold-300">
-                    Nouvel avatar ajusté — il sera enregistré à « Enregistrer ».
+                    {t('profile.newAvatarAdjusted')}
                   </p>
                 )}
                 {editAvatarRemoving && !editAvatarFile && (
-                  <p className="text-[11px] text-rose-400">L'image actuelle sera supprimée à l'enregistrement.</p>
+                  <p className="text-[11px] text-rose-400">{t('profile.imageWillBeRemoved')}</p>
                 )}
                 <p className="text-[11px] text-slate-500">
-                  JPG, PNG, WEBP ou GIF — {AVATAR_MAX_MB} Mo maximum.
+                  {t('profile.acceptedFormats', { max: AVATAR_MAX_MB })}
                 </p>
-                {editAvatarError && <p className="text-[11px] text-rose-400">{editAvatarError}</p>}
+                {editAvatarError && (
+                  <p className="text-[11px] text-rose-400">{t(editAvatarError.key, editAvatarError.params ?? {})}</p>
+                )}
                 <input
                   ref={editFileInput}
                   type="file"
@@ -585,16 +604,16 @@ export default function AdminUsers() {
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="flex items-center gap-2 text-sm text-slate-300">
                 <input type="checkbox" checked={Boolean(editForm.isActive)} onChange={setEdit('isActive')} className="accent-gold-500" />
-                Compte actif (peut se connecter)
+                {t('adminUsers.activeAccount')}
               </label>
             </div>
 
-            <Field label="Nouveau mot de passe (laisser vide pour conserver)">
-              <input className="input" type="password" value={editForm.newPassword || ''} onChange={setEdit('newPassword')} minLength="8" placeholder="8 caractères minimum" />
+            <Field label={t('adminUsers.newPasswordField')}>
+              <input className="input" type="password" value={editForm.newPassword || ''} onChange={setEdit('newPassword')} minLength="8" placeholder={t('profile.minChars')} />
             </Field>
             <div className="flex justify-end gap-2">
-              <button type="button" className="btn-ghost" onClick={closeEdit} disabled={saving}>Annuler</button>
-              <button type="submit" className="btn-primary" disabled={saving}>Enregistrer</button>
+              <button type="button" className="btn-ghost" onClick={closeEdit} disabled={saving}>{t('common.cancel')}</button>
+              <button type="submit" className="btn-primary" disabled={saving}>{t('common.save')}</button>
             </div>
           </form>
 
@@ -605,7 +624,7 @@ export default function AdminUsers() {
               url={editCropOpen.url}
               existingUrl={editCropOpen.existingUrl}
               existingName={editCropOpen.existingName || ''}
-              label={`Ajuster l'avatar de ${editTarget.login}`}
+              label={t('adminUsers.adjustAvatarLabel', { login: editTarget.login })}
               onClose={cancelEditCrop}
               onAdjust={onAdjustEditAvatar}
               disabled={saving}
@@ -618,15 +637,13 @@ export default function AdminUsers() {
       {deleteTarget && (
         <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-night-950/80 backdrop-blur-sm">
           <div className="card w-full max-w-md p-6">
-            <h2 className="text-lg font-bold text-white">Supprimer le compte ?</h2>
+            <h2 className="text-lg font-bold text-white">{t('adminUsers.deleteTitle')}</h2>
             <p className="mt-2 text-sm text-slate-400">
-              Le compte <span className="text-slate-200">{deleteTarget.login}</span> et{' '}
-              {(deleteTarget.vinylCount || 0)} disque{(deleteTarget.vinylCount || 0) > 1 ? 's' : ''} seront
-              définitivement supprimés.
+              {deleteAccountParts[0]}<span className="text-slate-200">{deleteAccountParts[1]}</span>{deleteAccountParts[2] || ''}
             </p>
             <div className="mt-5 flex justify-end gap-2">
-              <button className="btn-ghost" onClick={() => setDeleteTarget(null)}>Annuler</button>
-              <button className="btn-danger" onClick={remove}>Supprimer</button>
+              <button className="btn-ghost" onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</button>
+              <button className="btn-danger" onClick={remove}>{t('common.delete')}</button>
             </div>
           </div>
         </div>

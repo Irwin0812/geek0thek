@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
 import ComicCard from '../components/ComicCard.jsx'
 import GroupCard from '../components/GroupCard.jsx'
@@ -24,20 +25,22 @@ export default function ComicCollection() {
   const location = useLocation()
   const navigate = useNavigate()
   const { settings } = useDisplay()
+  const { t } = useTranslation()
   const [comics, setComics] = useState([])
   const [q, setQ] = useState('')
   const [loadError, setLoadError] = useState('')
   const [detailComic, setDetailComic] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
-  const [toast, setToast] = useState('')
+  // Toast structural { key, params } → traduit en langue courante via t().
+  const [toast, setToast] = useState(null)
   // Clé du groupe (série) ouvert au niveau 2, null pour la vue principale (niveau 1)
   const [openGroup, setOpenGroup] = useState(null)
 
   useEffect(() => {
-    if (location.state?.toast) {
-      setToast(location.state.toast)
-      const t = setTimeout(() => setToast(''), 4000)
-      return () => clearTimeout(t)
+    if (location.state?.toastKey) {
+      setToast({ key: location.state.toastKey, params: location.state.title ? { title: location.state.title } : null })
+      const timer = setTimeout(() => setToast(null), 4000)
+      return () => clearTimeout(timer)
     }
   }, [location.state])
 
@@ -67,8 +70,8 @@ export default function ComicCollection() {
     try {
       await api.comics.remove(comic.id)
       setConfirmDelete(null)
-      setToast(`« ${comic.title} » a été retirée de votre collection.`)
-      setTimeout(() => setToast(''), 3500)
+      setToast({ key: 'common.retiredComic', params: { title: comic.title } })
+      setTimeout(() => setToast(null), 3500)
       load()
     } catch (err) {
       alert(err.message)
@@ -102,8 +105,8 @@ export default function ComicCollection() {
   const isList = settings.view === 'list'
   const cardView = settings.jukebox ? 'jukebox' : 'card'
   const listActions = [
-    { value: 'edit', label: 'Modifier', icon: <PencilIcon size={15} /> },
-    { value: 'remove', label: 'Supprimer', icon: <TrashIcon size={15} />, danger: true },
+    { value: 'edit', label: t('common.edit'), icon: <PencilIcon size={15} /> },
+    { value: 'remove', label: t('common.delete'), icon: <TrashIcon size={15} />, danger: true },
   ]
   const onAction = (value, c) => (value === 'edit' ? goEdit(c) : setConfirmDelete(c))
   const openDetail = (c) => setDetailComic(c)
@@ -113,15 +116,34 @@ export default function ComicCollection() {
     showYear: settings.showYear,
   }
   const gridCls = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+  // Nom AFFICHÉ du groupe (série) au niveau 2 : « Hors série » si non étiqueté, sinon le nom.
+  const currentGroupName = currentGroup
+    ? (currentGroup.isUnlabeled ? t('collection.groupNoSeries') : currentGroup.name)
+    : ''
+
+  // Modale de suppression BD : fragments traduits (titre isolé dans [1] pour
+  // `<span>` en gras) ; « de {auteurs} » seulement si auteur présent, la cover
+  // locale n'est mentionnée que si /uploads/.
+  const comicDeleteParts = confirmDelete
+    ? t('collection.deleteComicBodyParts', {
+        title: confirmDelete.title,
+        artists: confirmDelete.authors ? String(confirmDelete.authors) : '',
+        returnObjects: true,
+      }) || []
+    : []
+  const comicDeleteHasLocalCover = confirmDelete
+    ? String(confirmDelete.coverUrl || '').startsWith('/uploads/')
+    : false
+
   const gridActions = (c) => (
     <div className="flex gap-2">
-      <button className="btn-ghost flex-1 !py-1.5" onClick={() => goEdit(c)}>Modifier</button>
+      <button className="btn-ghost flex-1 !py-1.5" onClick={() => goEdit(c)}>{t('common.edit')}</button>
       <button
         className="btn-danger !py-1.5"
         onClick={() => setConfirmDelete(c)}
         disabled={confirmDelete?.id === c.id}
       >
-        Supprimer
+        {t('common.delete')}
       </button>
     </div>
   )
@@ -131,10 +153,13 @@ export default function ComicCollection() {
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           {/* Nomenclature officielle (i18n navbar.myComics) : « Mes BD ». */}
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white">Mes BD</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-white">{t('navbar.myComics')}</h1>
+          {/* Introduction composée : albums + « regroupé(s) en » + séries + aide. */}
           <p className="text-sm text-slate-400 mt-1">
-            {comics.length} album{comics.length > 1 ? 's' : ''} regroupé{comics.length > 1 ? 's' : ''} en{' '}
-            {groups.length} série{groups.length > 1 ? 's' : ''} — cliquez sur une série pour voir ses albums.
+            {t('collection.albumsCount', { count: comics.length })}{' '}
+            {(comics.length === 1 ? t('collection.groupedOne') : t('collection.groupedOther'))}{' '}
+            {t('collection.seriesCount', { count: groups.length })}
+            {t('collection.introComicsTail')}
           </p>
         </div>
         {/* Barre d'actions : UNE seule ligne (recherche → vue → ajout), hauteurs
@@ -143,13 +168,13 @@ export default function ComicCollection() {
         <div className="flex flex-wrap items-center gap-3">
           <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
           <ViewToolbar />
-          <Link to="/comics/nouveau" className="btn-primary !h-12">Ajouter une BD</Link>
+          <Link to="/comics/nouveau" className="btn-primary !h-12">{t('dashboard.addComic')}</Link>
         </div>
       </header>
 
       {toast && (
         <p className="text-sm text-amber-800 bg-amber-100 border border-amber-500/30 rounded-lg px-3 py-2">
-          {toast}
+          {t(toast.key, toast.params ?? {})}
         </p>
       )}
 
@@ -158,15 +183,15 @@ export default function ComicCollection() {
       ) : comics.length === 0 ? (
         <div className="grid grid-cols-1 gap-4">
           <EmptyState
-            title={q ? 'Aucun résultat' : "Aucune bande dessinée pour l'instant"}
+            title={q ? t('collection.noResults') : t('collection.emptyComicTitle')}
             subtitle={q
-              ? `Aucun album ne correspond à « ${q} ».`
-              : 'Commencez par ajouter un album en saisie manuelle ou via un ISBN (Google Books / Open Library).'}
+              ? t('collection.noComicMatch', { q })
+              : t('collection.emptyComicSubtitle')}
             action={
               q ? (
-                <button className="btn-ghost" onClick={() => setQ('')}>Réinitialiser la recherche</button>
+                <button className="btn-ghost" onClick={() => setQ('')}>{t('collection.resetSearch')}</button>
               ) : (
-                <Link to="/comics/nouveau" className="btn-primary">Ajouter une BD</Link>
+                <Link to="/comics/nouveau" className="btn-primary">{t('dashboard.addComic')}</Link>
               )
             }
           />
@@ -196,20 +221,21 @@ export default function ComicCollection() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <button className="btn-ghost" onClick={() => setOpenGroup(null)}>← Toutes les séries</button>
+              <button className="btn-ghost" onClick={() => setOpenGroup(null)}>{t('collection.allSeries')}</button>
               <div>
-                <h2 className="text-xl font-extrabold text-white" title={currentGroup.name}>
-                  {currentGroup.name}
+                {/* Nom de la série (« Hors série » si non étiquetée) + compteur albums. */}
+                <h2 className="text-xl font-extrabold text-white" title={currentGroupName}>
+                  {currentGroupName}
                 </h2>
                 <p className="text-sm text-slate-400">
-                  {currentGroup.items.length} album{currentGroup.items.length > 1 ? 's' : ''}
+                  {t('collection.albumsCount', { count: currentGroup.items.length })}
                   {currentGroup.items[0]?.authors ? ` — ${currentGroup.items[0].authors}` : ''}
                 </p>
               </div>
             </div>
             {currentGroup.name !== NO_SERIES_LABEL && (
               <button className="btn-ghost" onClick={() => addForGroup(currentGroup)}>
-                + Ajouter dans cette série
+                {t('collection.addInSeries')}
               </button>
             )}
           </div>
@@ -217,11 +243,11 @@ export default function ComicCollection() {
           {currentGroup.items.length === 0 ? (
             <div className="grid grid-cols-1 gap-4">
               <EmptyState
-                title="Série vide"
-                subtitle={`Aucun album n'est rattaché à « ${currentGroup.name} » pour le moment.`}
+                title={t('collection.emptySeriesTitle')}
+                subtitle={t('collection.emptySeriesSubtitle', { name: currentGroupName })}
                 action={
                   <button className="btn-primary" onClick={() => addForGroup(currentGroup)}>
-                    + Ajouter un album
+                    {t('collection.addAlbum')}
                   </button>
                 }
               />
@@ -274,6 +300,7 @@ export default function ComicCollection() {
                 seriesImage={g.seriesImage}
                 view={cardView}
                 showTitle={settings.showTitle}
+                isUnlabeled={g.isUnlabeled}
                 onClick={() => setOpenGroup(g.key)}
               />
             ))}
@@ -290,22 +317,18 @@ export default function ComicCollection() {
       {confirmDelete && (
         <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-slate-900/40 backdrop-blur-sm">
           <div className="card w-full max-w-md p-6">
-            <h2 className="text-lg font-bold text-white text-center">Supprimer cette bande dessinée ?</h2>
+            <h2 className="text-lg font-bold text-white text-center">{t('collection.deleteComicTitle')}</h2>
             <p className="mt-2 text-sm text-slate-400">
-              « <span className="font-semibold text-white">{confirmDelete.title}</span> »
-              {confirmDelete.authors ? ` de ${confirmDelete.authors}` : ''} sera définitivement retirée
-              de votre collection.
-              {String(confirmDelete.coverUrl || '').startsWith('/uploads/') &&
-                ' Sa couverture locale sera également supprimée du disque.'}
+              {comicDeleteParts[0]}<span className="font-semibold text-white">{comicDeleteParts[1]}</span>{comicDeleteParts[2] || ''}{confirmDelete.authors ? (comicDeleteParts[3] || '') : ''}{comicDeleteParts[4] || ''}{comicDeleteHasLocalCover ? (comicDeleteParts[5] || '') : ''}
             </p>
             <div className="mt-5 flex justify-end gap-2">
-              <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>Annuler</button>
+              <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>{t('common.cancel')}</button>
               <button
                 className="btn-danger"
                 disabled={confirmDelete.deleting}
                 onClick={() => remove(confirmDelete)}
               >
-                Oui, supprimer
+                {t('common.confirmDelete')}
               </button>
             </div>
           </div>
