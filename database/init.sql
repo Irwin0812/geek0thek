@@ -33,7 +33,8 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_url     TEXT,                       -- '/uploads/avatars/xxx.jpg' ou NULL
     -- Langue préférée de l'utilisateur (code ISO 639-1, défaut : français)
     language       VARCHAR(5)   NOT NULL DEFAULT 'fr',
-    -- Thème visuel préféré (dark / light / vinyl / comic / cartoon / pastel)
+    -- Thème visuel préféré (dark / light / vinyl / comic / comic-books / pastel ;
+    -- « cartoon » supprimé, mappé vers « comic-books » au boot par le back-end)
     theme          VARCHAR(50)  NOT NULL DEFAULT 'dark',
     gender         VARCHAR(1)   CHECK (gender IN ('H', 'F', 'O')),  -- H / F / O (Autre)
     birth_date     DATE,

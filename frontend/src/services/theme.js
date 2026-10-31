@@ -6,13 +6,14 @@
  * --accent-strong… ; c'est donc le SEUL point de bascule lisible par le
  * DOM (attribut [data-theme] sur <html>) :
  *
- *   <html data-theme="dark">    →  src/themes/dark.css    (défaut de l'appli)
- *   <html data-theme="library"> →  src/themes/library.css (Médiathèque :
- *                                   photo bg-library.jpg sous voile clair)
- *   <html data-theme="vinyl">  →  src/themes/vinyl.css  (disquaire rétro)
- *   <html data-theme="comic">  →  src/themes/comic.css  (bande dessinée)
- *   <html data-theme="cartoon"> →  src/themes/cartoon.css (ludique et doux)
- *   <html data-theme="pastel"> →  src/themes/pastel.css  (couleurs pastel)
+ *   <html data-theme="dark">        →  src/themes/dark.css        (défaut de l'appli)
+ *   <html data-theme="library">     →  src/themes/library.css     (Médiathèque :
+ *                                    photo bg-library.jpg sous voile clair)
+ *   <html data-theme="vinyl">       →  src/themes/vinyl.css       (disquaire rétro)
+ *   <html data-theme="comic">       →  src/themes/comic.css       (bande dessinée)
+ *   <html data-theme="comic-books"> →  src/themes/comic-books.css (Comic Books :
+ *                                    photo bg_comics.jpg en fond principal)
+ *   <html data-theme="pastel">      →  src/themes/pastel.css      (couleurs pastel)
  *
  * Valeurs de clés possibles : identiques à l'enum du backend
  * (backend/src/controllers/userController.js, tableau THEMES) et à la
@@ -24,13 +25,18 @@ export const THEME_STORAGE_KEY = 'geek0thek_theme'
 
 /**
  * Migration d'une clé de thème obsolète vers sa remplaçante :
- * le thème « Moderne » (« light », ex-« src/themes/light.css ») a été
- * renommé « Médiathèque » et sert maintenant « public/img/bg-library.jpg »
- * en fond semi-transparent. Les préférences stockées (localStorage,
- * BDD `users.theme`) continuent donc de s'appliquer sans réinitialisation.
+ * - le thème « Moderne » (« light », ex-« src/themes/light.css ») a été
+ *   renommé « Médiathèque » et sert maintenant « public/img/bg-library.jpg »
+ *   en fond semi-transparent ;
+ * - le thème « Cartoon » (« cartoon », ex-« src/themes/cartoon.css ») a été
+ *   retiré : sa place est prise par « Comic Books » (« comic-books »,
+ *   photo bg_comics.jpg en fond principal).
+ * Les préférences stockées (localStorage, BDD `users.theme`) continuent
+ * donc de s'appliquer sans réinitialisation.
  */
 export const LEGACY_THEME_ALIASES = {
   light: 'library',
+  cartoon: 'comic-books',
 }
 
 /** Liste ordonnée des thèmes : id + libellé (FR, neutre) + échantillons. */
@@ -45,7 +51,13 @@ export const THEMES = [
   },
   { id: 'vinyl', label: 'Disquaire', swatches: ['#1a1108', '#2c1f13', '#d18a3e'] },
   { id: 'comic', label: 'Bande dessinée', swatches: ['#f2d94e', '#fffdf5', '#1d4ed8'] },
-  { id: 'cartoon', label: 'Cartoon', swatches: ['#e7e2f8', '#ffffff', '#0f766e'] },
+  {
+    id: 'comic-books',
+    label: 'Comic Books',
+    // Fond : photo bg_comics.jpg sous voile jaune « splash page » —
+    // échantillon = teinte du voile (première teinte perçue par l'œil).
+    swatches: ['#f2d94e', '#fffdf5', '#1d4ed8'],
+  },
   { id: 'pastel', label: 'Pastel', swatches: ['#f7efe3', '#fffbf4', '#a4552e'] },
 ]
 

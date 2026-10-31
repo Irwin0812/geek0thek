@@ -61,15 +61,16 @@ const LANGUAGES = ['fr', 'en', 'it', 'es', 'de', 'nl'];
 //   dark    — sombre (défaut de l'application)
 //   library — médiathèque (lumineux, photo bg-library.jpg sous voile clair)
 //   vinyl   — disquaire (tons bois, ambiance rétro)
-//   comic   — bande dessinée (contrastes marqués)
-//   cartoon — cartoon (couleurs ludiques et douces)
-//   pastel  — coloré mais pas trop vif (teintes pastel)
-const THEMES = ['dark', 'library', 'vinyl', 'comic', 'cartoon', 'pastel'];
+//   comic       — bande dessinée (contrastes marqués)
+//   comic-books — comic books (photo bg_comics.jpg en fond principal)
+//   pastel      — coloré mais pas trop vif (teintes pastel)
+const THEMES = ['dark', 'library', 'vinyl', 'comic', 'comic-books', 'pastel'];
 
 // Clés de thème obsolètes acceptées en entrée (préférences déjà stockées ou
 // payloads d'anciens clients) et résolues vers leur remplaçante : l'ex-thème
-// « Moderne » (« light ») est devenu « Médiathèque » (« library »).
-const LEGACY_THEME_ALIASES = { light: 'library' };
+// « Moderne » (« light ») est devenu « Médiathèque » (« library »), et le
+// retiré thème « cartoon » est remplacé par « Comic Books » (« comic-books »).
+const LEGACY_THEME_ALIASES = { light: 'library', cartoon: 'comic-books' };
 
 /** Réécrit une clé de thème obsolète en sa remplaçante (ex. « light » → « library »). */
 function migrateTheme(theme) {
@@ -568,7 +569,7 @@ async function updateProfileLanguage(req, res, next) {
 
 /**
  * PATCH /api/users/profile/theme — modification de son thème visuel préféré.
- * Body : { "theme": "dark" | "library" | "vinyl" | "comic" | "cartoon" | "pastel" }
+ * Body : { "theme": "dark" | "library" | "vinyl" | "comic" | "comic-books" | "pastel" }
  * (l'ancienne clé « light » du thème ex-« Moderne » est acceptée et résolue
  * automatiquement vers « library » / « Médiathèque »).
  * Endpoint léger et explicite, à côté de PATCH /profile/language (PUT /me

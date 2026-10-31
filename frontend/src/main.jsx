@@ -15,12 +15,12 @@ import './themes/dark.css'
 import './themes/library.css' // ex-« light » — thème « Médiathèque » (fond photo)
 import './themes/vinyl.css'
 import './themes/comic.css'
-import './themes/cartoon.css'
+import './themes/comic-books.css' // thème « Comic Books » (photo bg_comics.jpg en fond)
 import './themes/pastel.css'
 
 // Applique la préférence conservée (localStorage) AVANT le premier rendu :
 // sans cet appel, l'attribut data-theme ne serait posé qu'après l'API
-// /users/me (App.jsx) et une page light/cartoon… clignoterait « sombre ».
+// /users/me (App.jsx) et une page colorée clignoterait « sombre ».
 switchTheme()
 
 ReactDOM.createRoot(document.getElementById('root')).render(

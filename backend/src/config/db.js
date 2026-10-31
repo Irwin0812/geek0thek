@@ -114,7 +114,8 @@ const MIGRATIONS = [
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS language VARCHAR(5) NOT NULL DEFAULT 'fr';`,
     ],
   },
-  // Thème visuel préféré (dark / light / vinyl / comic / cartoon / pastel) :
+  // Thème visuel préféré (dark / light / vinyl / comic / comic-books / pastel,
+  // « cartoon » désormais mappé vers « comic-books », cf. migration dédiée) :
   // NOT NULL DEFAULT 'dark' (thème sombre = thème par défaut de l'appli).
   {
     name: 'users.theme',
@@ -390,6 +391,18 @@ const MIGRATIONS = [
        `UPDATE vinyls SET disc_type = 'Vinyle' WHERE btrim(COALESCE(disc_type, '')) = '';`,
      ],
    },
+  // Thèmes visuels : le thème « cartoon » a été RETIRÉ (plus de fichier
+  // frontend/src/themes/cartoon.css ni d'entrée dans l'enum THEMES) au profit
+  // du nouveau thème « comic-books ». Rétro-remplissage idempotent des
+  // préférences déjà stockées : sans lui, un profil users.theme = 'cartoon'
+  // resterait invalide côté API (clé inconnue refusée par cleanTheme) et
+  // reprendrait le défaut 'dark' au prochain choix.
+  {
+    name: 'users.theme-cartoon-to-comic-books',
+    statements: [
+      `UPDATE users SET theme = 'comic-books' WHERE lower(theme) = 'cartoon';`,
+    ],
+  },
 ];
 
 /**
