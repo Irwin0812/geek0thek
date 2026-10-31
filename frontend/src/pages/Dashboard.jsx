@@ -8,6 +8,10 @@ import {
 import { api } from '../services/api.js'
 import { useAuth } from '../App.jsx'
 import { useDisplay } from '../services/display.jsx'
+// Thème « Comic Books » : les titres de page (accueil + « Derniers ajouts »)
+// passent en typographie BANGERS / Impact + halo « case de BD » (white stroke,
+// ombre dure). Aucune autre section du dashboard n'est modifiée ici.
+import { getAppliedTheme } from '../services/theme.js'
 import VinylCard, { EmptyState } from '../components/VinylCard.jsx'
 import ComicCard from '../components/ComicCard.jsx'
 import ItemDetailModal from '../components/ItemDetailModal.jsx'
@@ -19,6 +23,11 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { settings } = useDisplay()
+  // Thème appliqué actuellement (service thème) — sert UNIQUEMENT à habiller les
+  // TITRES du dashboard sous le thème « Comic Books » (typo Bangers / Impact +
+  // halo « case de BD », cf. .font-comic-title dans src/themes/comic-books.css).
+  // La structure, les tuiles et le reste de la page ne sont pas modifiés ici.
+  const comicTheme = getAppliedTheme() === 'comic-books'
   const [vinyls, setVinyls] = useState([])
   const [comics, setComics] = useState([])
   const [detailVinyl, setDetailVinyl] = useState(null)
@@ -85,7 +94,10 @@ export default function Dashboard() {
       {/* En-tête */}
       <section>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-wide text-white">
+          {/* En-tête de bienvenue : sous le thème « Comic Books », lettrage de
+              case de BD (Bangers, blanc + liseré/ombre noir via .font-comic-title)
+              → contraste maximal sur bg_comics.jpg. Autres thèmes : style d'origine. */}
+          <h1 className={comicTheme ? 'font-comic-title text-3xl tracking-wide md:text-5xl' : 'text-2xl md:text-3xl font-bold tracking-wide text-white'}>
             {t('dashboard.greeting', { name: user.firstName })}
           </h1>
           {/* Bouton unique « Ajouter un média » (menu déroulant, cf. doc bas de page). */}
@@ -218,18 +230,37 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Derniers ajouts */}
+      {/* ============ DERNIERS AJOUTS (thème Comic Books : titres en lettrage « case BD ») ============
+          Tuiles : les cartes passent automatiquement en PAPIER BLANC FRANC
+          (src/themes/comic-books.css : --card-bg / --bg-elevated = #ffffff, fond de
+          vignette encre) — structure identique, fond + texte adaptés à bg_comics.jpg. */}
       <section>
-        <h2 className="text-lg font-bold uppercase tracking-wider text-white mb-4">{t('dashboard.latestAdds')}</h2>
+        {/* Titre de section : lettrage Bangers blanc + liseré/ombre noire
+            (cf. .font-comic-title du thème Comic Books) ; d'origine ailleurs. */}
+        <h2 className={comicTheme ? 'font-comic-title mb-6 text-3xl tracking-wide md:text-4xl' : 'text-lg font-bold uppercase tracking-wider text-white mb-4'}>
+          {t('dashboard.latestAdds')}
+        </h2>
         {loadError ? (
-          <p className="text-sm text-rose-400">{loadError}</p>
+          <p className={`text-sm ${comicTheme ? 'dashboard-load-error font-bold' : 'text-rose-400'}`}>{loadError}</p>
         ) : (
           <div className="space-y-8">
             {/* Disques */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-slate-200">{t('dashboard.vinylsSection')}</h3>
-                <Link to="/collection" className="text-sm text-gold-400 hover:text-gold-300">{t('common.viewAll')}</Link>
+                {/* Sous-titre « Disques » : encre du thème (noir chaud) + halo blanc
+                    discret — jamais de gris slate qui se fondrait dans la photo. */}
+                <h3 className={
+                  comicTheme
+                    ? 'font-bold uppercase tracking-wide text-xl [color:var(--text-primary)]'
+                    : 'font-bold text-slate-200'
+                }>
+                  {t('dashboard.vinylsSection')}
+                </h3>
+                {/* Lien « Tout voir » : accent Comic bleu encre + halo blanc ;
+                    or / slate d'origine pour les autres thèmes. */}
+                <Link to="/collection" className={comicTheme ? 'text-sm font-bold [color:var(--accent-soft)] hover:underline' : 'text-sm text-gold-400 hover:text-gold-300'}>
+                  {t('common.viewAll')}
+                </Link>
               </div>
               {vinyls.length === 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -260,8 +291,16 @@ export default function Dashboard() {
             {/* BDs */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-slate-200">{t('dashboard.comicsSection')}</h3>
-                <Link to="/comics" className="text-sm text-gold-400 hover:text-gold-300">{t('common.viewAll')}</Link>
+                <h3 className={
+                  comicTheme
+                    ? 'font-bold uppercase tracking-wide text-xl [color:var(--text-primary)]'
+                    : 'font-bold text-slate-200'
+                }>
+                  {t('dashboard.comicsSection')}
+                </h3>
+                <Link to="/comics" className={comicTheme ? 'text-sm font-bold [color:var(--accent-soft)] hover:underline' : 'text-sm text-gold-400 hover:text-gold-300'}>
+                  {t('common.viewAll')}
+                </Link>
               </div>
               {comics.length === 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -537,7 +576,11 @@ function AddMediaDropdown() {
               title={opt.enabled ? undefined : t('dashboard.soonTitle')}
               className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
                 opt.enabled
-                  ? 'text-slate-200 hover:bg-night-700/60 hover:text-white'
+                  ? comicTheme
+                    // Menu déroulant sur PAPIER (thème Comic Books) : encre du
+                    // thème + survol jaune « splash » — jamais de slate clair.
+                    ? 'text-[#191105] hover:bg-[#efe19a]/70'
+                    : 'text-slate-200 hover:bg-night-700/60 hover:text-white'
                   : 'cursor-not-allowed text-slate-500 hover:bg-transparent'
               }`}
             >
