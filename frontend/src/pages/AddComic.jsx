@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import i18n from '../i18n/i18n.js'
 import { api } from '../services/api.js'
 import IsbnModal from '../components/IsbnModal.jsx'
 
@@ -117,6 +119,7 @@ export default function AddComic() {
   const isEdit = Boolean(id)
   const navigate = useNavigate()
   const [params] = useSearchParams()
+  const { t } = useTranslation()
 
   const [form, setForm] = useState(EMPTY)
   const [file, setFile] = useState(null)
@@ -402,7 +405,7 @@ export default function AddComic() {
     e.preventDefault()
     setError('')
     if (!form.title.trim() || !form.authors.trim() || !form.publisher.trim()) {
-      setError('Les champs Titre, Auteur(s) et Éditeur sont obligatoires.')
+      setError(t('comicForm.errorRequired'))
       return
     }
     setSaving(true)
@@ -557,13 +560,13 @@ export default function AddComic() {
   }
 
   if (loading) {
-    return <div className="max-w-3xl mx-auto px-4 py-10 text-slate-400">Chargement de la BD…</div>
+    return <div className="max-w-3xl mx-auto px-4 py-10 text-slate-400">{t('comicForm.loading')}</div>
   }
   if (notFound) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-10">
-        <p className="text-rose-400">Cette BD n'existe pas ou vous n'y avez pas accès.</p>
-        <a href="/comics" className="btn-ghost inline-block">Retour à mes BD</a>
+        <p className="text-rose-400">{t('comicForm.notFound')}</p>
+        <a href="/comics" className="btn-ghost inline-block">{t('comicForm.backToComics')}</a>
       </div>
     )
   }
@@ -573,14 +576,14 @@ export default function AddComic() {
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold text-white">
-            {isEdit ? 'Modifier la BD' : 'Nouvelle bande dessinée'}
+            {isEdit ? t('comicForm.pageTitleEdit') : t('comicForm.pageTitleNew')}
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            BD, manga ou roman graphique — saisie manuelle ou import via ISBN (Google Books / Open Library).
+            {t('comicForm.subtitle')}
           </p>
         </div>
         {!isEdit && (
-          <button className="btn-ghost" onClick={() => setModalOpen(true)}>Importer une BD (#ISBN/Mots clés)</button>
+          <button className="btn-ghost" onClick={() => setModalOpen(true)}>{t('comicForm.importComicBtn')}</button>
         )}
       </header>
 
@@ -593,20 +596,20 @@ export default function AddComic() {
       <form onSubmit={submit} className="card p-6 space-y-6">
         {/* Couverture */}
         <fieldset className="space-y-3">
-          <legend className="label !mb-0">Couverture</legend>
+          <legend className="label !mb-0">{t('comicForm.coverSection')}</legend>
           <div className="flex gap-4 items-start">
             <div className="w-28 h-40 shrink-0 rounded-lg overflow-hidden bg-night-900 border border-night-600 grid place-items-center">
               {preview ? (
-                <img src={preview} alt="Aperçu de la couverture" className="w-full h-full object-cover" />
+                <img src={preview} alt={t('comicForm.coverAlt')} className="w-full h-full object-cover" />
               ) : (
                 // Placeholder « Aucune couverture » harmonisé sur --text-faint (slate-400).
-                <span className="text-xs text-slate-400 text-center px-2">Aucune couverture</span>
+                <span className="text-xs text-slate-400 text-center px-2">{t('comicForm.noCover')}</span>
               )}
             </div>
             <div className="flex-1 space-y-3">
               <div>
                 <label className="btn-ghost cursor-pointer text-left !justify-start w-full sm:w-auto">
-                  {file ? 'Changer le fichier' : 'Téléverser un fichier (JPG, PNG, WEBP)'}
+                  {file ? t('common.changeFile') : t('common.uploadFile')}
                   <input
                     ref={fileInput}
                     type="file"
@@ -624,10 +627,10 @@ export default function AddComic() {
                 {file && <p className="mt-1 text-xs text-slate-500 truncate">{file.name}</p>}
               </div>
               <div>
-                <label className="label">…ou URL distante</label>
+                <label className="label">{t('common.orRemoteUrl')}</label>
                 <input
                   className="input"
-                  placeholder="https://…/cover.jpg (Google Books, Open Library…)"
+                  placeholder={t('comicForm.remoteUrlPlaceholder')}
                   value={remoteUrl}
                   onChange={(e) => {
                     setRemoteUrl(e.target.value)
@@ -649,11 +652,11 @@ export default function AddComic() {
                   className="text-[11px] text-slate-500 underline decoration-dotted hover:text-slate-300"
                   onClick={() => handleRemoveImage('cover')}
                 >
-                  Retirer le fichier
+                  {t('common.removeFile')}
                 </button>
               )}
               <p className="text-[11px] text-slate-500">
-                Le fichier sera stocké localement sur le serveur (volume <code>./uploads/comics</code>).
+                {t('comicForm.storedHint', { volume: './uploads/comics' })}
               </p>
             </div>
           </div>
@@ -666,23 +669,21 @@ export default function AddComic() {
             repli propre img/no_title.jpg. N'affecte jamais la couverture
             d'album ci-dessus. */}
         <fieldset className="space-y-3">
-          <legend className="label !mb-0">Image de la série</legend>
+          <legend className="label !mb-0">{t('comicForm.seriesImageSection')}</legend>
           <div className="flex gap-4 items-start">
             <div className="w-28 h-20 shrink-0 rounded-lg overflow-hidden bg-night-900 border border-night-600 grid place-items-center">
               {seriesPreview ? (
-                <img src={seriesPreview} alt="Aperçu de l'image de la série" className="w-full h-full object-cover" />
+                <img src={seriesPreview} alt={t('comicForm.seriesImageAlt')} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-[11px] text-slate-400 text-center px-2 leading-snug">
-                  Photo ou logo
-                  <br />
-                  (optionnel)
+                  {t('vinylForm.photoOrLogoOptional')}
                 </span>
               )}
             </div>
             <div className="flex-1 space-y-2">
               <div>
                 <label className="btn-ghost cursor-pointer text-left !justify-start w-full sm:w-auto">
-                  {seriesFile ? 'Changer le fichier' : 'Téléverser un fichier (JPG, PNG)'}
+                  {seriesFile ? t('common.changeFile') : t('comicForm.seriesUpload')}
                   <input
                     ref={seriesFileInput}
                     type="file"
@@ -713,22 +714,21 @@ export default function AddComic() {
                   className="text-[11px] text-slate-500 underline decoration-dotted hover:text-slate-300"
                   onClick={() => handleRemoveImage('seriesImage')}
                 >
-                  Retirer le fichier
+                  {t('common.removeFile')}
                 </button>
               )}
               <p className="text-[11px] text-slate-500">
-                Optionnelle : affichée pour la série (tous ses tomes). Sans fichier,
-                elle est retrouvée automatiquement ; à défaut,&nbsp;l'emblème par défaut s'affiche.
+                {t('comicForm.seriesImageHint')}
               </p>
             </div>
           </div>
         </fieldset>
 
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field label="Titre de l'album *">
+          <Field label={t('comicForm.titleField')}>
             <input className="input" value={form.title} onChange={set('title')} placeholder="Corto Maltese" required />
           </Field>
-          <Field label="Série">
+          <Field label={t('comicForm.seriesField')}>
             {/* Suggestions = séries déjà présentes dans ma collection :
                 sélectionner/saisir une série existante pré-remplit
                 automatiquement le synopsis si le champ est vide. */}
@@ -745,33 +745,39 @@ export default function AddComic() {
               ))}
             </datalist>
           </Field>
-          <Field label="Tome / numéro">
+          <Field label={t('comicForm.tomeField')}>
             <input className="input" value={form.tomeNumber} onChange={set('tomeNumber')} placeholder="1" />
           </Field>
-          <Field label="Auteur(s) *">
+          <Field label={t('comicForm.authorsField')}>
             <input className="input" value={form.authors} onChange={set('authors')} placeholder="Hugo Pratt" required />
           </Field>
-          <Field label="Dessinateur(s)">
+          <Field label={t('comicForm.illustratorsField')}>
             <input className="input" value={form.illustrators} onChange={set('illustrators')} placeholder="Dessin" />
           </Field>
-          <Field label="Éditeur *">
+          <Field label={t('comicForm.publisherField')}>
             <input className="input" value={form.publisher} onChange={set('publisher')} placeholder="Dargaud" required />
           </Field>
-          <Field label="Date de parution">
+          <Field label={t('comicForm.releaseDateField')}>
             <input className="input" type="date" value={form.releaseDate} onChange={set('releaseDate')} />
           </Field>
           {/* Genre : menu déroulant (remplace l'ancien champ texte libre).
               Valeurs fixes, « Bande Dessinée » par défaut à l'initialisation. */}
-          <Field label="Genre">
+          <Field label={t('comicForm.genreLabel')}>
             <select className="input" value={form.genre} onChange={set('genre')}>
-              {GENRE_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
+              {GENRE_OPTIONS.map((option) => {
+                // Clé i18n SANS ACCENT (« Bande Dessinée » -> « genres.Bande
+                // Dessinee ») : la valeur de l'option conserve son accent
+                // d'origine (stockée telle quelle en base, colonne comics.genre).
+                const gKey = `comicForm.genres.${option.normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`
+                return (
+                  <option key={option} value={option}>
+                    {i18n.exists(gKey) ? t(gKey) : option}
+                  </option>
+                )
+              })}
             </select>
           </Field>
-          <Field label="ISBN">
+          <Field label={t('comicForm.isbnField')}>
             <input
               className="input font-mono"
               value={form.isbn}
@@ -782,17 +788,17 @@ export default function AddComic() {
           {/* Remplace l'ancien champ « État » : date d'ajout de la BD à la
               collection (défaut = date du jour lors de la création, modifiable).
               Stockée en base dans comics.added_date (DATE). */}
-          <Field label="Date d'ajout">
+          <Field label={t('comicForm.addedDateField')}>
             <input className="input" type="date" value={form.addedDate} onChange={set('addedDate')} />
           </Field>
         </div>
 
-        <Field label="Synopsis (optionnel)">
+        <Field label={t('comicForm.synopsisField')}>
           <textarea
             className="input min-h-[90px]"
             value={form.synopsis}
             onChange={set('synopsis')}
-            placeholder="Résumé de l'album…"
+            placeholder={t('comicForm.synopsisPlaceholder')}
           />
         </Field>
 
@@ -804,7 +810,7 @@ export default function AddComic() {
               checked={form.isSpecialEdition}
               onChange={(e) => setForm((f) => ({ ...f, isSpecialEdition: e.target.checked }))}
             />
-            Édition spéciale
+            {t('comicForm.specialEdition')}
           </label>
 
           {/* "Livre dédicacé" : case booléenne alignée sur la même ligne,
@@ -816,15 +822,15 @@ export default function AddComic() {
               checked={form.isSigned}
               onChange={(e) => setForm((f) => ({ ...f, isSigned: e.target.checked }))}
             />
-            Livre dédicacé
+            {t('comicForm.signed')}
           </label>
         </div>
 
         <div className="flex flex-wrap gap-2 pt-2 border-t border-night-600/50">
           <button type="submit" className="btn-primary" disabled={saving}>
-            {saving ? 'Enregistrement…' : isEdit ? 'Enregistrer les modifications' : 'Ajouter à ma collection'}
+            {saving ? t('common.saving') : isEdit ? t('comicForm.saveChanges') : t('common.addCollection')}
           </button>
-          <button type="button" className="btn-ghost" onClick={() => navigate(-1)}>Annuler</button>
+          <button type="button" className="btn-ghost" onClick={() => navigate(-1)}>{t('common.cancel')}</button>
         </div>
       </form>
 

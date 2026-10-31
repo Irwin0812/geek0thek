@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import i18n from '../i18n/i18n.js'
 import { api } from '../services/api.js'
 import BarcodeModal from '../components/BarcodeModal.jsx'
 import { CheckIcon } from '../components/icons.jsx'
@@ -142,6 +144,7 @@ export default function AddVinyl() {
   const isEdit = Boolean(id)
   const navigate = useNavigate()
   const [params] = useSearchParams()
+  const { t } = useTranslation()
 
   const [form, setForm] = useState(EMPTY)
   const [file, setFile] = useState(null)
@@ -373,7 +376,7 @@ export default function AddVinyl() {
     e.preventDefault()
     setError('')
     if (!form.artist.trim() || !form.title.trim()) {
-      setError("L'artiste et le titre de l'album sont obligatoires.")
+      setError(t('vinylForm.errorRequired'))
       return
     }
     const trackCount = toTrackCount(form.trackCount)
@@ -483,12 +486,12 @@ export default function AddVinyl() {
   }
 
   if (loading) {
-    return <div className="max-w-3xl mx-auto px-4 py-10 text-slate-400">Chargement du disque…</div>
+    return <div className="max-w-3xl mx-auto px-4 py-10 text-slate-400">{t('vinylForm.loading')}</div>
   }
   if (notFound) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-10">
-        <p className="text-rose-400">Ce disque n'existe pas ou vous n'y avez pas accès.</p>
+        <p className="text-rose-400">{t('vinylForm.notFound')}</p>
         <LinkHome />
       </div>
     )
@@ -501,14 +504,14 @@ export default function AddVinyl() {
           {/* Nomenclature officielle (libellés du formulaire) :
               « Modifier le disque » / « Nouveau disque ». */}
           <h1 className="text-2xl font-extrabold text-white">
-            {isEdit ? 'Modifier le disque' : 'Nouveau disque'}
+            {isEdit ? t('vinylForm.pageTitleEdit') : t('vinylForm.pageTitleNew')}
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Deux méthodes d'import : « Code-barres » (MusicBrainz + Discogs) ou saisie manuelle complète.
+            {t('vinylForm.subtitle')}
           </p>
         </div>
         {!isEdit && (
-          <button className="btn-ghost" onClick={() => setModalOpen(true)}>Importer un Disque (#EAN/Mots clés)</button>
+          <button className="btn-ghost" onClick={() => setModalOpen(true)}>{t('vinylForm.importVinylBtn')}</button>
         )}
       </header>
 
@@ -521,20 +524,20 @@ export default function AddVinyl() {
       <form onSubmit={submit} className="card p-6 space-y-6">
         {/* Jaquette */}
         <fieldset className="space-y-3">
-          <legend className="label !mb-0">Jaquette</legend>
+          <legend className="label !mb-0">{t('vinylForm.coverSection')}</legend>
           <div className="flex gap-4 items-start">
             <div className="w-28 h-28 shrink-0 rounded-lg overflow-hidden bg-night-900 border border-night-600 grid place-items-center">
               {preview ? (
-                <img src={preview} alt="Aperçu de la jaquette" className="w-full h-full object-cover" />
+                <img src={preview} alt={t('vinylForm.coverAlt')} className="w-full h-full object-cover" />
               ) : (
                 // Placeholder « Aucune jaquette » harmonisé sur --text-faint (slate-400).
-                <span className="text-xs text-slate-400 text-center px-2">Aucune jaquette</span>
+                <span className="text-xs text-slate-400 text-center px-2">{t('vinylForm.noCover')}</span>
               )}
             </div>
             <div className="flex-1 space-y-3">
               <div>
                 <label className="btn-ghost cursor-pointer text-left !justify-start w-full sm:w-auto">
-                  {file ? 'Changer le fichier' : 'Téléverser un fichier (JPG, PNG, WEBP)'}
+                  {file ? t('common.changeFile') : t('common.uploadFile')}
                   <input
                     ref={fileInput}
                     type="file"
@@ -552,10 +555,10 @@ export default function AddVinyl() {
                 {file && <p className="mt-1 text-xs text-slate-500 truncate">{file.name}</p>}
               </div>
               <div>
-                <label className="label">…ou URL distante</label>
+                <label className="label">{t('common.orRemoteUrl')}</label>
                 <input
                   className="input"
-                  placeholder="https://…/cover.jpg (MusicBrainz, Internet Archive…)"
+                  placeholder={t('vinylForm.remoteUrlPlaceholder')}
                   value={remoteUrl}
                   onChange={(e) => {
                     setRemoteUrl(e.target.value)
@@ -577,12 +580,10 @@ export default function AddVinyl() {
                   className="text-[11px] text-slate-500 underline decoration-dotted hover:text-slate-300"
                   onClick={() => handleRemoveImage('cover')}
                 >
-                  Retirer le fichier
+                  {t('common.removeFile')}
                 </button>
               )}
-              <p className="text-[11px] text-slate-500">
-                Le fichier sera stocké localement sur le serveur (volume <code>./uploads</code>).
-              </p>
+              <p className="text-[11px] text-slate-500">{t('vinylForm.storedHint', { volume: './uploads' })}</p>
             </div>
           </div>
         </fieldset>
@@ -593,23 +594,21 @@ export default function AddVinyl() {
             le backend récupère automatiquement une photo à la création
             (MusicBrainz -> Cover Art Archive), repli propre img/no_group.jpg. */}
         <fieldset className="space-y-3">
-          <legend className="label !mb-0">Image de l'artiste</legend>
+          <legend className="label !mb-0">{t('vinylForm.artistImageSection')}</legend>
           <div className="flex gap-4 items-start">
             <div className="w-28 h-28 shrink-0 rounded-lg overflow-hidden bg-night-900 border border-night-600 grid place-items-center">
               {artistPreview ? (
-                <img src={artistPreview} alt="Aperçu de l'image de l'artiste" className="w-full h-full object-cover" />
+                <img src={artistPreview} alt={t('vinylForm.artistImageAlt')} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-[11px] text-slate-400 text-center px-2 leading-snug">
-                  Photo ou logo
-                  <br />
-                  (optionnel)
+                  {t('vinylForm.photoOrLogoOptional')}
                 </span>
               )}
             </div>
             <div className="flex-1 space-y-2">
               <div>
                 <label className="btn-ghost cursor-pointer text-left !justify-start w-full sm:w-auto">
-                  {artistFile ? 'Changer le fichier' : 'Choisir une photo / un logo (JPG, PNG)'}
+                  {artistFile ? t('common.changeFile') : t('vinylForm.choosePhoto')}
                   <input
                     ref={artistFileInput}
                     type="file"
@@ -641,26 +640,22 @@ export default function AddVinyl() {
                   className="text-[11px] text-slate-500 underline decoration-dotted hover:text-slate-300"
                   onClick={() => handleRemoveImage('artistImage')}
                 >
-                  Retirer le fichier
+                  {t('common.removeFile')}
                 </button>
               )}
-              <p className="text-[11px] text-slate-500">
-                Optionnel : utilisée uniquement sur la tuile « artiste » de la page Mes Disques.
-                Sans photo, elle est récupérée automatiquement lors de l'ajout ; à défaut,&nbsp;
-                l'emblème par défaut s'affiche.
-              </p>
+              <p className="text-[11px] text-slate-500">{t('vinylForm.artistImageHint')}</p>
             </div>
           </div>
         </fieldset>
 
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field label="Artiste / groupe *">
+          <Field label={t('vinylForm.artistField')}>
             <input className="input" value={form.artist} onChange={set('artist')} placeholder="Pink Floyd" required />
           </Field>
-          <Field label="Titre de l'album *">
+          <Field label={t('vinylForm.titleField')}>
             <input className="input" value={form.title} onChange={set('title')} placeholder="The Dark Side of the Moon" required />
           </Field>
-          <Field label="Nombre de chansons">
+          <Field label={t('vinylForm.trackCountField')}>
             <input
               className="input"
               type="number"
@@ -669,16 +664,16 @@ export default function AddVinyl() {
               onChange={set('trackCount')}
             />
           </Field>
-          <Field label="Style / genre musical">
+          <Field label={t('vinylForm.genreField')}>
             <input className="input" value={form.genre} onChange={set('genre')} placeholder="Progressive Rock" />
           </Field>
-          <Field label="Maison d'édition (Label)">
+          <Field label={t('vinylForm.labelField')}>
             <input className="input" value={form.label} onChange={set('label')} placeholder="Harvest" />
           </Field>
-          <Field label="Date de sortie">
+          <Field label={t('vinylForm.releaseDateField')}>
             <input className="input" type="date" value={form.releaseDate} onChange={set('releaseDate')} />
           </Field>
-          <Field label="Code-barres (EAN/UPC)">
+          <Field label={t('vinylForm.barcodeField')}>
             <input
               className="input font-mono"
               value={form.barcode}
@@ -686,7 +681,7 @@ export default function AddVinyl() {
               placeholder="0190295958361"
             />
           </Field>
-          <Field label="Date d'ajout">
+          <Field label={t('vinylForm.addedDateField')}>
             {/* Date exacte d'ajout du disque à la bibliothèque (remplace l'ancien
                 « Année d'acquisition »). Pré-remplie avec la date du jour à la
                 création ; peut être ajustée rétroactivement ici même ou en édition.
@@ -695,7 +690,7 @@ export default function AddVinyl() {
           </Field>
         </div>
 
-        <Field label="Liste des pistes">
+        <Field label={t('vinylForm.tracklistField')}>
           <textarea
             className="input min-h-[120px] font-mono text-[13px]"
             value={form.tracklist}
@@ -714,25 +709,25 @@ export default function AddVinyl() {
             cercle barré et vide), défaut « Noir » — remplace l'ancien champ
             « Notes (optionnel) »). */}
         <fieldset className="space-y-2">
-          <legend className="label !mb-0">Disque — options</legend>
+          <legend className="label !mb-0">{t('vinylForm.discOptions')}</legend>
           <div className="flex flex-col sm:flex-row gap-x-4 gap-y-2 items-end">
             {/* 1. Type de Disque : « Vinyle » / « Compact » (défaut « Vinyle »),
                 envoyé `disc_type` — remplace l'ancienne checkbox « Édition spéciale » */}
             <div className="sm:flex-1">
-              <Field label="Type de Disque">
+              <Field label={t('vinylForm.discTypeLabel')}>
                 {/* « Vinyle » (défaut) / « Compact » — la valeur `Vinyle` est
                     portée par le formulaire (EMPTY.discType = 'Vinyle' et
                     chargement en mode édition) : c'est l'option par défaut. */}
                 <select className="input" value={form.discType} onChange={set('discType')}>
-                  <option value="Vinyle">Vinyle</option>
-                  <option value="Compact">Compact</option>
+                  <option value="Vinyle">{t('vinylForm.discTypeVinyl')}</option>
+                  <option value="Compact">{t('vinylForm.discTypeCompact')}</option>
                 </select>
               </Field>
             </div>
 
             {/* 2. Nombre de Disques : entiers 1 → 5 (défaut 1), stocké discs_count INTEGER */}
             <div className="sm:flex-1">
-              <Field label="Nombre de Disques">
+              <Field label={t('vinylForm.discsCountLabel')}>
                 <select
                   className="input"
                   value={form.discsCount}
@@ -752,7 +747,7 @@ export default function AddVinyl() {
                 case est centrée verticalement sur la hauteur du select
                 (h-10). */}
             <div className="sm:flex-1 max-w-[150px]">
-              <span className="label">Picture Disc</span>
+              <span className="label">{t('vinylForm.pictureDiscLabel')}</span>
               <label className="flex h-10 cursor-pointer items-center gap-2 rounded-lg px-1 text-sm text-slate-300 select-none">
                 <input
                   type="checkbox"
@@ -760,7 +755,7 @@ export default function AddVinyl() {
                   checked={Boolean(form.pictureDisc)}
                   onChange={(e) => setForm((f) => ({ ...f, pictureDisc: e.target.checked }))}
                 />
-                {form.pictureDisc ? 'Oui' : 'Non'}
+                {form.pictureDisc ? t('vinylForm.yes') : t('vinylForm.no')}
               </label>
             </div>
 
@@ -770,7 +765,7 @@ export default function AddVinyl() {
                 bouton + panneau (useDismiss) remplace le <select> ; fermeture
                 au clic à l'extérieur ou sur Échap. */}
             <div className="sm:flex-1" ref={colorMenuRef}>
-              <span className="label">Couleur</span>
+              <span className="label">{t('vinylForm.colorLabel')}</span>
               <div className="relative">
                 <button
                   type="button"
@@ -781,7 +776,7 @@ export default function AddVinyl() {
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     {colorDot(form.color)}
-                    <span className="truncate">{colorLabel(form.color)}</span>
+                    <span className="truncate">{colorLabel(form.color, t)}</span>
                   </span>
                   <svg
                     width="12"
@@ -813,7 +808,7 @@ export default function AddVinyl() {
                   >
                     <ColorOption
                       value={COLOR_NA}
-                      label="N/A"
+                      label={t('vinylForm.na')}
                       selected={form.color === COLOR_NA}
                       onSelect={() => {
                         setForm((f) => ({ ...f, color: COLOR_NA }))
@@ -824,7 +819,7 @@ export default function AddVinyl() {
                       <ColorOption
                         key={c.value}
                         value={c.value}
-                        label={c.value}
+                        label={colorLabel(c.value, t)}
                         hex={c.hex}
                         selected={form.color === c.value}
                         onSelect={() => {
@@ -842,45 +837,42 @@ export default function AddVinyl() {
 
         {/* Identifiants externes (recherche par code-barres) */}
         <fieldset className="space-y-3">
-          <legend className="label !mb-0">Identifiants externes</legend>
+          <legend className="label !mb-0">{t('vinylForm.externalIds')}</legend>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="MusicBrainz (release MBID)">
+            <Field label={t('vinylForm.mbidField')}>
               <input
                 className="input font-mono text-[12px]"
                 value={form.mbid}
                 onChange={set('mbid')}
-                placeholder="UUID de la release (rempli par la recherche)"
+                placeholder={t('vinylForm.mbidPlaceholder')}
               />
             </Field>
-            <Field label="Discogs (release ID)">
+            <Field label={t('vinylForm.discogsIdField')}>
               <input
                 className="input font-mono"
                 inputMode="numeric"
                 value={form.discogsReleaseId}
                 onChange={(e) => setForm((f) => ({ ...f, discogsReleaseId: e.target.value.replace(/\D/g, '') }))}
-                placeholder="ID numérique de la fiche Discogs"
+                placeholder={t('vinylForm.discogsIdPlaceholder')}
               />
             </Field>
           </div>
-          <Field label="Discogs (URL de la fiche)">
+          <Field label={t('vinylForm.discogsUrlField')}>
             <input
               className="input font-mono text-[12px]"
               value={form.discogsUrl}
               onChange={set('discogsUrl')}
-              placeholder="https://www.discogs.com/releases/1234567"
+              placeholder={t('vinylForm.discogsUrlPlaceholder')}
             />
           </Field>
-          <p className="text-[11px] text-slate-500">
-            Ces champs sont remplis automatiquement par la recherche par code-barres
-            (MusicBrainz + Discogs) ; ils restent modifiables et sont conservés avec le disque.
-          </p>
+          <p className="text-[11px] text-slate-500">{t('vinylForm.autoFilledNote')}</p>
         </fieldset>
 
         <div className="flex flex-wrap gap-2 pt-2 border-t border-night-600/50">
           <button type="submit" className="btn-primary" disabled={saving}>
-            {saving ? 'Enregistrement…' : isEdit ? 'Enregistrer les modifications' : 'Ajouter à ma collection'}
+            {saving ? t('common.saving') : isEdit ? t('vinylForm.saveChanges') : t('common.addCollection')}
           </button>
-          <button type="button" className="btn-ghost" onClick={() => navigate(-1)}>Annuler</button>
+          <button type="button" className="btn-ghost" onClick={() => navigate(-1)}>{t('common.cancel')}</button>
         </div>
       </form>
 
@@ -945,9 +937,20 @@ function colorDot(value, size = 14) {
   )
 }
 
-/* Libellé d'une valeur de couleur (couleurs inconnues héritées : affichées
-   telles quelles, avec leur pastille grise). */
-const colorLabel = (value) => String(value || '—')
+/* Libellé d'une valeur de couleur traduit : les couleurs inconnues héritées
+   (legacy) sont affichées telles quelles, avec leur pastille grise. Les clés
+   i18n utilisent la valeur SANS ACCENT du code-barres (« Marbre » en base ->
+   `vinylForm.colors.Marbre`, « Bande Dessinee » etc.) — valeur stockée en
+   base (colonne vinyls.color, sans liste contrôlée). */
+const colorLabel = (value, t) => {
+  const s = String(value || '')
+  if (!s) return '—'
+  // Valeur héritée inconnue : repli tel quel (le « é » de « Marbré » hérité
+  // n'existe pas en clé ; on retire les accents — décomposition NFD pour les
+  // formes précomposées — pour la recherche du libellé).
+  const key = `vinylForm.colors.${s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`
+  return i18n.exists(key) ? t(key) : s
+}
 
 /* Ligne du menu déroulant « Couleur » : pastille + libellé (+ coche si
    sélection), style du menu ⚙ de la toolbar de vue. */
@@ -979,7 +982,8 @@ function Field({ label, children }) {
 }
 
 function LinkHome() {
+  const { t } = useTranslation()
   return (
-    <a href="/collection" className="btn-ghost">Retour à ma collection</a>
+    <a href="/collection" className="btn-ghost">{t('vinylForm.backToCollection')}</a>
   )
 }

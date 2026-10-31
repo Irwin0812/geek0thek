@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
 
 /**
@@ -47,6 +48,8 @@ const SOURCE_LABELS = {
 }
 
 export default function BarcodeModal({ open, onClose, onPrefill }) {
+  const { t } = useTranslation()
+
   // ---- onglet actif : 'barcode' (défaut) | 'query' --------------------------
   const [tab, setTab] = useState('barcode')
 
@@ -87,7 +90,6 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
   }, [open])
 
   if (!open) return null
-
   const close = () => {
     setTab('barcode')
     setCode('')
@@ -118,7 +120,7 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
   const lookup = async (e) => {
     e?.preventDefault()
     if (!valid) {
-      setError('Le code-barres doit contenir entre 8 et 14 chiffres (EAN/UPC).')
+      setError(t('barcodeModal.errorInvalidBarcode'))
       return
     }
     setError('')
@@ -147,11 +149,11 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
     if (busy || searching) return
     const value = query.replace(/\s+/g, ' ').trim()
     if (value.length < 2) {
-      setError('Saisissez au moins 2 caractères : titre de l’album, « artiste titre », ou un n° EAN/UPC.')
+      setError(t('barcodeModal.minCharsError'))
       return
     }
     if (value.length > 300) {
-      setError('Requête trop longue (300 caractères maximum).')
+      setError(t('barcodeModal.maxLenError'))
       return
     }
     setError('')
@@ -182,12 +184,12 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
   const providerBadge = (state) => {
     const [tone, label] =
       state === 'found'
-        ? ['text-emerald-300 bg-emerald-500/10 border-emerald-500/30', '✓ trouvée']
+        ? ['text-emerald-300 bg-emerald-500/10 border-emerald-500/30', `✓ ${t('barcodeModal.providerFound')}`]
         : state === 'unavailable'
-          ? ['text-amber-300 bg-amber-500/10 border-amber-500/30', 'indisponible']
+          ? ['text-amber-300 bg-amber-500/10 border-amber-500/30', t('barcodeModal.providerUnavailable')]
           : state === 'not-configured'
-            ? ['text-slate-500 bg-slate-500/10 border-slate-500/30', 'non configurée']
-            : ['text-slate-400 bg-slate-500/10 border-slate-500/30', 'absente']
+            ? ['text-slate-500 bg-slate-500/10 border-slate-500/30', t('barcodeModal.providerNotConfigured')]
+            : ['text-slate-400 bg-slate-500/10 border-slate-500/30', t('barcodeModal.providerNotPresent')]
     return (
       <span className={`shrink-0 text-[10px] font-semibold rounded px-1.5 py-0.5 border ${tone}`}>
         {label}
@@ -204,8 +206,8 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
   ]
   const subtitle =
     tab === 'barcode'
-      ? `Saisissez le n° EAN/UPC de la pochette — pré-remplissage via ${activeNames.join(', ')}.`
-      : `Titre de l’album, « artiste titre » ou n° EAN/UPC — cascade stricte : 1. Last.fm → 2. Discogs → 3. MusicBrainz (sources actives : ${activeNames.join(', ')}).`
+      ? t('barcodeModal.subtitleBarcode', { sources: activeNames.join(', ') })
+      : t('barcodeModal.subtitleQuery', { sources: activeNames.join(', ') })
 
   return (
     <div
@@ -215,14 +217,14 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
       <div className="card w-full max-w-xl p-6 shadow-2xl shadow-black/50 flex flex-col max-h-[90vh]">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
-            <h2 className="text-lg font-extrabold text-white">Importer un Disque</h2>
+            <h2 className="text-lg font-extrabold text-white">{t('barcodeModal.title')}</h2>
             <p className="text-sm text-slate-400 mt-0.5">{subtitle}</p>
           </div>
-          <button onClick={close} className="btn-ghost !p-1.5" aria-label="Fermer">✕</button>
+          <button onClick={close} className="btn-ghost !p-1.5" aria-label={t('common.close')}>✕</button>
         </div>
 
         {/* Onglets : Code-barres | Mots-clés (mêmes styles que la modale BD) */}
-        <div className="flex gap-1 border-b border-night-600/60 mb-4" role="tablist" aria-label="Mode de recherche">
+        <div className="flex gap-1 border-b border-night-600/60 mb-4" role="tablist" aria-label={t('barcodeModal.searchModeLabel')}>
           <button
             type="button"
             role="tab"
@@ -234,7 +236,7 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
             }`}
             onClick={() => switchTab('barcode')}
           >
-            ⌗ Code-barres (EAN/UPC)
+            {t('barcodeModal.tabBarcode')}
           </button>
           <button
             type="button"
@@ -247,7 +249,7 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
             }`}
             onClick={() => switchTab('query')}
           >
-            🔎 Mots-clés
+            {t('barcodeModal.tabQuery')}
           </button>
         </div>
 
@@ -256,7 +258,7 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
           <form onSubmit={lookup} className="flex flex-wrap gap-2">
             <input
               className="input font-mono tracking-widest min-w-0"
-              placeholder="Ex. 0190295958361"
+              placeholder={t('barcodeModal.barcodePlaceholder')}
               inputMode="numeric"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
@@ -264,7 +266,7 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
               autoFocus
             />
             <button className="btn-primary shrink-0" disabled={anyBusy || !valid}>
-              {busy ? 'Recherche…' : 'Importer'}
+              {busy ? t('common.searching') : t('barcodeModal.importBtn')}
             </button>
           </form>
         )}
@@ -275,26 +277,24 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
             <form onSubmit={searchQuery} className="flex flex-wrap gap-2">
               <input
                 className="input min-w-0"
-                placeholder="Ex. Pink Floyd — The Dark Side of the Moon (ou un n° EAN)…"
+                placeholder={t('barcodeModal.queryPlaceholder')}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 maxLength={300}
                 autoFocus
               />
               <button className="btn-primary shrink-0" disabled={anyBusy}>
-                {searching ? 'Recherche…' : 'Rechercher'}
+                {searching ? t('common.searching') : t('common.search')}
               </button>
             </form>
             <p className="text-[11px] text-slate-500 mt-1.5">
-              Utilisable quand le code-barres échoue : titre de l’album, « artiste titre » ou n° EAN —
-              ordre de recherche imposé : Last.fm d’abord (jaquettes), puis Discogs, puis MusicBrainz.
+              {t('barcodeModal.queryHint')}
             </p>
 
             {/* Aucun disque trouvé (404 géré en erreur ci-dessous) */}
             {!error && hasSearched && !result && !searching && (
               <p className="mt-3 text-sm text-slate-500 bg-night-900/60 border border-night-600/60 rounded-lg px-3 py-2">
-                Aucun disque trouvé pour cette recherche — essayez d’élargir la requête (titre seul,
-                « artiste titre », ou le n° EAN exact de l’album).
+                {t('barcodeModal.noResults')}
               </p>
             )}
           </div>
@@ -310,7 +310,7 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
             l'une des sources actives a échoué (quota 429, jeton Discogs invalide…). */}
         {warnings.length > 0 && result && !error && (
           <div className="mt-3 text-sm text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 space-y-1">
-            <p className="font-semibold">Avertissements :</p>
+            <p className="font-semibold">{t('barcodeModal.warningsLabel')}</p>
             {warnings.map((w) => (
               <p key={w}>{w}</p>
             ))}
@@ -321,9 +321,9 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
           <div className="mt-5 flex gap-4">
             <div className="w-28 h-28 shrink-0 rounded-lg overflow-hidden bg-night-900 border border-night-600">
               {result.cover_image ? (
-                <img src={result.cover_image} alt="Aperçu jaquette" className="w-full h-full object-cover" />
+                <img src={result.cover_image} alt={t('barcodeModal.sleevePreview')} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full grid place-items-center text-slate-600 text-xs">Aucune image</div>
+                <div className="w-full h-full grid place-items-center text-slate-600 text-xs">{t('common.noImage')}</div>
               )}
             </div>
             <div className="flex-1 text-sm space-y-1 min-w-0">
@@ -357,8 +357,8 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
               {result.label && <p className="text-slate-500 truncate">Label : {result.label}</p>}
               <p className="text-slate-500">
                 {toTrackCount(result.track_count) > 0
-                  ? `${toTrackCount(result.track_count)} titre(s) détecté(s)`
-                  : 'Aucune tracklist renvoyée : à compléter manuellement'}
+                  ? t('barcodeModal.tracksDetected', { count: toTrackCount(result.track_count) })
+                  : t('barcodeModal.noTracklist')}
               </p>
               {result.mbid && (
                 <p className="text-slate-500 truncate font-mono text-[11px]" title={result.mbid}>
@@ -380,7 +380,7 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
         )}
 
         <div className="mt-6 flex justify-end gap-2">
-          <button className="btn-ghost" onClick={close}>Annuler</button>
+          <button className="btn-ghost" onClick={close}>{t('common.cancel')}</button>
           {result && (
             <button
               className="btn-primary"
@@ -410,7 +410,7 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
                 onPrefill?.(payload)
               }}
             >
-              Pré-remplir la fiche
+              {t('common.prepopulateSheet')}
             </button>
           )}
         </div>

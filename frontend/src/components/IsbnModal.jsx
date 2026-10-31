@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
 
 // Libellés des sources (une fiche peut être la fusion des deux quand
@@ -36,6 +37,8 @@ const SOURCE_LABELS = {
  *    formulaire AddComic que le mode ISBN.
  */
 export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
+  const { t } = useTranslation()
+
   // ---- onglet actif : 'isbn' (défaut) | 'query' -------------------------
   const [tab, setTab] = useState('isbn')
 
@@ -86,7 +89,7 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
     if (busy || importing) return // un seul appel à la fois (modes 1 et 2 exclusifs)
     const value = digits
     if (!validIsbn) {
-      setError('ISBN attendu : 13 chiffres (ISBN-13) ou 10 caractères (ISBN-10, X final possible).')
+      setError(t('isbnModal.errorInvalidIsbn'))
       return
     }
     setError('')
@@ -131,7 +134,7 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
     if (searching || busy || importing) return // exclusif avec les appels ISBN
     const value = query.replace(/\s+/g, ' ').trim()
     if (value.length < 2) {
-      setError('Saisissez au moins 2 caractères : titre de la BD, auteur, série…')
+      setError(t('isbnModal.minCharsError'))
       return
     }
     setError('')
@@ -169,18 +172,16 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
       <div className="card w-full max-w-xl p-6 shadow-2xl shadow-black/50 flex flex-col max-h-[90vh]">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
-            <h2 className="text-lg font-extrabold text-white">Remplir via ISBN / Code-barres</h2>
+            <h2 className="text-lg font-extrabold text-white">{t('isbnModal.title')}</h2>
             <p className="text-sm text-slate-400 mt-0.5">
-              Saisissez l'ISBN de la bande dessinée, OU — si son code-barres échoue —
-              retrouvez-la par MOTS-CLÉS (titre, auteur, série) via Google Books +
-              Open Library.
+              {t('isbnModal.subtitle')}
             </p>
           </div>
-          <button onClick={close} className="btn-ghost !p-1.5" aria-label="Fermer">✕</button>
+          <button onClick={close} className="btn-ghost !p-1.5" aria-label={t('common.close')}>✕</button>
         </div>
 
         {/* Onglets : ISBN / Code-barres | Recherche par mots-clés */}
-        <div className="flex gap-1 border-b border-night-600/60 mb-4" role="tablist" aria-label="Mode de recherche">
+        <div className="flex gap-1 border-b border-night-600/60 mb-4" role="tablist" aria-label={t('isbnModal.searchModeLabel')}>
           <button
             type="button"
             role="tab"
@@ -192,7 +193,7 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
             }`}
             onClick={() => switchTab('isbn')}
           >
-            ISBN / Code-barres
+            {t('isbnModal.tabIsbn')}
           </button>
           <button
             type="button"
@@ -205,7 +206,7 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
             }`}
             onClick={() => switchTab('query')}
           >
-            🔎 Recherche par mots-clés
+            {t('isbnModal.tabQuery')}
           </button>
         </div>
 
@@ -214,7 +215,7 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
           <form onSubmit={lookup} className="flex flex-wrap gap-2">
             <input
               className="input font-mono tracking-widest min-w-0"
-              placeholder="Ex. 9782205007664"
+              placeholder={t('isbnModal.isbnPlaceholder')}
               inputMode="numeric"
               value={isbn}
               onChange={(e) => setIsbn(e.target.value.replace(/[^0-9xX]/g, ''))}
@@ -222,14 +223,14 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
               autoFocus
             />
             <button className="btn-primary shrink-0" disabled={anyBusy || !validIsbn}>
-              {busy ? 'Recherche…' : 'Chercher'}
+              {busy ? t('common.searching') : t('isbnModal.searchBtn')}
             </button>
             {/* MODE 2 — IMPORT DIRECT PAR CODE-BARRES : création immédiate de la
                 BD côté backend (api.comics.importByIsbn) ; le parent prend la
                 main via onImport (navigation + toast). Coexiste sans conflit
                 avec « Chercher » (mode 1, pré-remplissage du formulaire). */}
             <button type="button" className="btn-ghost shrink-0" onClick={importDirect} disabled={anyBusy || !validIsbn}>
-              {importing ? 'Importation…' : '⌗ Importer par code-barres'}
+              {importing ? t('isbnModal.importing') : t('isbnModal.importByBarcode')}
             </button>
           </form>
         )}
@@ -240,19 +241,18 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
             <form onSubmit={searchQuery} className="flex flex-wrap gap-2">
               <input
                 className="input min-w-0"
-                placeholder="Ex. Les Démons d'Alexia — Le sang de l'ange (ou un auteur, une série)…"
+                placeholder={t('isbnModal.queryPlaceholder')}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 maxLength={300}
                 autoFocus
               />
               <button className="btn-primary shrink-0" disabled={anyBusy}>
-                {searching ? 'Recherche…' : 'Rechercher'}
+                {searching ? t('common.searching') : t('common.search')}
               </button>
             </form>
             <p className="text-[11px] text-slate-500 mt-1.5">
-              Utilisable quand l'ISBN / le code-barres échoue : titre de la BD, auteur,
-              série… (consulte Google Books « q=… »).
+              {t('isbnModal.queryHint')}
             </p>
 
             {/* Grille de sélection des résultats (200 + [] = aucun volume) */}
@@ -273,17 +273,17 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
                       ) : null}
                     </span>
                     <span className="min-w-0 flex-1 text-sm space-y-0.5">
-                      <span className="block font-semibold text-white truncate">{item.title || 'Titre introuvable'}</span>
+                      <span className="block font-semibold text-white truncate">{item.title || t('isbnModal.noTitle')}</span>
                       {(item.series || item.tome_number) && (
                         <span className="block text-gold-300 truncate text-xs">
-                          {[item.series, item.tome_number ? `Tome ${item.tome_number}` : ''].filter(Boolean).join(' · ')}
+                          {[item.series, item.tome_number ? t('isbnModal.volume', { number: item.tome_number }) : ''].filter(Boolean).join(' · ')}
                         </span>
                       )}
                       <span className="block text-slate-400 truncate text-xs">
                         {[item.authors, item.publisher].filter(Boolean).join(' · ')}
                       </span>
                       <span className="block text-slate-600 text-[11px] font-mono flex items-center gap-2">
-                        <span>{[item.release_date, item.isbn ? `ISBN ${item.isbn}` : ''].filter(Boolean).join(' · ') || '—'}</span>
+                        <span>{[item.release_date, item.isbn ? t('isbnModal.isbnField', { isbn: item.isbn }) : ''].filter(Boolean).join(' · ') || '—'}</span>
                         {/* Provenance de la fiche : Google Books seul, Open
                             Library (cascade) ou fusion des deux. */}
                         <span className="text-[10px] px-1.5 py-0.5 rounded border border-night-600/70 text-slate-500">
@@ -299,8 +299,7 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
             {/* Aucun volume trouvé (200 + []), affiché uniquement après une recherche */}
             {!error && hasSearched && results.length === 0 && !searching && (
               <p className="mt-3 text-sm text-slate-500 bg-night-900/60 border border-night-600/60 rounded-lg px-3 py-2">
-                Aucun livre trouvé pour cette recherche — essayez d'élargir la requête
-                (titre seul, auteur seul, ou titre « sans » le sous-titre).
+                {t('isbnModal.noResults')}
               </p>
             )}
           </div>
@@ -318,29 +317,29 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
           <div className="mt-5 flex gap-4">
             <div className="w-24 shrink-0 aspect-[2/3] rounded-lg overflow-hidden bg-night-900 border border-night-600">
               {result.cover_image ? (
-                <img src={result.cover_image} alt="Aperçu couverture" className="w-full h-full object-cover" />
+                <img src={result.cover_image} alt={t('isbnModal.coverPreview')} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full grid place-items-center text-slate-600 text-xs text-center px-2">Aucune image</div>
+                <div className="w-full h-full grid place-items-center text-slate-600 text-xs text-center px-2">{t('common.noImage')}</div>
               )}
             </div>
             <div className="flex-1 text-sm space-y-1 min-w-0">
               <p className="text-white font-bold truncate" title={result.title}>
-                {result.title || 'Titre introuvable'}
+                {result.title || t('isbnModal.noTitle')}
               </p>
               {(result.series || result.tome_number) && (
                 <p className="text-gold-300 truncate">
-                  {[result.series, result.tome_number ? `Tome ${result.tome_number}` : ''].filter(Boolean).join(' · ')}
+                  {[result.series, result.tome_number ? t('isbnModal.volume', { number: result.tome_number }) : ''].filter(Boolean).join(' · ')}
                 </p>
               )}
               <p className="text-slate-400 truncate">
-                {[result.authors, result.illustrators ? `dessin ${result.illustrators}` : '', result.publisher].filter(Boolean).join(' · ')}
+                {[result.authors, result.illustrators ? t('isbnModal.drawingsBy', { names: result.illustrators }) : '', result.publisher].filter(Boolean).join(' · ')}
               </p>
               <p className="text-slate-500">
                 {[result.release_date, result.genre].filter(Boolean).join(' · ')}
               </p>
               {result.isbn && (
                 <p className="text-[11px] text-slate-600 font-mono">
-                  ISBN {result.isbn}
+                  {t('isbnModal.isbnField', { isbn: result.isbn })}
                 </p>
               )}
               {result.synopsis && (
@@ -352,14 +351,14 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
                 </p>
               )}
               <p className="text-[11px] text-slate-600">
-                Source : {SOURCE_LABELS[result.source] || 'Open Library'}
+                {t('isbnModal.sourceLabel')} : {SOURCE_LABELS[result.source] || 'Open Library'}
               </p>
             </div>
           </div>
         )}
 
         <div className="mt-6 flex justify-end gap-2">
-          <button className="btn-ghost" onClick={close}>Annuler</button>
+          <button className="btn-ghost" onClick={close}>{t('common.cancel')}</button>
           {result && (
             <button
               className="btn-primary"
@@ -413,7 +412,7 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
                 onPrefill?.(payload)
               }}
             >
-              Pré-remplir la fiche
+              {t('common.prepopulateSheet')}
             </button>
           )}
         </div>
