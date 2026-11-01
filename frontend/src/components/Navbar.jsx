@@ -268,10 +268,13 @@ export default function Navbar() {
                   ▾
                 </span>
               </button>
+              {/* z-50 IMPÉRATIF : le panneau doit se peindre AU-DESSUS de la
+                  bande décorative du thème (ex: .cb-navbar::after, z-index 30
+                  dans comic-books.css) ; sans lui, il passait sous la ligne. */}
               {othersOpen && (
                 <div
                   role="menu"
-                  className="absolute left-0 top-full mt-1.5 w-64 max-w-[calc(100vw-2rem)] card !p-1.5 shadow-2xl shadow-black/50"
+                  className="absolute left-0 top-full z-50 mt-1.5 w-64 max-w-[calc(100vw-2rem)] card !p-1.5 shadow-2xl shadow-black/50"
                 >
                   {OTHER_COLLECTIONS.length === 0 ? (
                     <p className="px-3 py-2 text-xs text-slate-500">
@@ -328,9 +331,11 @@ export default function Navbar() {
                 </span>
               </button>
 
-              {/* --- Panneau déroulant --- */}
+              {/* --- Panneau déroulant — z-50 IMPÉRATIF : au-dessus de la bande
+                  décorative du thème (.cb-navbar::after, z-index 30) qui
+                  couvrait sinon le menu (cf. « Autres Collections »). --- */}
               {userMenuOpen && (
-                <div className="absolute top-full right-0 mt-1.5 w-80 max-w-[calc(100vw-2rem)] card !p-1.5 shadow-2xl shadow-black/50">
+                <div className="absolute top-full right-0 z-50 mt-1.5 w-80 max-w-[calc(100vw-2rem)] card !p-1.5 shadow-2xl shadow-black/50">
                   {/* En-tête du menu : avatar, nom et rôle de l'utilisateur
                       connecté (conservés depuis la barre de navigation). */}
                   <div className="flex items-center gap-3 px-4 py-3">
