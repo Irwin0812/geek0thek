@@ -32,10 +32,16 @@
   --text-faint: #8f7d4a;
   --accent-soft: #1d4ed8; /* texte accent (bleu comic) */
   --accent: #2563eb;
-  --accent-strong: #1d4ed8; /* boutons : bleu vif */
-  --accent-deep: #1e40af;
-  --accent-dark: #1e3a8a;
-  --accent-contrast: #ffffff;
+  /* Boutons d'action : JAUNE « splash » / OR + ENCRE noire — exactement la
+     couleur du tampon actif de la navigation (« MES DISQUES », cf. .cb-nav-link
+     .bg-night-700 ci-dessous : var(--cb-yellow)) et le bouton « Ajouter » des
+     barres d'action (.cb-actions .btn-primary). --accent-contrast = ENCRE au
+     lieu du blanc : tout texte .text-[var(--accent-contrast)] (segment actif
+     de la toolbar Grille/Liste…) passe en noir contrasté sur le jaune. */
+  --accent-strong: #ffd21f; /* boutons : jaune « splash » / or */
+  --accent-deep: #f5b800;
+  --accent-dark: #191105;
+  --accent-contrast: #191105; /* texte sur les boutons : ENCRE noire (jamais blanc) */
   --ring: rgba(29, 78, 216, 0.3);
   --shadow-color: #191105; /* ombre « case » : noir franc */
   --card-radius: 0.5rem;
@@ -138,13 +144,17 @@
   box-shadow: 1px 1px 0 0 var(--border-default);
 }
 
+/* Base des boutons d'action : JAUNE « splash » / or + ENCRE noire (variables
+   --accent-strong/--accent-contrast re-ciblées ci-dessus). La charte complète
+   (bordure nette 3px, Bangers MAJUSCULES, ombre dure, états forçés !important)
+   est SCELLÉE en fin de fichier : dernière règle du thème = ne perd jamais. */
 [data-theme='comic-books'] .btn-primary {
-  background: var(--accent-strong);
-  color: var(--accent-contrast);
+  background: var(--accent-strong); /* = jaune or #ffd21f */
+  color: var(--accent-contrast);    /* = ENCRE noire */
 }
 
 [data-theme='comic-books'] .btn-primary:hover {
-  background: var(--accent);
+  background: var(--cb-yellow-hi); /* jaune ÉCLAIRCI (jamais bleu) */
 }
 
 [data-theme='comic-books'] .btn-ghost {
@@ -389,12 +399,19 @@
     Bangers (comics US), bordures noires épaisses + ombres décalées sans flou.
     ============================================================ */
 
-/* Couleurs vives de la charte (littéraux volontairement très saturés). */
-[data-theme='comic-books'] .cb-navbar {
+/* Couleurs vives de la charte (littéraux volontairement très saturés).
+   IMPORTANT : ces variables sont définies à la RACINE du thème [data-theme='comic-books'],
+   ET pas sur .cb-navbar — un var(--cb-*) se résout par HÉRITAGE : enfermé dans .cb-navbar,
+   il serait INVISIBLE depuis les boutons d'action « Ajouter » (pages Collection, Dashboard),
+   rendrait background: var(--cb-yellow) INVALIDE → fond transparent → bouton qui "disparaît". */
+[data-theme='comic-books'] {
   --cb-yellow: #ffd21f;
   --cb-yellow-hi: #ffe15c;
   --cb-red: #e11d48;
   --cb-cyan: #22d3ee;
+}
+
+[data-theme='comic-books'] .cb-navbar {
   background: #0c0a12; /* fond « case » quasi noir : fait remonter les couleurs vives */
   border-bottom: none;
 }
@@ -410,7 +427,7 @@
 }
 
 /* Navlinks : lettrage Bangers « case de BD » ; l'ÉTAT ACTIF (le NavLink actif
-   porte .bg-night-700 en classe) devient un TAMPOON JAUNE à liseré noir. */
+   porte .bg-night-700 en classe) devient un TAMPON JAUNE à liseré noir. */
 [data-theme='comic-books'] .cb-nav-link {
   font-family: var(--comic-title-font);
   font-weight: 400;
@@ -497,13 +514,8 @@
     6px 6px 0 #e11d48; /* ombre dure ROUGE COMIC (accent de la charte) */
 }
 
-/* --- BARRE D'ACTIONS : bouton « Ajouter un média / disque / BD » en JAUNE ---
-    En-tête des pages de collection : le lien btn-primary flottait sur la PHOTO
-    EN TÊTU (bg_comics.jpg sans voile) → au-delà du jaune, un CARTOUCHÉ SOLIDE
-    noir « case de BD » derrière le bouton détache TOTALEMENT le texte du
-    background : conteneur pseudo ::before NOIR franc (#191105) liseré d'or,
-    l'ombre décalée cyan du bloc « global » est conservée par-dessus. Le jaune
-    du bouton conserve son contraste maximal sur cette plaque noire. */
+/* === CARTOUCHE D'ACTIONS « CASE DE BD » (barres d'actions des collections ET
+    en-tête du Dashboard) : même plaque NOIRE liserée or derrière la barre. */
 [data-theme='comic-books'] .cb-actions {
   position: relative;
 }
@@ -512,23 +524,43 @@
   position: absolute;
   inset: -10px -14px;
   background: #191105; /* fond SOLIDE contrasté derrière la barre d'actions */
-  border: 3px solid #ffd21f; /* liseré or « splash » du cartouche */
+  border: 3px solid var(--cb-yellow); /* liseré or « splash » du cartouche */
   border-radius: 1rem;
   box-shadow: 8px 8px 0 0 var(--cb-cyan);
   z-index: -1; /* derrière les boutons, toujours visible (z-index auto en haut) */
 }
-[data-theme='comic-books'] .cb-actions .btn-primary {
-  background: var(--cb-yellow);
-  color: #191105;
-  border-color: #191105;
-  box-shadow: 4px 4px 0 #191105;
-  font-family: var(--comic-title-font);
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  font-size: 1.05rem;
+
+/* ============================================================
+    BOUTONS D'ACTION « AJOUTER » — CHARTE UNIQUE (JAUNE SPLASH / ENCRE NOIRE)
+    L'exemple de référence est le NAVACTION ACTIF « MES DISQUES » (le bloc
+    .cb-nav-link ci-dessous) : TAMPON JAUNE var(--cb-yellow), ENCRE #191105,
+    bordure noire 3 px NETTE + ombre décalée « case ». Les boutons d'action
+    « Ajouter un disque / Ajouter une BD / Ajouter un média » reprennent EXACTEMENT ce style :
+      - fond    : jaune vif / or (var(--cb-yellow) — identique au tampon actif),
+      - forme   : rounded-lg (carré arrondi du design, cf. .btn de base) +
+                  bordure noire épaisse nette (.btn) ;
+      - texte   : MAJUSCULES police comics US (Bangers = --comic-title-font) en
+                  ENCRE NOIRE (#191105 ≈ text-slate-950), jamais blanc/clair,
+      - ombre   : OMBRE PORTÉE / CONTOUR dure sans flou « case de BD »,
+                  enfoncement au clic (.btn:active du thème).
+    Le correctif ANCIEN limitait ce style aux .cb-actions des COLLECTIONS : sur
+    les autres surfaces (en-tête DU DASHBOARD, états vides, modales) le
+    btn-primary remontait au BLEU --accent-strong #1d4ed8 dont le rond rouge du fond
+    bg_comics.jpg se confond → bouton « fondu » / texte lisible difficilement.
+    Le style est donc GLOBAL à .btn-primary, scellé en FIN DE FICHIER avec des
+    variantes FORCÉES !important (les hover:bg-* de Tailwind du JSX possèdent un
+    préfixe :hover et gagneraient le tie-break de source sans ce scellement). */
+
+/* 1) SEGMENT ACTIF de la toolbar Grille/Liste (bg-[var(--accent-strong)] +
+    texte var(--accent-contrast)) : hérite des variables jaune/encre de --accent*
+    (devenues jaune ENCRE ci-dessus) + bordure noire nette + ombre décalée pour
+    épouser exactement les boutons d'action « Ajouter ». */
+[data-theme='comic-books'] .cb-viewtoolbar button[aria-pressed='true'] {
+  background: var(--accent-strong); /* = jaune (voir variables ci-dessus) */
+  color: var(--accent-contrast);    /* = ENCRE noire */
 }
-[data-theme='comic-books'] .cb-actions .btn-primary:hover {
-  background: var(--cb-yellow-hi);
+[data-theme='comic-books'] .cb-viewtoolbar button[aria-pressed='true']:hover {
+  background: #ffe15c; /* même éclairci que le survol des .btn-primary */
 }
 
 /* --- BARRE GRILLE/LISTE ⚙ : papier + encre, segment actif = tampon jaune --- */
@@ -702,6 +734,53 @@
 [data-theme='comic-books'] form label,
 [data-theme='comic-books'] [role='dialog'] label {
   color: var(--text-primary);
+}
+
+/* ============================================================
+    BOUTONS D'ACTION « AJOUTER » — SCELLÉ EN FIN DE FICHIER
+    (plus grande priorité de cascade que tout l'ensemble du thème : la même
+    règle gagne à la source, Y COMPRIS contre les utilitaires hover:bg-* /
+    focus:ring-* de Tailwind du JSX — c'est ce qui empêchait le correctif de
+    s'imposer dans certains états : le survol/retour repassait au bleu
+     --accent ancien, le bouton devenait de nouveau illisible dans la photo.
+     LA CHARTE UNIQUE des boutons d'action est celle du nav-action ACTIF « MES
+     DISQUES » (.cb-nav-link ci-dessus) : fond JAUNE var(--cb-yellow), ENCRE
+     #191105 (equivalent text-slate-950), bordure NOIRE NETTE 3 px, ombre PORTÉE /
+     CONTOUR dur sans flou. Appliquée ICI à TOUT .btn-primary (barres d'actions des
+     collections « AJOUTER UN DISQUE » / « AJOUTER UNE BD », bouton « AJOUTER UN
+     MÉDIA » du Dashboard, états vides, modales Barcode/ISBN, formulaires, Profil)
+     : même look partout, texte JAMAIS illisible. */
+[data-theme='comic-books'] .btn-primary {
+  background: var(--cb-yellow) !important; /* jaune vif / or = tampon actif de la nav */
+  color: #191105 !important;              /* ENCRE NOIRE (≙ text-slate-950) — jamais blanc */
+  /* Les boutons ne portent QUE .btn-primary (PAS la classe .btn) : le bord + la
+     OMBRE du thème [data-theme] .btn ne les visent donc JAMAIS. On les déclare
+     ici en TOUT (bordure NETTE épaisse + ombre dure « case », sans flou). */
+  border: 3px solid #191105 !important;   /* bordure NETTE épaisse, largeur incluse */
+  box-shadow: 4px 4px 0 0 #191105;        /* OMBRE PORTÉE / contour dur « case » (sans flou) */
+  font-family: var(--comic-title-font);   /* police comics US (Bangers) */
+  font-weight: 400;                       /* Bangers n'existe qu'en 400 (déjà gras/condensé) */
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 1.05rem;
+}
+/* Survol : jaune éCLAIRCI (jamais bleu — l'ancien hover:bg-gold-400 de base et
+   les var(--accent) repassaient en bleu royal) — !important pour écraser les
+   utilitaires :hover de Tailwind. */
+[data-theme='comic-books'] .btn-primary:hover:not(:disabled) {
+  background: var(--cb-yellow-hi) !important;
+}
+/* Clic : enfoncement + ombre réduite — même mécanisme que le .btn:active du thème
+   (les boutons portent la classe .btn-primary mais PAS .btn, donc la règle :active
+   commune ne les vise pas ; on replique l'enfoncement ici). */
+[data-theme='comic-books'] .btn-primary:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 #191105;
+}
+/* Focus clavier : anneau ENCRE sur voile jaune (au lieu du focus:ring-gold-500/30 de base). */
+[data-theme='comic-books'] .btn-primary:focus-visible {
+  --tw-ring-color: #191105;
+  --tw-ring-offset-color: rgba(255, 210, 31, 0.6);
 }
 
 

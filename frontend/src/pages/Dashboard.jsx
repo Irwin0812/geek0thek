@@ -91,9 +91,13 @@ export default function Dashboard() {
       <ItemDetailModal type="vinyl" item={detailVinyl} onClose={() => setDetailVinyl(null)} onEdit={(v) => { setDetailVinyl(null); navigate(`/vinyles/${v.id}`) }} />
       <ItemDetailModal type="comic" item={detailComic} onClose={() => setDetailComic(null)} onEdit={(c) => { setDetailComic(null); navigate(`/comics/${c.id}`) }} />
 
-      {/* En-tête */}
+      {/* En-tête : même structure que les barres d'actions des collections —
+          cb-actions (thème Comic Books : CARTOUCHE noir franc #191105 liseré or
+          + ombre décalée cyan derrière la barre, cf. themes/comic-books.css) pour
+          que le bouton « AJOUTER UN MÉDIA » n'affiche JAMAIS son style bleu
+          d'origine sur la photo bg_comics.jpg ; inerte sous les autres thèmes. */}
       <section>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="cb-actions flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* En-tête de bienvenue : sous le thème « Comic Books », lettrage de
               case de BD (Bangers, blanc + liseré/ombre noir via .font-comic-title)
               → contraste maximal sur bg_comics.jpg. Autres thèmes : style d'origine. */}
@@ -492,11 +496,27 @@ function SoonCard({ icon: Icon, label, bgImage }) {
  * boutons et liens principaux sont des FRÈRES au DOM, pas imbriqués.
  */
 function QuickAction({ to, tone = 'neutral', children }) {
-  const tones = {
-    amber: 'border-amber-500/40 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25 hover:text-amber-100 focus-visible:ring-amber-500/60',
-    teal: 'border-teal-500/40 bg-teal-500/15 text-teal-200 hover:bg-teal-500/25 hover:text-teal-100 focus-visible:ring-teal-500/60',
-    neutral: 'border-white/10 bg-night-950/60 text-slate-300 hover:bg-night-800/80 hover:text-white focus-visible:ring-gold-500/60',
-  }
+  // Idem AddMediaDropdown : lecture locale du thème (la variable de scope de
+  // Dashboard() n'était pas accessible ici — ancien ReferenceError).
+  const comicTheme = getAppliedTheme() === 'comic-books'
+  /* Surcharges inline : sous le thème « Comic Books » (photo jaune bg_comics.jpg),
+     les pills translucides d'origine (bg-*-500/15 + texte clair) disparaissent sur la
+     photo. Elles reprennent donc la charte UNIQUE des boutons d'action : JAUNE vif /
+     or (bg-amber-400) + ENCRE NOIRE (text-slate-950) + liseré net — exactement la
+     même couleur que les .btn-primary scellées dans themes/comic-books.css, quelle
+     que soit la tuile. Autres thèmes : tons translucides du domaine d'origine
+     (ambre musique / teal littérature / neutre). */
+  const tones = comicTheme
+    ? {
+        amber: 'border-slate-950 bg-amber-400 text-slate-950 hover:bg-yellow-400',
+        teal: 'border-slate-950 bg-amber-400 text-slate-950 hover:bg-yellow-400',
+        neutral: 'border-slate-950 bg-amber-400 text-slate-950 hover:bg-yellow-400',
+      }
+    : {
+        amber: 'border-amber-500/40 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25 hover:text-amber-100 focus-visible:ring-amber-500/60',
+        teal: 'border-teal-500/40 bg-teal-500/15 text-teal-200 hover:bg-teal-500/25 hover:text-teal-100 focus-visible:ring-teal-500/60',
+        neutral: 'border-white/10 bg-night-950/60 text-slate-300 hover:bg-night-800/80 hover:text-white focus-visible:ring-gold-500/60',
+      }
   return (
     <Link
       to={to}
@@ -528,6 +548,13 @@ function AddMediaDropdown() {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const ref = useDismiss(open, () => setOpen(false))
+  // CORRECTION CRITIQUE : `comicTheme` n'existait que dans le scope de
+  // Dashboard() — cette fonction (frère au DOM) la référençait → ReferenceError
+  // à l'ouverture du menu = DÉMONTAGE TOTAL de la page React : c'est ce bug qui
+  // a fait « disparaître » le bouton AJOUTER UN MÉDIA + les tuiles au dernier
+  // correctif. On lit ici directement l'état réel du thème (attribut data-theme,
+  // source de vérité — services/theme.js), même pattern que Dashboard().
+  const comicTheme = getAppliedTheme() === 'comic-books'
 
   const options = [
     { to: '/vinyles/nouveau', label: t('dashboard.addMedia.vinyl'), enabled: true },
