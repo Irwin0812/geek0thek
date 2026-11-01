@@ -19,7 +19,10 @@ const OTHER_COLLECTIONS = []
 
 /* Base commune des liens de la barre principale (NavLink actif ou non) et
    du bouton qui ouvre « Autres Collections ». */
-const linkBase = 'px-3 py-2 rounded-lg text-sm font-medium transition'
+/* cb-nav-link : accroche de charte « Comic Books » (thèmes/comic-books.css).
+   Inerte sur les autres thèmes (aucune règle ne cibl .cb-nav-link). Elle porte
+   le lettrage Bangers + l'état actif « tampon jaune » de la barre haute. */
+const linkBase = 'cb-nav-link px-3 py-2 rounded-lg text-sm font-medium transition'
 const linkCls =
   'text-slate-300 hover:bg-night-700/60 hover:text-white'
 const linkClass = ({ isActive }) =>
@@ -211,8 +214,11 @@ export default function Navbar() {
   const currentLang = i18n.resolvedLanguage || i18n.language
   const activeLangLabel = SUPPORTED_LANGUAGES.find((l) => l.code === currentLang)?.label
 
+  // cb-navbar : accroche de la charte « Comic Books » (thèmes/comic-books.css)
+  // — barre jaune/rouge/cyan, lettrage Bangers, boutons harmonisés au message
+  // de bienvenue. Inerte ailleurs (aucune règle ne cible .cb-navbar).
   return (
-    <header className="sticky top-0 z-40 border-b border-night-700/70 bg-night-950/85 backdrop-blur">
+    <header className="cb-navbar sticky top-0 z-40 border-b border-night-700/70 bg-night-950/85 backdrop-blur">
       {/* BLOC DE NAVIGATION PRINCIPAL RECENTRÉ dans le header :
           LOGO → « Tableau de bord » / « Mes Disques » / « Mes BD » /
           « Autres Collections » → MENU UTILISATEUR (avatar, à droite).
@@ -226,7 +232,8 @@ export default function Navbar() {
               <span className="h-2.5 w-2.5 rounded-full bg-gold-500" />
             </span>
             <span className="leading-tight">
-              <span className="block font-extrabold tracking-wide text-white">
+              {/* cb-logo : lettrage « case de BD » du nom sous le thème Comic Books. */}
+              <span className="cb-logo block font-extrabold tracking-wide text-white">
                 GEEK<span className="text-gold-400">0THEK</span>
               </span>
               <span className="block text-[10px] uppercase tracking-[0.2em] text-slate-500">

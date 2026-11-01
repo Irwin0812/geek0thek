@@ -98,7 +98,9 @@ export default function ViewToolbar({ forceGrid = false }) {
   return (
     // h-12 : même hauteur que le champ de recherche et le bouton d'action ;
     // shrink-0 : jamais écrasé par le champ flex-1 de la barre d'actions.
-    <div className="flex h-12 shrink-0 items-center gap-1.5 rounded-xl border border-night-600/70 bg-night-800/70 p-1.5 backdrop-blur">
+    // cb-viewtoolbar : accroche charte « Comic Books » (thèmes/comic-books.css)
+    // qui passe la barre en papier + encre + ombre décalée « case de BD ».
+    <div className="cb-viewtoolbar flex h-12 shrink-0 items-center gap-1.5 rounded-xl border border-night-600/70 bg-night-800/70 p-1.5 backdrop-blur">
       {/* Mode d'affichage : Grille / Liste */}
       <div className="flex items-center gap-0.5 rounded-lg bg-night-900/70 p-0.5" role="group" aria-label={t('settings.displayMode')}>
         <button

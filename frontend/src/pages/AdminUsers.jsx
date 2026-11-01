@@ -361,7 +361,8 @@ export default function AdminUsers() {
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-white">{t('adminUsers.title')}</h1>
+          {/* cb-page-title : lettrage « case de BD » sous le thème Comic Books. */}
+          <h1 className="cb-page-title text-2xl font-extrabold text-white">{t('adminUsers.title')}</h1>
           <p className="text-sm text-slate-400 mt-1">
             {t('adminUsers.subtitle', { count: users.length })}
           </p>
@@ -480,7 +481,9 @@ export default function AdminUsers() {
       {/* Modal édition */}
       {editTarget && (
         <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-night-950/80 backdrop-blur-sm overflow-y-auto">
-          <form onSubmit={submitEdit} className="card w-full max-w-xl p-6 space-y-4">
+          {/* role=dialog + aria-modal : semantic modal + hook du liseré tricolore
+              du thème Comic Books. */}
+          <form onSubmit={submitEdit} role="dialog" aria-modal="true" className="card w-full max-w-xl p-6 space-y-4">
             <h2 className="font-bold text-white">{t('adminUsers.editModalTitle', { login: editTarget.login })}</h2>
             {error && <p className="text-sm text-rose-400">{error}</p>}
 
@@ -636,7 +639,8 @@ export default function AdminUsers() {
       {/* Modal suppression */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-night-950/80 backdrop-blur-sm">
-          <div className="card w-full max-w-md p-6">
+          {/* role=dialog + aria-modal : semantic modal + hook du liseré tricolore. */}
+          <div role="dialog" aria-modal="true" className="card w-full max-w-md p-6">
             <h2 className="text-lg font-bold text-white">{t('adminUsers.deleteTitle')}</h2>
             <p className="mt-2 text-sm text-slate-400">
               {deleteAccountParts[0]}<span className="text-slate-200">{deleteAccountParts[1]}</span>{deleteAccountParts[2] || ''}

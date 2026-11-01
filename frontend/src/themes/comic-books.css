@@ -288,3 +288,213 @@
       4px 4px 0 #191105;
   }
 }
+
+/* ============================================================
+    DÉCLINAISON GLOBALE « COMIC BOOKS » — BARRES HAUTE/BAS + COLLECTIONS
+    Les règles ci-dessous sont SCELLÉES sous [data-theme='comic-books'] :
+    elles ne modifient AUCUN autre thème. Elles s'accrochent à des classes
+    "crochets" posées dans le JSX (inertes ailleurs) :
+        .cb-navbar      barre de navigation haute
+        .cb-footer      pied de page (barre basse)
+        .cb-logo        lettrage du nom GEEK0THEK
+        .cb-nav-link    liens de la barre (desktop + mobile)
+        .cb-page-title  grand titre des pages de collection
+        .cb-group-title titre de groupe niveau 2 (Artiste / Série)
+        .cb-actions     barre d'actions (recherche / vue / AJOUTER UN MÉDIA)
+        .cb-viewtoolbar barre de personnalisation Grille/Liste + OPTIONS
+    Charte : couleurs vives JAUNE « splash » / ROUGE COMIC / CYAN, police
+    Bangers (comics US), bordures noires épaisses + ombres décalées sans flou.
+    ============================================================ */
+
+/* Couleurs vives de la charte (littéraux volontairement très saturés). */
+[data-theme='comic-books'] .cb-navbar {
+  --cb-yellow: #ffd21f;
+  --cb-yellow-hi: #ffe15c;
+  --cb-red: #e11d48;
+  --cb-cyan: #22d3ee;
+  background: #0c0a12; /* fond « case » quasi noir : fait remonter les couleurs vives */
+  border-bottom: none;
+}
+
+/* Bande bicolore "masthead" : JAUNE -> ROUGE -> CYAN, en bas de la barre. */
+[data-theme='comic-books'] .cb-navbar::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -5px 0;
+  height: 5px;
+  z-index: 30;
+  background: linear-gradient(90deg, var(--cb-yellow) 0%, var(--cb-red) 48%, var(--cb-cyan) 100%);
+}
+
+/* Navlinks : lettrage Bangers « case de BD » ; l'ÉTAT ACTIF (le NavLink actif
+   porte .bg-night-700 en classe) devient un TAMPOON JAUNE à liseré noir. */
+[data-theme='comic-books'] .cb-nav-link {
+  font-family: var(--comic-title-font);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 1.05rem;
+  line-height: 1;
+  color: #ffffff;
+  padding: 0.5rem 0.9rem;
+}
+[data-theme='comic-books'] .cb-nav-link:hover {
+  background: rgba(34, 211, 238, 0.16); /* survol : cyan vif */
+  color: #a7ecff;
+}
+[data-theme='comic-books'] .cb-nav-link.bg-night-700 {
+  background: var(--cb-yellow);
+  color: #191105;
+  border: 3px solid #191105;
+  box-shadow: 3px 3px 0 #191105; /* ombre décalée « case » */
+}
+
+/* Lettrage Bangers du nom de marque (harmonisé au message de bienvenue). */
+[data-theme='comic-books'] .cb-logo {
+  font-family: var(--comic-title-font);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 0.95;
+  color: #ffffff;
+  -webkit-text-stroke: 1.6px #191105;
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #191105, -1px -1px 0 #191105;
+}
+[data-theme='comic-books'] .cb-logo [class*='text-gold-400'] {
+  color: var(--cb-red); /* le « 0THEK » passe au rouge comic */
+}
+
+/* Menus déroulants de la barre (cartes flottantes) : papier + encre. */
+[data-theme='comic-books'] .cb-navbar .card a,
+[data-theme='comic-books'] .cb-navbar .card button,
+[data-theme='comic-books'] .cb-navbar .card p {
+  color: var(--text-primary);
+}
+[data-theme='comic-books'] .cb-navbar .card a:hover,
+[data-theme='comic-books'] .cb-navbar .card button:hover {
+  background: #ffe9a8; /* survol jaune « splash » */
+}
+/* Rangées de bascule (Thème / Langue) : valeur courante conservée en cyan. */
+[data-theme='comic-books'] .cb-navbar .card span[class*='text-cyan-300'] {
+  color: #0e7490;
+}
+/* Pastilles des échantillons : liseré noir net (au lieu du halo blanc). */
+[data-theme='comic-books'] .cb-navbar .card span.rounded-full {
+  border-color: #191105 !important;
+}
+
+/* --- BARRE BASSE : pied de page rouge comic, cadre de la barre haute --- */
+[data-theme='comic-books'] .cb-footer {
+  background: var(--cb-red);
+  border-top: 4px solid #191105;
+}
+[data-theme='comic-books'] .cb-footer div {
+  color: #ffffff;
+}
+[data-theme='comic-books'] .cb-footer a {
+  color: #ffe15c; /* mention de crédit jaune « splash » sur rouge */
+}
+
+/* --- TITRES DES PAGES DE COLLECTION (Mes Disques / Mes BD / Utilisateurs) —
+    même lettrage « case de BD » que le message de bienvenue du Dashboard --- */
+[data-theme='comic-books'] .cb-page-title,
+[data-theme='comic-books'] .cb-group-title {
+  font-family: var(--comic-title-font);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
+  color: #ffffff;
+  -webkit-text-stroke: 2.5px #191105;
+  paint-order: stroke fill;
+  text-shadow:
+    -2px -2px 0 #191105,
+    2px -2px 0 #191105,
+    -2px 2px 0 #191105,
+    2px 2px 0 #191105,
+    6px 6px 0 #e11d48; /* ombre dure ROUGE COMIC (accent de la charte) */
+}
+
+/* --- BARRE D'ACTIONS : bouton « Ajouter un média / disque / BD » en JAUNE --- */
+[data-theme='comic-books'] .cb-actions .btn-primary {
+  background: var(--cb-yellow);
+  color: #191105;
+  border-color: #191105;
+  box-shadow: 4px 4px 0 #191105;
+  font-family: var(--comic-title-font);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 1.05rem;
+}
+[data-theme='comic-books'] .cb-actions .btn-primary:hover {
+  background: var(--cb-yellow-hi);
+}
+
+/* --- BARRE GRILLE/LISTE ⚙ : papier + encre, segment actif = tampon jaune --- */
+[data-theme='comic-books'] .cb-viewtoolbar {
+  background: var(--bg-elevated); /* papier blanc franc */
+  border-color: #191105;
+}
+[data-theme='comic-books'] .cb-viewtoolbar > div[role='group'] {
+  background: #ffe9a8; /* petit plateau jaune pâle */
+  border: 2px solid #191105;
+}
+[data-theme='comic-books'] .cb-viewtoolbar button {
+  color: #191105;
+}
+[data-theme='comic-books'] .cb-viewtoolbar button[aria-pressed='true'] {
+  background: var(--cb-yellow);
+  color: #191105;
+  border: 2px solid #191105;
+  border-radius: 0.4rem;
+  box-shadow: 2px 2px 0 #191105;
+}
+[data-theme='comic-books'] .cb-viewtoolbar button:not([aria-pressed='true']):hover {
+  background: #fff3c4;
+}
+/* Bouton OPTIONS (⚙) : icône encre + fond papier. */
+[data-theme='comic-books'] .cb-viewtoolbar .btn-ghost {
+  background: transparent;
+  color: #191105;
+  border-color: transparent;
+  box-shadow: none;
+}
+[data-theme='comic-books'] .cb-viewtoolbar .btn-ghost:hover,
+[data-theme='comic-books'] .cb-viewtoolbar .btn-ghost.\!bg-night-600 {
+  background: #fff3c4;
+  color: #191105;
+}
+
+/* --- FENÊTRES MODALES : liseré tricolore « case de BD » en haut — indépendant
+    des paddings responsive du modal ; le modal devient position: relative pour
+    accueillir ce liseré absolu au-dessus du contenu. --- */
+[data-theme='comic-books'] .card[role='dialog'] {
+  position: relative;
+}
+[data-theme='comic-books'] .card[role='dialog']::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 14px;
+  right: 14px;
+  height: 3px;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(90deg, var(--cb-yellow) 0%, var(--cb-red) 50%, var(--cb-cyan) 100%);
+}
+
+/* --- GESTION DES UTILISATEURS : tableau lisible sur papier (encre) ---
+    Le TD reçoit l'encre du thème ; les descendants qui porteraient déjà leur
+    propre couleur explicite (utility Tailwind .text-*) conservent celle-ci —
+    seuls les textes "nus" (sans utility de couleur) passent à l'encre. C'est
+    exactement le comportement CSS d'héritage, sans cascade ni hack. */
+[data-theme='comic-books'] .card th {
+  color: #4a3d20;
+}
+[data-theme='comic-books'] .card td {
+  color: var(--text-secondary);
+}
+/* Ligne survolée : clair-jaune « splash » (au lieu du voile nuit). */
+[data-theme='comic-books'] .card tbody tr:hover {
+  background: #fff3c4;
+}

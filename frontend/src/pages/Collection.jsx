@@ -135,7 +135,9 @@ export default function Collection() {
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           {/* Nomenclature officielle (i18n navbar.myVinyls) : « Mes Disques ». */}
-           <h1 className="text-2xl md:text-3xl font-extrabold text-white">{t('navbar.myVinyls')}</h1>
+           {/* cb-page-title : lettrage « case de BD » sous le thème Comic Books
+               (Bangers blanc + liseré noir, cf. themes/comic-books.css). */}
+           <h1 className="cb-page-title text-2xl md:text-3xl font-extrabold text-white">{t('navbar.myVinyls')}</h1>
           {/* Introduction composée : compteur disques + « regroupé(s) en » +
               compteur artistes + phrase d'aide (4 clés au lieu d'une monolithe). */}
           <p className="text-sm text-slate-400 mt-1">
@@ -148,7 +150,9 @@ export default function Collection() {
         {/* Barre d'actions : UNE seule ligne (recherche → vue → ajout), hauteurs
             uniformes (h-12). La recherche absorbe le sur-largeur (flex-1) au lieu
             de forcer le bouton à passer sous la toolbar. Layout strictement aligné sur la page BD. */}
-        <div className="flex flex-wrap items-center gap-3">
+        {/* cb-actions : barre d'actions — le thème Comic Books y flashe le bouton
+            « Ajouter » en jaune « splash » (thèmes/comic-books.css). */}
+        <div className="cb-actions flex flex-wrap items-center gap-3">
           <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
           <ViewToolbar />
           <Link to="/vinyles/nouveau" className="btn-primary !h-12">{t('dashboard.addVinyl')}</Link>
@@ -212,8 +216,9 @@ export default function Collection() {
             <div className="flex items-center gap-3">
               <button className="btn-ghost" onClick={() => setOpenGroup(null)}>{t('collection.allArtists')}</button>
               <div>
-                {/* Nom du groupe (« Divers » si non étiqueté) + compteur disques. */}
-                <h2 className="text-xl font-extrabold text-white" title={currentGroupName}>
+                {/* Nom du groupe (« Divers » si non étiqueté) + compteur disques.
+                    cb-group-title : lettrage « case de BD » sous le thème Comic Books. */}
+                <h2 className="cb-group-title text-xl font-extrabold text-white" title={currentGroupName}>
                   {currentGroupName}
                 </h2>
                 <p className="text-sm text-slate-400">
@@ -310,7 +315,9 @@ export default function Collection() {
 
       {confirmDelete && (
         <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="card w-full max-w-md p-6">
+          {/* role=dialog + aria-modal : semantic modal + hook du liseré tricolore
+              du thème Comic Books ([data-theme='comic-books'] .card[role=dialog]). */}
+          <div role="dialog" aria-modal="true" className="card w-full max-w-md p-6">
             <h2 className="text-lg font-bold text-white text-center">{t('collection.deleteVinylTitle')}</h2>
             <p className="mt-2 text-sm text-slate-400">
               {vinylDeleteParts[0]}<span className="font-semibold text-white">{vinylDeleteParts[1]}</span>{vinylDeleteParts[2] || ''}{vinylDeleteHasLocalCover ? (vinylDeleteParts[3] || '') : ''}

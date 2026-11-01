@@ -153,7 +153,7 @@ export default function ComicCollection() {
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           {/* Nomenclature officielle (i18n navbar.myComics) : « Mes BD ». */}
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white">{t('navbar.myComics')}</h1>
+          <h1 className="cb-page-title text-2xl md:text-3xl font-extrabold text-white">{t('navbar.myComics')}</h1>
           {/* Introduction composée : albums + « regroupé(s) en » + séries + aide. */}
           <p className="text-sm text-slate-400 mt-1">
             {t('collection.albumsCount', { count: comics.length })}{' '}
@@ -165,7 +165,9 @@ export default function ComicCollection() {
         {/* Barre d'actions : UNE seule ligne (recherche → vue → ajout), hauteurs
             uniformes (h-12). La recherche absorbe le sur-largeur (flex-1) au lieu
             de forcer le bouton à passer sous la toolbar. Layout strictement aligné sur la page Disques. */}
-        <div className="flex flex-wrap items-center gap-3">
+        {/* cb-actions : barre d'actions — le thème Comic Books y flashe le bouton
+            « Ajouter » en jaune « splash » (thèmes/comic-books.css). */}
+        <div className="cb-actions flex flex-wrap items-center gap-3">
           <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
           <ViewToolbar />
           <Link to="/comics/nouveau" className="btn-primary !h-12">{t('dashboard.addComic')}</Link>
@@ -223,8 +225,9 @@ export default function ComicCollection() {
             <div className="flex items-center gap-3">
               <button className="btn-ghost" onClick={() => setOpenGroup(null)}>{t('collection.allSeries')}</button>
               <div>
-                {/* Nom de la série (« Hors série » si non étiquetée) + compteur albums. */}
-                <h2 className="text-xl font-extrabold text-white" title={currentGroupName}>
+                {/* Nom de la série (« Hors série » si non étiquetée) + compteur albums.
+                    cb-group-title : lettrage « case de BD » sous le thème Comic Books. */}
+                <h2 className="cb-group-title text-xl font-extrabold text-white" title={currentGroupName}>
                   {currentGroupName}
                 </h2>
                 <p className="text-sm text-slate-400">
@@ -316,7 +319,9 @@ export default function ComicCollection() {
 
       {confirmDelete && (
         <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="card w-full max-w-md p-6">
+          {/* role=dialog + aria-modal : semantic modal + hook du liseré tricolore
+              du thème Comic Books ([data-theme='comic-books'] .card[role=dialog]). */}
+          <div role="dialog" aria-modal="true" className="card w-full max-w-md p-6">
             <h2 className="text-lg font-bold text-white text-center">{t('collection.deleteComicTitle')}</h2>
             <p className="mt-2 text-sm text-slate-400">
               {comicDeleteParts[0]}<span className="font-semibold text-white">{comicDeleteParts[1]}</span>{comicDeleteParts[2] || ''}{confirmDelete.authors ? (comicDeleteParts[3] || '') : ''}{comicDeleteParts[4] || ''}{comicDeleteHasLocalCover ? (comicDeleteParts[5] || '') : ''}
