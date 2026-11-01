@@ -256,9 +256,10 @@ export default function Dashboard() {
                 }>
                   {t('dashboard.vinylsSection')}
                 </h3>
-                {/* Lien « Tout voir » : accent Comic bleu encre + halo blanc ;
-                    or / slate d'origine pour les autres thèmes. */}
-                <Link to="/collection" className={comicTheme ? 'text-sm font-bold [color:var(--accent-soft)] hover:underline' : 'text-sm text-gold-400 hover:text-gold-300'}>
+                {/* Lien « Tout voir » : sous Comic Books, lettrage « case BD » (Bangers
+                    blanc + contour/ombre noire, cf. .cb-view-all dans themes/comic-books.css)
+                    — même typo que le titre « DERNIERS AJOUTS », taille d'origine conservée. */}
+                <Link to="/collection" className={comicTheme ? 'cb-view-all text-sm font-bold hover:underline' : 'text-sm text-gold-400 hover:text-gold-300'}>
                   {t('common.viewAll')}
                 </Link>
               </div>
@@ -298,7 +299,7 @@ export default function Dashboard() {
                 }>
                   {t('dashboard.comicsSection')}
                 </h3>
-                <Link to="/comics" className={comicTheme ? 'text-sm font-bold [color:var(--accent-soft)] hover:underline' : 'text-sm text-gold-400 hover:text-gold-300'}>
+                <Link to="/comics" className={comicTheme ? 'cb-view-all text-sm font-bold hover:underline' : 'text-sm text-gold-400 hover:text-gold-300'}>
                   {t('common.viewAll')}
                 </Link>
               </div>

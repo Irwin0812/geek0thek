@@ -290,6 +290,89 @@
 }
 
 /* ============================================================
+   BOUTON « TOP » (remonter en haut de page) — BLEU FLASHY.
+   Le composant TopButton.jsx est une pastille AMBRE (bg-amber-500,
+   halo amber-400) pensée pour un fond sombre ; sous Comic Books
+   l'ambre se confond avec la photo jaune bg_comics.jpg. On le repasse
+   en BLEU VIF « comic » : fond bg-cyan-400 → hover plus profond
+   (cyan-500), bordure noire épaisse + ombre décalée « case » (le
+   .btn du thème n'étant pas présent sur cette pastille, elles sont
+   portées ici), texte en ENCRE près-noir (au lieu de slate-950) pour
+   un contraste franc, halo/brillance dynamiques recolorés cyan, anneau
+   de focus assorti. Ciblage par l'ID `#top-button` (posée par TopButton.jsx)
+   —
+   inutilisable ailleurs, aucune collision possible avec un autre thème
+   (le bloc est scellé sous [data-theme='comic-books']). */
+[data-theme='comic-books'] #top-button {
+  background: #22d3ee; /* bg-cyan-400 : bleu flashy « splash » */
+  color: #191105;
+  border: 3px solid #191105;
+  box-shadow:
+    4px 4px 0 0 #191105, /* ombre décalée « case de BD */
+    0 0 0 2px rgba(165, 243, 252, 0.35) inset;
+}
+[data-theme='comic-books'] #top-button:hover {
+  background: #06b6d4; /* hover : cyan plus profond */
+  box-shadow:
+    4px 4px 0 0 #191105,
+    0 0 20px rgba(34, 211, 238, 0.65), /* halo flashy cyan (au lieu de l'ambre) */
+    0 4px 14px rgba(6, 182, 212, 0.45),
+    0 0 0 2px rgba(165, 243, 252, 0.55) inset;
+}
+/* Halo flou « brillance dynamique » (span bg-amber-400/60 du JSX) : cyan. */
+[data-theme='comic-books'] #top-button [class*='bg-amber-400'] {
+  background-color: rgba(34, 211, 238, 0.6);
+}
+/* Anneau de focus (ring-amber-300) : pastille cyan flashy. */
+[data-theme='comic-books'] #top-button:focus-visible {
+  --tw-ring-color: #22d3ee;
+}
+
+/* ── LETTRAGE « CASE DE BD » DU LIEN « TOUT VOIR → » + SOUS-TITRES DE SECTION
+   (correction lisibilité — spec 2).
+   Le lien `viewAll` du Dashboard passe exactement au lettrage du titre
+   « DERNIERS AJOUTS » (.font-comic-title ci-dessus) : Bangers, MAJUSCULES,
+   TEXTE BLANC + CONTOUR NOIR ÉPAIS (liseré) + OMBRE PORTEE SOMBRE — tout en
+   CONSERVANT LA TAILLE d'origine (la taille n'est pas redéfinie ici). L'accroche
+   `cb-view-all` est posée dans Dashboard.jsx (inerte sous les autres thèmes,
+   cf. le principe du bloc « DÉCLINAISON GLOBALE » plus bas). Le lettrage est
+   appliqué AUSSI aux sous-titres des sections « DISQUES » / « BANDES DESSINÉES »
+   (<h3>) : cohérence de bloc, contraste maximal sur bg_comics.jpg (spécificité
+   0,2,1 → gagne sur les utilitaires Tailwind `.text-*` du h3). */
+[data-theme='comic-books'] .cb-view-all,
+[data-theme='comic-books'] main section h3 {
+  font-family: var(--comic-title-font);
+  font-weight: 400; /* Bangers ne vient qu'en 400 — corps déjà gras / condensé */
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.15;
+  color: #ffffff; /* texte BLANC/CLAIR… */
+  -webkit-text-stroke: 2px #191105; /* …sur CONTOUR NOIR ÉPAIS (liseré) */
+  paint-order: stroke fill;
+  text-shadow:
+    -2px -2px 0 #191105,
+    2px -2px 0 #191105,
+    -2px 2px 0 #191105,
+    2px 2px 0 #191105,
+    4px 4px 0 #e11d48; /* OMBRE PORTEE dure ROUGE COMIC (accent de la charte) */
+}
+
+/* Tracé légèrement plus fin sous md (Bangers est large — pas de dévorement des
+   contre-dures sur les petits sous-titres text-sm / text-xl). */
+@media (max-width: 768px) {
+  [data-theme='comic-books'] .cb-view-all,
+  [data-theme='comic-books'] main section h3 {
+    -webkit-text-stroke: 1.5px #191105;
+    text-shadow:
+      -2px -2px 0 #191105,
+      2px -2px 0 #191105,
+      -2px 2px 0 #191105,
+      2px 2px 0 #191105,
+      3px 3px 0 #e11d48;
+  }
+}
+
+/* ============================================================
     DÉCLINAISON GLOBALE « COMIC BOOKS » — BARRES HAUTE/BAS + COLLECTIONS
     Les règles ci-dessous sont SCELLÉES sous [data-theme='comic-books'] :
     elles ne modifient AUCUN autre thème. Elles s'accrochent à des classes
@@ -414,7 +497,26 @@
     6px 6px 0 #e11d48; /* ombre dure ROUGE COMIC (accent de la charte) */
 }
 
-/* --- BARRE D'ACTIONS : bouton « Ajouter un média / disque / BD » en JAUNE --- */
+/* --- BARRE D'ACTIONS : bouton « Ajouter un média / disque / BD » en JAUNE ---
+    En-tête des pages de collection : le lien btn-primary flottait sur la PHOTO
+    EN TÊTU (bg_comics.jpg sans voile) → au-delà du jaune, un CARTOUCHÉ SOLIDE
+    noir « case de BD » derrière le bouton détache TOTALEMENT le texte du
+    background : conteneur pseudo ::before NOIR franc (#191105) liseré d'or,
+    l'ombre décalée cyan du bloc « global » est conservée par-dessus. Le jaune
+    du bouton conserve son contraste maximal sur cette plaque noire. */
+[data-theme='comic-books'] .cb-actions {
+  position: relative;
+}
+[data-theme='comic-books'] .cb-actions::before {
+  content: '';
+  position: absolute;
+  inset: -10px -14px;
+  background: #191105; /* fond SOLIDE contrasté derrière la barre d'actions */
+  border: 3px solid #ffd21f; /* liseré or « splash » du cartouche */
+  border-radius: 1rem;
+  box-shadow: 8px 8px 0 0 var(--cb-cyan);
+  z-index: -1; /* derrière les boutons, toujours visible (z-index auto en haut) */
+}
 [data-theme='comic-books'] .cb-actions .btn-primary {
   background: var(--cb-yellow);
   color: #191105;
@@ -498,3 +600,108 @@
 [data-theme='comic-books'] .card tbody tr:hover {
   background: #fff3c4;
 }
+
+/* ============================================================
+   VUE MODE LISTE (Collections) — correction lisibilité.
+   Sous Comic Books, les LIGNES de la vue liste (ItemList / GroupedItemList :
+   <article class="card"> dans un <ul>, une par titre) sont des tuiles PAPIER
+   BLANC — mais le texte qu'elles portaient était conçu pour le fond sombre
+   d'origine (text-slate-100 / -300 / -400 / -500 : blanc/gris clairs), rendu
+   invisible sur le blanc. RÉGLAGE GÉNÉRAL (aucune règle par classe utilitaire)
+   : tout DESCENDANT textuel des lignes liste reçoit l'ENCRE du thème
+   (--text-primary #191105, quasi noir — équivalent slate-900) ; la police reste
+   identique, seule la COULEUR change, donc TOUTES les lignes deviennent
+   contrastées d'un coup (titre, sous-titre, année, badges…). Les accents
+   volontairement colorés sont ré-ancrés par-dessus : or (genres), émeraude
+   (vérifié) ; « Supprimer » reste rouge à l'intérieur du menu ⋯ (fond sombre). Le survol des lignes repasse sur le clair-jaune
+   « splash ». Les CARTES DE GRILLE ne sont PAS des descendants de <li> (elles
+   vivent dans des <div>) : aucune régression côté grille. */
+
+/* 1) Toute LIGNE liste / accordéon = surface PAPIER pleine du thème + bordure
+       ENCRE nette (remplace le voile .card par défaut bg-night-800/80). */
+[data-theme='comic-books'] li article.card {
+  background: var(--bg-elevated);
+  border-color: var(--border-default);
+}
+
+/* Survol d'une ligne liste : clair-jaune « splash » (au lieu du voile nuit). */
+[data-theme='comic-books'] li article.card:hover {
+  background: #fff3c4;
+}
+/* Accordéon ouvert / accordéon relevé (classe bg-night-700/30 posée par
+   GroupedItemList) : plateau jaune pâle — l'encre reste parfaitement lisible. */
+[data-theme='comic-books'] li article.card[class*='bg-night-700'] {
+  background-color: #fff3c4;
+}
+
+/* Surfaces internes des lignes (plateau de vignette, pastilles d'année /
+   compteur) : fond PAPIER CHAUD --bg-raised + liseré ENCRE (remplace les fonds
+   bg-night-900/-700 quasi invisibles sur la carte papier). La spécificité double
+   classe gagne sur `.card` mais reste inférieure aux règles de couleur ci-dessous. */
+[data-theme='comic-books'] li article.card [class*='bg-night-900']:not([class*='gradient']),
+[data-theme='comic-books'] li article.card [class*='bg-night-700']:not([class*='gradient']) {
+  background-color: var(--bg-raised);
+  border-color: var(--border-default);
+}
+
+/* 2) TOUTE la matière textuelle des lignes passe à l'ENCRE (quasi noir).
+       Spécificité multi-classe : gagne sur les utilitaires Tailwind
+       (par ex. .text-slate-100), quel que soit le niveau DOM du texte. */
+[data-theme='comic-books'] li article.card * {
+  color: var(--text-primary);
+}
+
+/* 3) Ré-ancre des accents volontaires par-dessus l'encre générale : */
+/*   a. Badges or (genre / collection / monogrammes) : ambré soutenu, lisible
+        sur papier ET sur le fond encre de la vignette. */
+[data-theme='comic-books'] li article.card [class*='text-gold-300'],
+[data-theme='comic-books'] li article.card .badge {
+  color: #a16207;
+}
+/*   b. Validité « vérifié » (émeraude) : vert soutenu contrasté. */
+[data-theme='comic-books'] li article.card [class*='text-emerald-300'] {
+  color: #047857;
+}
+/* 4) Chevrons / bouton-menu purement graphiques (▾ accordéon, ⋯ de la ligne) :
+       encre atténuée --text-subtle — visibles sans dominer le titre. Le survol
+       se repasse alors sur l'encre pleine du thème (cf. .icon-btn ci-dessus). */
+[data-theme='comic-books'] li article.card span[class*='leading-none'],
+[data-theme='comic-books'] li article.card [aria-haspopup] {
+  color: var(--text-subtle);
+}
+
+/* 5) Menu ⋯ DROPPDOWN des lignes : panneau absolu (z-50, fond ENCRE sombre
+       bg-night-800). Sa matière textuelle est EXCLUE de la règle (2) et remise
+       en clair, survols tonés ; « Supprimer » garde son rouge framboise. */
+[data-theme='comic-books'] li article.card .absolute button {
+  color: #ffffff;
+}
+[data-theme='comic-books'] li article.card .absolute button:hover {
+  background-color: rgba(255, 255, 255, 0.12); /* voile clair sur fond encre */
+}
+[data-theme='comic-books'] li article.card .absolute button[class*='text-rose-300'] {
+  color: #ffd9e0; /* « Supprimer » : rouge lisible sur le panneau sombre */
+}
+[data-theme='comic-books'] li article.card .absolute button[class*='text-rose-300']:hover {
+  background-color: rgba(225, 29, 72, 0.3); /* « Supprimer » : tinte rose accentuée */
+}
+
+/* ============================================================
+   FORMULAIRES & MODALS — LABELS / CHECKBOXES EN ENCRE
+   Les libellés des cases à cocher (« Édition spéciale », « Livre dédicacé »,
+   « Picture Disc »…) étaient en text-slate-300 (gris clair) sur PAPIER BLANC :
+   presque invisibles. Réglage GÉNÉRAL : tout <label> d'un formulaire ou d'une
+   modale passe en ENCRE quasi-noire --text-primary (texte sombre contrasté),
+   quelle que soit la surface (carte papier, modal). Les champs classiques
+   (.label, libellés Field/légendes) conservent l'encre secondaire --text-muted,
+   plus lue et déjà contrastée. Aucun autre thème n'est touché. */
+
+/* A) Libellés de case à cocher / select ET libellés de champs (.label) : ENCRE
+    quasi-noire. `form label` (et non juste fieldset) : les cases « Édition
+    spéciale » / « Livre dédicacé » (AddComic) vivent dans une simple <div>. */
+[data-theme='comic-books'] form label,
+[data-theme='comic-books'] [role='dialog'] label {
+  color: var(--text-primary);
+}
+
+
