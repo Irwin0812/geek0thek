@@ -91,6 +91,7 @@ export default function GroupCard({
 
   return (
     <article
+      data-card="group"
       aria-label={onClick ? t(isVinyl ? 'collection.viewGroupVinyls' : 'collection.viewGroupComics', { name: displayName }) : undefined}
       className={`group relative flex flex-col overflow-hidden transition duration-500 ${
         jukebox

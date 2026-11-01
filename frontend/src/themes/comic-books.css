@@ -225,6 +225,33 @@
   color: #efe4c8;
 }
 
+/* ── EXCEPTION RÉCIPROQUE : en-têtes de PAGES (formulaire « Nouveau disque » /
+   « Nouveau disque » modifié, « Mes Disques » / « Mes BD », profil, admin…) —
+   ces <h1> et leurs sous-titres d'aide (ex. « Deux méthodes d'import :
+   Code-barres… », « BD, manga ou roman graphique… ») vivent HORS de toute .card,
+   à même la photo bg_comics.jpg. Leur couleur codée en dur (text-white /
+   text-slate-400 — pensées pour l'ancien fond sombre) se fonde dans le jaune /
+   les zones claires de la photo : texte PÂLE ILLISIBLE. Ré-ancrage GÉNÉRAL à
+   l'encre du thème, même logique que les règles .card ci-dessus :
+     * h1         → ENCRE quasi-noire #191105 (≙ text-slate-900, ton comics) —
+                    les titres déjà lettrés « case de BD » (.cb-page-title des
+                    pages de collection, .font-comic-title du Dashboard) sont
+                    EXCLUS : ils portent blanc + liseré/ombre noire, toujours
+                    lisibles ;
+     * p          → ENCRE SECONDAIRE #2b2210 : contraste optimal sur TOUTES les
+                    zones de bg_comics.jpg (jaune « splash » ~#f2d94e → ratio
+                    ~7:1 AA+, même sur les zones orangées rouges vives), sans
+                    fond ajouté. La police/la taille restent celles d'origine,
+                    seule la couleur change. Ciblage multi-classe (0,1,1 > 0,1,0)
+                    : gagne sur les utilitaires Tailwind .text-* du JSX ; aucun
+                    autre thème n'est touché (bloc scellé sous [data-theme]). */
+[data-theme='comic-books'] header p {
+  color: var(--text-secondary);
+}
+[data-theme='comic-books'] h1:not(.cb-page-title):not(.font-comic-title) {
+  color: #191105; /* encre quasi-noire du thème */
+}
+
 /* Badges : papier + encre du thème (bordure épaisse noire incluse). */
 [data-theme='comic-books'] .badge {
   background: var(--bg-raised);
@@ -409,10 +436,17 @@
   --cb-yellow-hi: #ffe15c;
   --cb-red: #e11d48;
   --cb-cyan: #22d3ee;
+  /* BLEU ÉLECTRIQUE — barre de menu haute + tuiles du Dashboard (« Mes Disques »
+     / « Mes bandes dessinées », section « Derniers ajouts ») : planches vivantes
+     qui font ressortir le lettrage blanc liseré d'encre, les tampons jaunes et
+     les accents rouge/cyan de la charte. */
+  --cb-electric: #0055ff;      /* bleu électrique de base */
+  --cb-electric-hi: #2d7dff;   /* surbrillance (survol) */
+  --cb-electric-deep: #002fa6; /* ombrage bas de planche / pied de dégradé */
 }
 
 [data-theme='comic-books'] .cb-navbar {
-  background: #0c0a12; /* fond « case » quasi noir : fait remonter les couleurs vives */
+  background: var(--cb-electric); /* fond BLEU ÉLECTRIQUE — fait remonter les couleurs vives de la charte */
   border-bottom: none;
 }
 
@@ -734,6 +768,76 @@
 [data-theme='comic-books'] form label,
 [data-theme='comic-books'] [role='dialog'] label {
   color: var(--text-primary);
+}
+
+/* ============================================================
+    TUILES DU DASHBOARD + TUILES DE COLLECTIONS — FOND BLEU ÉLECTRIQUE
+    (spec 1 & 2) : le fond de la BARRE DE MENU (.cb-navbar) ET le fond des
+    tuiles « Disques » / « Bandes dessinées » (section haute du Dashboard,
+    cartes de « Derniers ajouts », tuiles de groupes/bidon) passent en BLEU
+    ÉLECTRIQUE var(--cb-electric) #0055ff — planches vivantes qui font ressortir
+    le lettrage blanc liseré d'encre et les tampons jaunes de la charte.
+
+    Ciblage par l'ACROCHE `data-card` posée sur chaque carte (VinylCard /
+    ComicCard / GroupCard : data-card="vinyl|comic" ou absent pour les groupes)
+    → ne touche JAMAIS les autres .card (modales, dropdowns du menu, états vides,
+    lignes de la vue liste : elles restent papier blanc — leurs textes y sont en
+    ENCRE, un fond bleu casserait leur lisibilité). Spécificité multi-classe
+    (0,1,2 + attribute) > .card de base (0,1,0) : le bleu gagne sans toucher
+    les BORDURES ENCRE (3 px #191105, --card-border) ni l'OMBRE PORTÉE « case »
+    (= relief conservé). Le fond ENCRE SOLIDE (#191105) des cadres de vignettes
+    et bandes-étiquette ([class*="gradient"] ci-dessus) est CONSERVÉ : la
+    jaquette/couverture reste encadrée d'encre, en surimpression sur le bleu.
+    ============================================================ */
+
+/* A) Plateau des tuiles (carte complète) : bleu électrique + dégradé vers
+   --cb-electric-deep en bas = relief de planche ; BORDURES ENCRE 3 px et
+   OMBRE DÉCALÉE « case » inchangées (héritées de la règle .card ci-dessus). */
+[data-theme='comic-books'] .card[data-card] {
+  background: linear-gradient(180deg, var(--cb-electric-hi) 0%, var(--cb-electric) 34%, var(--cb-electric-deep) 100%);
+}
+/* Survol : surbrillance électrique (le halo argenté d'origine du Dashboard est
+   écrasé — charte Comics : la planche « s'éclaire » sous la main). */
+[data-theme='comic-books'] .card[data-card]:hover {
+  background: linear-gradient(180deg, var(--cb-electric) 0%, var(--cb-electric-deep) 100%);
+}
+
+/* B) TITRES DES VIGNETTES — DERNIERS AJOUTS + COLLECTIONS (spec 3) : le titre
+   (<h3>) et la série (<p>, ComicCard) d'origine étaient en BLANC / OR SANS
+   AUCUN APOUETRE, pensé pour un fond sombre — posés sur des jaquettes claires
+   ou vives ils se confondaient avec l'image. Ré-ancrage « case de BD » :
+     * TITRE <h3>     → TEXTE BLANC FRANC + CONTOUR NOIR ÉPAIS (liseré 1,5 px,
+                        paint-order stroke fill : le blanc reste au premier
+                        plan) sur fond BLEU ÉLECTRIQUE = contraste MAXIMAL sur
+                        toute jaquette / couverture, style « titre de comic » ;
+     * SÉRIE <p>      → JAUNE « splash » + liseré ENCRE fin (se détache du bleu
+                        sans dévorer le lettrage) ;
+     * AUTEURS / ARTISTE <p> + DATE DE SORTIE « Sorti le … » → CRÈME chaud +
+                        liseré ENCRE fin (lisible sur le bleu électrique).
+   Les BADGES (genre, série…) .badge du pied de carte restent en papier + encre
+   (règle .badge ci-dessus) — déjà contrastés ; les étiquettes EN HAUT DE
+   JACQUETTE et les bandeaux DÉGRADÉS gardent leur traitement encre/clair
+   dédié (règles [class*="gradient"] plus haut). Ciblage multi-classe sur le
+   PIED de carte uniquement : le lettrage des bandeaux dégradés n'est jamais
+   touché. Sous-titres encre #191105 à ~2,4px d'épaisseur sur blanc : ratio
+   AAA, sans fond ajouté — le relief vient du liseré lui-même. */
+[data-theme='comic-books'] .card[data-card] h3 {
+  color: #ffffff;                    /* TEXTE BLANC FRANC… */
+  -webkit-text-stroke: 1.5px #191105; /* …sur CONTOUR NOIR ÉPAIS (liseré) */
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #191105;    /* OMBRE PORTÉE nette sous le titre */
+}
+[data-theme='comic-books'] .card[data-card] p {
+  color: #ffe4a8;                    /* CRÈME chaud (série / auteurs / date) */
+  -webkit-text-stroke: 0.6px rgba(25, 17, 5, 0.85);
+  paint-order: stroke fill;
+}
+
+/* C) Panneau mobile de la barre haute (liste ☮ sous md:hidden) : planche
+   bleu électrique PROFOND assortie, au lieu du voile night-900 d'origine —
+   bordure supérieure conservée par-dessus en liseré encre net. */
+[data-theme='comic-books'] .cb-navbar nav.md\:hidden {
+  background: var(--cb-electric-deep);
 }
 
 /* ============================================================
