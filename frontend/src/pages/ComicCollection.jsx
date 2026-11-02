@@ -10,8 +10,9 @@ import ItemList from '../components/ItemList.jsx'
 import GroupedItemList from '../components/GroupedItemList.jsx'
 import ViewToolbar from '../components/ViewToolbar.jsx'
 import CollectionSearch from '../components/CollectionSearch.jsx'
+import CollectionCounter from '../components/CollectionCounter.jsx'
 import { groupComicsBySeries, NO_SERIES_LABEL } from '../components/collection.js'
-import { useDisplay } from '../services/display.jsx'
+import { useDisplay, DisplayProvider, DISPLAY_SCOPES } from '../services/display.jsx'
 import { PencilIcon, TrashIcon } from '../components/icons.jsx'
 
 /**
@@ -22,6 +23,18 @@ import { PencilIcon, TrashIcon } from '../components/icons.jsx'
  * Quand une recherche est en cours, la liste reste à plat (résultat de la recherche).
  */
 export default function ComicCollection() {
+  /* Scope d'affichage DÉDIÉ BD (clé « geek0thek_display_comics ») : le mode
+     grille/liste et les options de cette page sont totalement INDÉPENDANTS de
+     ceux de « Mes disques » — chaque collection s'isole dans son propre
+     <DisplayProvider> persisté sous sa propre clé localStorage. */
+  return (
+    <DisplayProvider scope={DISPLAY_SCOPES.comics}>
+      <ComicCollectionView />
+    </DisplayProvider>
+  )
+}
+
+function ComicCollectionView() {
   const location = useLocation()
   const navigate = useNavigate()
   const { settings } = useDisplay()
@@ -154,15 +167,6 @@ export default function ComicCollection() {
         <div>
           {/* Nomenclature officielle (i18n navbar.myComics) : « Mes BD ». */}
           <h1 className="cb-page-title text-2xl md:text-3xl font-extrabold text-white">{t('navbar.myComics')}</h1>
-          {/* Introduction composée : albums + « regroupé(s) en » + séries + aide. */}
-          {/* Sous-titre explicatif en gras + halo blanc lumineux (.subtitle-glow) :
-              texte lisible sur tous les fonds de thème (photo « splash » incluse). */}
-          <p className="text-sm text-slate-400 mt-1 subtitle-glow">
-            {t('collection.albumsCount', { count: comics.length })}{' '}
-            {(comics.length === 1 ? t('collection.groupedOne') : t('collection.groupedOther'))}{' '}
-            {t('collection.seriesCount', { count: groups.length })}
-            {t('collection.introComicsTail')}
-          </p>
         </div>
         {/* Barre d'actions : UNE seule ligne (recherche → vue → ajout), hauteurs
             uniformes (h-12). La recherche absorbe le sur-largeur (flex-1) au lieu
@@ -170,6 +174,10 @@ export default function ComicCollection() {
         {/* cb-actions : barre d'actions — le thème Comic Books y flashe le bouton
             « Ajouter » en jaune « splash » (thèmes/comic-books.css). */}
         <div className="cb-actions flex flex-wrap items-center gap-3">
+          {/* Compteur de collection « X séries — Y albums » : à GAUCHE de la
+              barre de recherche (gras + ombrage noir ; jaune liseré d'encre sous
+              le thème Comic Books — cf. CollectionCounter / index.css). */}
+          <CollectionCounter groups={groups.length} items={comics.length} />
           <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
           <ViewToolbar />
           <Link to="/comics/nouveau" className="btn-primary !h-12">{t('dashboard.addComic')}</Link>

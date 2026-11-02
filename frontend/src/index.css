@@ -71,17 +71,28 @@
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
 
-  /* Sous-titres explicatifs des pages (Mes Disques, Mes BD, Mon Profil,
-     Gestion des Utilisateurs…) : texte en GRAS + halo blanc lumineux qui
-     détache le texte de tous les fonds de thème (jaune « splash » + photo du
-     thème Comic Books, dégradés sombres des thèmes Dark / Vinyle…). Deux
-     couches : contour fin net (lisible à 100 %) puis voile diffus plus large
-     qui crée l'effet « halo lumineux » demandé. */
-  .subtitle-glow {
-    @apply font-bold;
+  /* Badge compteur de collection (« X artistes — Y disques » / « X séries — Y albums »),
+     à gauche de la barre de recherche (CollectionCounter.jsx) : police GRIS TRÈS CLAIR,
+     GRAS (bold), avec OMBRAGE NOIR (halo dur noir multi-directionnel). Les variables
+     sont reprises (écrasées) par le thème « Comic Books » — jaune liseré d'encre noire
+     — à la fin de src/themes/comic-books.css. */
+  .collection-badge {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    color: var(--badge-foreground, #e2e8f0);
+    -webkit-text-stroke: var(--badge-outline-size, 1px) var(--badge-outline, #000);
+    paint-order: stroke fill; /* l'ombrage noir passe derrière la couleur du texte */
     text-shadow:
-      0 1px 2px rgba(255, 255, 255, 0.9),
-      0 0 8px rgba(255, 255, 255, 0.55);
+      -1.5px -1.5px 0 rgba(0, 0, 0, 0.9),
+      1.5px -1.5px 0 rgba(0, 0, 0, 0.9),
+      -1.5px 1.5px 0 rgba(0, 0, 0, 0.9),
+      1.5px 1.5px 0 rgba(0, 0, 0, 0.9),
+      2.5px 2.5px 0 rgba(0, 0, 0, 0.55);
   }
 
   .icon-btn {

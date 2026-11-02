@@ -24,6 +24,8 @@
   },
   "collection": {
     "searchPlaceholder": "Zoek in mijn collectie…",
+    "collectionBadge": "{{artists}} artiesten — {{vinyls}} platen",
+    "comicBadge": "{{series}} reeksen — {{albums}} albums",
     "groupNoSeries": "Geen reeks",
     "groupNoArtist": "Diversen",
     "vinylsCount_one": "{{count}} plaat",

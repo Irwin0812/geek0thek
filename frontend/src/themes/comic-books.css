@@ -887,4 +887,16 @@
   --tw-ring-offset-color: rgba(255, 210, 31, 0.6);
 }
 
+/* ============================================================
+   BADGE COMPTEUR DE COLLECTION (« X séries — Y albums » / « X artistes — Y disques »)
+   Sous le thème Comic Books : police JAUNE VIF (--cb-yellow) avec OMBRAGE NOIR —
+   le gris très clair demandé par la charte de base (index.css, .collection-badge)
+   se noierait dans la photo bg_comics.jpg. !important pour écraser toute règle
+   d'origine : l'échantillon de police reste celui de la base (seule la couleur
+   change), le contournement passe par les variables --badge-*. */
+[data-theme='comic-books'] .collection-badge {
+  color: var(--cb-yellow) !important;
+  --badge-outline: #191105 !important; /* encre NOIRE du thème (ombrage noir) */
+}
+
 

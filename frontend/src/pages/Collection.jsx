@@ -9,8 +9,9 @@ import ItemList from '../components/ItemList.jsx'
 import GroupedItemList from '../components/GroupedItemList.jsx'
 import ViewToolbar from '../components/ViewToolbar.jsx'
 import CollectionSearch from '../components/CollectionSearch.jsx'
+import CollectionCounter from '../components/CollectionCounter.jsx'
 import { groupVinylsByArtist, NO_ARTIST_LABEL } from '../components/collection.js'
-import { useDisplay } from '../services/display.jsx'
+import { useDisplay, DisplayProvider, DISPLAY_SCOPES } from '../services/display.jsx'
 import { PencilIcon, TrashIcon } from '../components/icons.jsx'
 
 /**
@@ -21,6 +22,18 @@ import { PencilIcon, TrashIcon } from '../components/icons.jsx'
  * Quand une recherche est en cours, la liste reste à plat (résultat de la recherche).
  */
 export default function Collection() {
+  /* Scope d'affichage DÉDIÉ disques (clé « geek0thek_display_disks ») : le mode
+     grille/liste et les options de cette page sont totalement INDÉPENDANTS de
+     ceux de « Mes BD » — chaque collection s'isole dans son propre
+     <DisplayProvider> persisté sous sa propre clé localStorage. */
+  return (
+    <DisplayProvider scope={DISPLAY_SCOPES.disks}>
+      <CollectionView />
+    </DisplayProvider>
+  )
+}
+
+function CollectionView() {
   const location = useLocation()
   const { settings } = useDisplay()
   const { t } = useTranslation()
@@ -138,16 +151,6 @@ export default function Collection() {
            {/* cb-page-title : lettrage « case de BD » sous le thème Comic Books
                (Bangers blanc + liseré noir, cf. themes/comic-books.css). */}
            <h1 className="cb-page-title text-2xl md:text-3xl font-extrabold text-white">{t('navbar.myVinyls')}</h1>
-          {/* Introduction composée : compteur disques + « regroupé(s) en » +
-              compteur artistes + phrase d'aide (4 clés au lieu d'une monolithe). */}
-          {/* Sous-titre explicatif en gras + halo blanc lumineux (.subtitle-glow) :
-              texte lisible sur tous les fonds de thème (photo « splash » incluse). */}
-          <p className="text-sm text-slate-400 mt-1 subtitle-glow">
-            {t('collection.vinylsCount', { count: vinyls.length })}{' '}
-            {(vinyls.length === 1 ? t('collection.groupedOne') : t('collection.groupedOther'))}{' '}
-            {t('collection.artistsCount', { count: groups.length })}
-            {t('collection.introVinylsTail')}
-          </p>
         </div>
         {/* Barre d'actions : UNE seule ligne (recherche → vue → ajout), hauteurs
             uniformes (h-12). La recherche absorbe le sur-largeur (flex-1) au lieu
@@ -155,6 +158,10 @@ export default function Collection() {
         {/* cb-actions : barre d'actions — le thème Comic Books y flashe le bouton
             « Ajouter » en jaune « splash » (thèmes/comic-books.css). */}
         <div className="cb-actions flex flex-wrap items-center gap-3">
+          {/* Compteur de collection « X artistes — Y disques » : à GAUCHE de la
+              barre de recherche (gras + ombrage noir ; jaune liseré d'encre sous
+              le thème Comic Books — cf. CollectionCounter / index.css). */}
+          <CollectionCounter groups={groups.length} items={vinyls.length} />
           <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
           <ViewToolbar />
           <Link to="/vinyles/nouveau" className="btn-primary !h-12">{t('dashboard.addVinyl')}</Link>

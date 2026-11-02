@@ -317,8 +317,6 @@ export default function Profile() {
       <header>
         {/* Nomenclature officielle (i18n profile.title / navbar.myProfile) : « Mon profil ». */}
         <h1 className="text-2xl font-extrabold text-white">{t('profile.title')}</h1>
-        {/* Sous-titre explicatif en gras + halo blanc lumineux (.subtitle-glow). */}
-        <p className="text-sm text-slate-400 mt-1 subtitle-glow">{t('profile.subtitle')}</p>
       </header>
 
       {toast && (

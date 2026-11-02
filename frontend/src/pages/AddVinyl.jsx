@@ -506,9 +506,7 @@ export default function AddVinyl() {
           <h1 className="text-2xl font-extrabold text-white">
             {isEdit ? t('vinylForm.pageTitleEdit') : t('vinylForm.pageTitleNew')}
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            {t('vinylForm.subtitle')}
-          </p>
+
         </div>
         {!isEdit && (
           <button className="btn-ghost" onClick={() => setModalOpen(true)}>{t('vinylForm.importVinylBtn')}</button>

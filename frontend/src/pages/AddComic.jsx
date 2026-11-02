@@ -578,9 +578,7 @@ export default function AddComic() {
           <h1 className="text-2xl font-extrabold text-white">
             {isEdit ? t('comicForm.pageTitleEdit') : t('comicForm.pageTitleNew')}
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            {t('comicForm.subtitle')}
-          </p>
+
         </div>
         {!isEdit && (
           <button className="btn-ghost" onClick={() => setModalOpen(true)}>{t('comicForm.importComicBtn')}</button>
