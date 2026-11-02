@@ -236,7 +236,7 @@ export default function Navbar() {
               <span className="cb-logo block font-extrabold tracking-wide text-white">
                 GEEK<span className="text-gold-400">0THEK</span>
               </span>
-              <span className="block text-[10px] uppercase tracking-[0.2em] text-slate-500">
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-white">
                 {t('navbar.collections')}
               </span>
             </span>

@@ -616,7 +616,7 @@ function AddMediaDropdown() {
               <TypeIcon opt={opt} />
               <span className="truncate">{opt.label}</span>
               {!opt.enabled && (
-                <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-night-700 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-500">
+                <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-300 bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-black shadow-sm">
                   <Lock size={9} aria-hidden="true" />
                   {t('dashboard.soonTitle')}
                 </span>
