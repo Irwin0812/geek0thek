@@ -3,6 +3,8 @@ import { useEffect, useRef } from 'react'
 /**
  * Ferme au clic à l'extérieur / touche Échap.
  * Retourne une ref à poser sur le conteneur du panneau (bouton déclencheur inclus).
+ * Fermeture au RETRAIT DE LA SOURIS : brancher `onMouseLeave` directement sur ce
+ * même conteneur (la zone englobe déclencheur + panneau + sous-menus) — voir Navbar.
  */
 export function useDismiss(open, onClose) {
   const ref = useRef(null)

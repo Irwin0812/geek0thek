@@ -253,7 +253,12 @@ export default function Navbar() {
                 de collections. Aucune entrée aujourd'hui → placeholder
                 « à venir » (le map ci-dessous active directement la liste
                 dès qu'OTHER_COLLECTIONS sera renseignée). */}
-            <div className="relative" ref={othersRef}>
+            {/* onMouseLeave : fermeture AUTOMATIQUE dès que la souris quitte la
+                zone (bouton + panneau) — au lieu de rester ouvert en attendant
+                un clic extérieur. Le pont transparent avant: ci-dessous rend la
+                zone HIT CONTIGÛE à travers l'espace mt-1.5, sinon le simple
+                trajet vertical bouton → panneau déclencherait un leave intempestif. */}
+            <div className="relative" ref={othersRef} onMouseLeave={() => setOthersOpen(false)}>
               <button
                 type="button"
                 onClick={() => setOthersOpen((v) => !v)}
@@ -271,11 +276,13 @@ export default function Navbar() {
               </button>
               {/* z-50 IMPÉRATIF : le panneau doit se peindre AU-DESSUS de la
                   bande décorative du thème (ex: .cb-navbar::after, z-index 30
-                  dans comic-books.css) ; sans lui, il passait sous la ligne. */}
+                  dans comic-books.css) ; sans lui, il passait sous la ligne.
+                  avant:absolute -top-1.5 h-1.5 : strip transparent qui comble
+                  la marge mt-1.5 (zone de survol continue pour onMouseLeave). */}
               {othersOpen && (
                 <div
                   role="menu"
-                  className="absolute left-0 top-full z-50 mt-1.5 w-64 max-w-[calc(100vw-2rem)] card !p-1.5 shadow-2xl shadow-black/50"
+                  className="absolute left-0 top-full z-50 mt-1.5 w-64 max-w-[calc(100vw-2rem)] card !p-1.5 shadow-2xl shadow-black/50 before:absolute before:-top-1.5 before:left-0 before:h-1.5 before:w-full before:content-['']"
                 >
                   {OTHER_COLLECTIONS.length === 0 ? (
                     <p className="px-3 py-2 text-xs text-slate-500">
@@ -304,7 +311,18 @@ export default function Navbar() {
             {/* Déclencheur du menu utilisateur : avatar + nom + rôle (nom
                 masqué sous sm — seul l'avatar reste visible sur mobile).
                 Chevron qui pivote à l'ouverture. */}
-            <div className="relative" ref={userMenuRef}>
+            {/* onMouseLeave : fermeture AUTOMATIQUE dès que la souris quitte la
+                zone (déclencheur + panneau + sous-menus Thème/Langue) — le
+                sous-menu ouvert est refermé en même temps (setSubMenu(null)).
+                La même ref alimente useDismiss (clic extérieur / Échap). */}
+            <div
+              className="relative"
+              ref={userMenuRef}
+              onMouseLeave={() => {
+                setSubMenu(null)
+                setUserMenuOpen(false)
+              }}
+            >
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((v) => !v)}
@@ -418,7 +436,12 @@ export default function Navbar() {
                               title={`${th.label}${th.id === 'dark' ? ` (${t('navbar.themeDefault')})` : ''}`}
                               className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition disabled:opacity-60 ${
                                 active
-                                  ? 'bg-night-700 text-gold-300'
+                                  /* Élément ACTIF : fond clair contrasté (jaune vif) +
+                                     texte noir bien visible — sur un fond sombre
+                                     (bg-night-700), le texte sombre était illisible ;
+                                     la coche dorée passe à l'encre qu'il faut alors
+                                     garder lisible. */
+                                  ? 'bg-gold-400 text-slate-950'
                                   : 'text-slate-300 hover:bg-night-700/60 hover:text-white'
                               }`}
                             >
@@ -433,7 +456,7 @@ export default function Navbar() {
                               </span>
                               {th.label}
                               {th.id === 'dark' ? ` (${t('navbar.themeDefault')})` : ''}
-                              {active && <CheckIcon size={12} className="ml-auto shrink-0 text-gold-400" />}
+                              {active && <CheckIcon size={12} className="ml-auto shrink-0 text-slate-950" />}
                             </button>
                           )
                         })}
@@ -490,12 +513,16 @@ export default function Navbar() {
                               aria-pressed={active}
                               className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition disabled:opacity-60 ${
                                 active
-                                  ? 'bg-night-700 text-gold-300'
+                                  /* Élément ACTIF : fond clair contrasté (jaune vif) +
+                                     texte noir bien visible — sur un fond sombre
+                                     (bg-night-700), le texte sombre était illisible ;
+                                     la coche dorée passe à l'encre noire de même. */
+                                  ? 'bg-gold-400 text-slate-950'
                                   : 'text-slate-300 hover:bg-night-700/60 hover:text-white'
                               }`}
                             >
                               {lang.label}
-                              {active && <CheckIcon size={12} className="ml-auto shrink-0 text-gold-400" />}
+                              {active && <CheckIcon size={12} className="ml-auto shrink-0 text-slate-950" />}
                             </button>
                           )
                         })}
