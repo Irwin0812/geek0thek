@@ -6,9 +6,9 @@ import { useTranslation } from 'react-i18next'
  * hauteur harmonisée h-12 comme le reste de la barre d'actions.
  *
  * Typographie imposée :
- *  - thème « Comic Books » ([data-theme='comic-books']) → police JAUNE (--cb-yellow)
- *    liserée d'encre NOIRE (cf. .collection-badge--comic à la fin de
- *    src/themes/comic-books.css — !important pour écraser le gris d'origine) ;
+ *  - thème « Comic Books » → police JAUNE VIF (--cb-yellow) avec OMBRAGE NOIR,
+ *    définie à la fin de src/themes/comic-books.css (bloc [data-theme='comic-books']
+ *    .collection-badge, !important pour écraser le gris d'origine) ;
  *  - tous les autres thèmes (notamment « Geek0thek ») → police GRIS TRÈS CLAIR,
  *    GRAS (bold), avec OMBRAGE NOIR (halo dur noir multi-directionnel).
  * Les variables (--badge-foreground / --badge-outline / --badge-outline-size)
