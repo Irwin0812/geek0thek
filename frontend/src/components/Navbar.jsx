@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import i18n, { SUPPORTED_LANGUAGES } from '../i18n/i18n.js'
 import { useAuth } from '../App'
+import { ChevronDown } from 'lucide-react'
 import { api, saveSession } from '../services/api.js'
 import Avatar from './Avatar.jsx'
 import { CheckIcon, GlobeIcon } from './icons.jsx'
@@ -321,14 +322,15 @@ export default function Navbar() {
                     {isAdmin ? t('navbar.roleAdmin') : t('navbar.roleUser')}
                   </span>
                 </span>
-                {/* Chevron ↓ identique à celui d'« Autres Collections »
-                    (toujours visible, pivote à l'ouverture). */}
-                <span
+                {/* Chevron « V » épuré (lucide ChevronDown) — même allure que le
+                    chevron du bouton « + AJOUTER UN MÉDIA » (Dashboard) : w-4 h-4,
+                    blanc contrasté sur la navbar, pivote à l'ouverture. */}
+                <ChevronDown
+                  size={16}
+                  strokeWidth={2.5}
                   aria-hidden="true"
-                  className={`ml-1.5 text-xs transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`}
-                >
-                  ▾
-                </span>
+                  className={`ml-1.5 h-4 w-4 text-white transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`}
+                />
               </button>
 
               {/* --- Panneau déroulant — z-50 IMPÉRATIF : au-dessus de la bande

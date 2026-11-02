@@ -363,7 +363,8 @@ export default function AdminUsers() {
         <div>
           {/* cb-page-title : lettrage « case de BD » sous le thème Comic Books. */}
           <h1 className="cb-page-title text-2xl font-extrabold text-white">{t('adminUsers.title')}</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          {/* Sous-titre explicatif en gras + halo blanc lumineux (.subtitle-glow). */}
+          <p className="text-sm text-slate-400 mt-1 subtitle-glow">
             {t('adminUsers.subtitle', { count: users.length })}
           </p>
         </div>

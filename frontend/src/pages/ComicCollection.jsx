@@ -155,7 +155,9 @@ export default function ComicCollection() {
           {/* Nomenclature officielle (i18n navbar.myComics) : « Mes BD ». */}
           <h1 className="cb-page-title text-2xl md:text-3xl font-extrabold text-white">{t('navbar.myComics')}</h1>
           {/* Introduction composée : albums + « regroupé(s) en » + séries + aide. */}
-          <p className="text-sm text-slate-400 mt-1">
+          {/* Sous-titre explicatif en gras + halo blanc lumineux (.subtitle-glow) :
+              texte lisible sur tous les fonds de thème (photo « splash » incluse). */}
+          <p className="text-sm text-slate-400 mt-1 subtitle-glow">
             {t('collection.albumsCount', { count: comics.length })}{' '}
             {(comics.length === 1 ? t('collection.groupedOne') : t('collection.groupedOther'))}{' '}
             {t('collection.seriesCount', { count: groups.length })}

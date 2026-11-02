@@ -71,6 +71,19 @@
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
 
+  /* Sous-titres explicatifs des pages (Mes Disques, Mes BD, Mon Profil,
+     Gestion des Utilisateurs…) : texte en GRAS + halo blanc lumineux qui
+     détache le texte de tous les fonds de thème (jaune « splash » + photo du
+     thème Comic Books, dégradés sombres des thèmes Dark / Vinyle…). Deux
+     couches : contour fin net (lisible à 100 %) puis voile diffus plus large
+     qui crée l'effet « halo lumineux » demandé. */
+  .subtitle-glow {
+    @apply font-bold;
+    text-shadow:
+      0 1px 2px rgba(255, 255, 255, 0.9),
+      0 0 8px rgba(255, 255, 255, 0.55);
+  }
+
   .icon-btn {
     @apply inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400
       transition hover:bg-night-600 hover:text-white focus:outline-none
