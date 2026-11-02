@@ -7,7 +7,7 @@ import { ChevronDown } from 'lucide-react'
 import { api, saveSession } from '../services/api.js'
 import Avatar from './Avatar.jsx'
 import { CheckIcon, GlobeIcon } from './icons.jsx'
-import { useDismiss } from './hooks.js'
+import { useDismiss, useHoverClose } from './hooks.js'
 import { getAppliedTheme, isKnownTheme, switchTheme, THEMES } from '../services/theme.js'
 
 /* « Autres Collections » — emplace structurellement prêt à accueillir les
@@ -57,6 +57,9 @@ export default function Navbar() {
      placeholder vide aujourd'hui (constante OTHER_COLLECTIONS). */
   const [othersOpen, setOthersOpen] = useState(false)
   const othersRef = useDismiss(othersOpen, () => setOthersOpen(false))
+  /* Survol STABLE du panneau « Autres Collections » : délai 200 ms annulé à
+     toute ré-entrée dans la zone (bouton + panneau) — cf. useHoverClose. */
+  const othersHover = useHoverClose(() => setOthersOpen(false))
 
   /* Menu déroulant de l'utilisateur (déclencheur : avatar + nom + chevron).
      Contenu, en ordre :
@@ -74,6 +77,11 @@ export default function Navbar() {
      inclus). */
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useDismiss(userMenuOpen, () => setUserMenuOpen(false))
+  /* Survol STABLE du menu utilisateur (déclencheur + panneau + sous-menus
+     Thème/Langue) : délai 200 ms annulé à toute ré-entrée dans la zone. Le
+     sous-menu ouvert est refermé automatiquement par l'effet ci-dessous dès
+     que userMenuOpen passe à false (idempotent avec setSubMenu(null)). */
+  const userHover = useHoverClose(() => setUserMenuOpen(false))
 
   /* Sous-menu indenté ouvert dans le menu utilisateur : 'theme' | 'language'
      | null — au plus UN à la fois ; refermé automatiquement dès que le
@@ -253,12 +261,19 @@ export default function Navbar() {
                 de collections. Aucune entrée aujourd'hui → placeholder
                 « à venir » (le map ci-dessous active directement la liste
                 dès qu'OTHER_COLLECTIONS sera renseignée). */}
-            {/* onMouseLeave : fermeture AUTOMATIQUE dès que la souris quitte la
-                zone (bouton + panneau) — au lieu de rester ouvert en attendant
-                un clic extérieur. Le pont transparent avant: ci-dessous rend la
-                zone HIT CONTIGÛE à travers l'espace mt-1.5, sinon le simple
-                trajet vertical bouton → panneau déclencherait un leave intempestif. */}
-            <div className="relative" ref={othersRef} onMouseLeave={() => setOthersOpen(false)}>
+            {/* Survol : fermeture ANIMÉE via useHoverClose (état React + délai
+                200 ms, annulé dès la ré-entrée) au lieu d'un onMouseLeave brut
+                qui refermait au moindre micro-mouvement de la souris — OU ne se
+                refermait jamais (bloqué ouvert). La zone englobée = bouton +
+                panneau ; le pont transparent avant: ci-dessous rend le trajet
+                vertical bouton → panneau géométriquement CONTINU à travers l'
+                espace mt-1.5, et le délai absorbe le reste. */}
+            <div
+              className="relative"
+              ref={othersRef}
+              onMouseEnter={othersHover.onMouseEnter}
+              onMouseLeave={othersHover.onMouseLeave}
+            >
               <button
                 type="button"
                 onClick={() => setOthersOpen((v) => !v)}
@@ -311,17 +326,17 @@ export default function Navbar() {
             {/* Déclencheur du menu utilisateur : avatar + nom + rôle (nom
                 masqué sous sm — seul l'avatar reste visible sur mobile).
                 Chevron qui pivote à l'ouverture. */}
-            {/* onMouseLeave : fermeture AUTOMATIQUE dès que la souris quitte la
-                zone (déclencheur + panneau + sous-menus Thème/Langue) — le
-                sous-menu ouvert est refermé en même temps (setSubMenu(null)).
-                La même ref alimente useDismiss (clic extérieur / Échap). */}
+            {/* Survol : fermeture ANIMÉE via useHoverClose (état React + délai
+                200 ms, annulé dès la ré-entrée) sur la zone COMBINÉE déclencheur
+                + panneau (+ sous-menus Thème/Langue imbriqués) — remplace le
+                ancien onMouseLeave brut qui refermait au moindre micro-mouvement
+                OU restait collé ouvert. Le sous-menu ouvert est refermé à sa
+                suite par l'effet ci-dessus (userMenuOpen → setSubMenu(null)). */}
             <div
               className="relative"
               ref={userMenuRef}
-              onMouseLeave={() => {
-                setSubMenu(null)
-                setUserMenuOpen(false)
-              }}
+              onMouseEnter={userHover.onMouseEnter}
+              onMouseLeave={userHover.onMouseLeave}
             >
               <button
                 type="button"
@@ -353,9 +368,13 @@ export default function Navbar() {
 
               {/* --- Panneau déroulant — z-50 IMPÉRATIF : au-dessus de la bande
                   décorative du thème (.cb-navbar::after, z-index 30) qui
-                  couvrait sinon le menu (cf. « Autres Collections »). --- */}
+                  couvrait sinon le menu (cf. « Autres Collections »).
+                  avant:absolute -top-1.5 h-1.5 : pont transparent comblant la
+                  marge mt-1.5 — le passage vertical avatar → panneau reste CONTINU
+                  dans la zone de survol (avec le délai useHoverClose, aucun
+                  clignotement open/close sur les micro-mouvements). --- */}
               {userMenuOpen && (
-                <div className="absolute top-full right-0 z-50 mt-1.5 w-80 max-w-[calc(100vw-2rem)] card !p-1.5 shadow-2xl shadow-black/50">
+                <div className="absolute top-full right-0 z-50 mt-1.5 w-80 max-w-[calc(100vw-2rem)] card !p-1.5 shadow-2xl shadow-black/50 before:absolute before:-top-1.5 before:left-0 before:h-1.5 before:w-full before:content-['']">
                   {/* En-tête du menu : avatar, nom et rôle de l'utilisateur
                       connecté (conservés depuis la barre de navigation). */}
                   <div className="flex items-center gap-3 px-4 py-3">

@@ -16,7 +16,7 @@ import VinylCard, { EmptyState } from '../components/VinylCard.jsx'
 import ComicCard from '../components/ComicCard.jsx'
 import ItemDetailModal from '../components/ItemDetailModal.jsx'
 import { addedDateValue } from '../components/cards.js'
-import { useDismiss } from '../components/hooks.js'
+import { useDismiss, useHoverClose } from '../components/hooks.js'
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -547,7 +547,13 @@ function AddMediaDropdown() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  // Clic extérieur / Échap (useDismiss) + SURVOL STABLE (useHoverClose) :
+  // fermeture différée de 200 ms, annulée dès que la souris ré-entre dans la
+  // zone bouton + panneau — les micro-mouvements du trajet bouton → menu ne
+  // referment plus le menu, et un vrai retrait le ferme proprement (plus de
+  // menu « collé ouvert » non plus).
   const ref = useDismiss(open, () => setOpen(false))
+  const hover = useHoverClose(() => setOpen(false))
   // CORRECTION CRITIQUE : `comicTheme` n'existait que dans le scope de
   // Dashboard() — cette fonction (frère au DOM) la référençait → ReferenceError
   // à l'ouverture du menu = DÉMONTAGE TOTAL de la page React : c'est ce bug qui
@@ -570,7 +576,17 @@ function AddMediaDropdown() {
   }
 
   return (
-    <div className="relative" ref={ref}>
+    /* Zone de survol COMBINÉE (bouton + panneau flottant) : useHoverClose y
+       gère l'ouverture/fermeture au survol avec un délai de 200 ms annulé à la
+       ré-entrée — au lieu d'un onMouseLeave brut, le menu ne se fermait plus au
+       moindre micro-mouvement entre le bouton et le panneau ; au lieu du
+       simple clic-extérieur, il se referme aussi dès le vrai départ de la souris. */
+    <div
+      className="relative"
+      ref={ref}
+      onMouseEnter={hover.onMouseEnter}
+      onMouseLeave={hover.onMouseLeave}
+    >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -588,11 +604,14 @@ function AddMediaDropdown() {
         />
       </button>
 
+      {/* Panneau : avant:absolute -top-1.5 h-1.5 = pont transparent comblant la
+          marge mt-1.5, le passage vertical bouton → panneau reste CONTINU dans
+          la zone de survol (avec le délai useHoverClose, aucun clignotement). */}
       {open && (
         <div
           role="menu"
           aria-label={t('dashboard.addMedia.title')}
-          className="absolute right-0 top-full z-50 mt-1.5 w-72 max-w-[calc(100vw-2rem)] card !p-1.5 shadow-2xl shadow-black/50"
+          className="absolute right-0 top-full z-50 mt-1.5 w-72 max-w-[calc(100vw-2rem)] card !p-1.5 shadow-2xl shadow-black/50 before:absolute before:-top-1.5 before:left-0 before:h-1.5 before:w-full before:content-['']"
         >
           {options.map((opt) => (
             <button
