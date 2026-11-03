@@ -108,15 +108,18 @@
       noires + halo rouge #e11d48 en bas-droite). Les titres .cb-page-title
       (« MES DISQUES » / « MES BD » / « Utilisateurs ») et les titres filles
       .comic-page-title (« Nouveau disque », « Nouvelle bande dessinée », « Mon
-      profil ») partagent CECI : sous toutes les thématiques, les titres restent
-      identiques au lettrage principal des pages (déclinaison plus spécifique
-      conservée sous le thème Comic Books — cf. themes/comic-books.css). */
-   .cb-page-title, .comic-page-title {
+      profil ») partagent CECI.
+
+      ⚠️ EXCLUSIF AU THÈME « COMIC BOOKS » : le lettrage comics n'est appliqué
+      QUE sous [data-theme='comic-books'] (cf. themes/comic-books.css). Sous les
+      autres thèmes — en particulier « Geek0thek » (dark) — ces titres reprennent
+      la police épurée d'origine du thème (Inter, cf. --app-font de dark.css),
+      en GRAS, TAILLE ACTUELLE CONSERVÉE (les classes text-* des composants). */
+   [data-theme='comic-books'] .cb-page-title,
+   [data-theme='comic-books'] .comic-page-title {
      font-family: 'Bangers', 'Arial Black', Impact, 'Franklin Gothic Bold', sans-serif;
      letter-spacing: 0.02em;
      text-transform: uppercase;
-   }
-   [data-theme] .cb-page-title, [data-theme] .comic-page-title {
      color: #ffffff;
      -webkit-text-stroke: 3px #191105;
      paint-order: stroke fill;
@@ -128,7 +131,8 @@
         6px  6px 0 #e11d48;
    }
    @media (max-width: 768px) {
-     [data-theme] .cb-page-title, [data-theme] .comic-page-title {
+     [data-theme='comic-books'] .cb-page-title,
+     [data-theme='comic-books'] .comic-page-title {
        -webkit-text-stroke: 2px #191105;
        text-shadow:
          -2px -2px 0 #191105,
@@ -141,8 +145,9 @@
 
    /* MESSAGE DE BIENVENUE du Dashboard (« Bonjour, ITHome ») : même police
       stylisée que les sections de l'application (ex. « Mes Disques »), un
-      cran plus grand (h1 d'accueil) — halo rouge encore plus prononcé. */
-   [data-theme] .comic-greeting {
+      cran plus grand (h1 d'accueil) — halo rouge encore plus prononcé.
+      ⚠️ EXCLUSIF AU THÈME « COMIC BOOKS » (idem ci-dessus). */
+   [data-theme='comic-books'] .comic-greeting {
      font-family: 'Bangers', 'Arial Black', Impact, 'Franklin Gothic Bold', sans-serif;
      letter-spacing: 0.02em;
      color: #ffffff;
@@ -156,7 +161,7 @@
         7px  7px 0 #e11d48;
    }
    @media (max-width: 768px) {
-     [data-theme] .comic-greeting {
+     [data-theme='comic-books'] .comic-greeting {
        -webkit-text-stroke: 2px #191105;
        text-shadow:
          -2px -2px 0 #191105,
@@ -165,6 +170,21 @@
           2px  2px 0 #191105,
           5px  5px 0 #e11d48;
      }
+   }
+
+   /* ------------------------------------------------------------------
+      THÈME « GEEK0THEK » (dark) — RESTAURATION DE LA POLICE ÉPURÉE D'ORIGINE :
+      les titres de pages ci-dessus reprennent la police d'origine du thème
+      (--app-font = Inter, cf. dark.css), en GRAS. La TAILLE est strictement
+      conservée (les classes text-* des composants) ; on ne force ici QUE la
+      famille + le poids. S'applique UNIQUEMENT à [data-theme='dark'] : les
+      autres thèmes (Médiathèque, Disquaire, BD, Comic Books, Néon) gardent
+      leur propre lettrage. */
+   [data-theme='dark'] .cb-page-title,
+   [data-theme='dark'] .comic-page-title,
+   [data-theme='dark'] .comic-greeting {
+     font-family: var(--app-font);
+     font-weight: 700;
    }
 
   /*
