@@ -427,18 +427,42 @@ const MIGRATIONS = [
   },
   // SÉCURITÉ À LA PREMIÈRE CONNEXION (onboarding) — drapeau
   // users.must_change_password : TRUE tant que le compte n'a pas encore
-  // changé ses identifiants de première installation. Le seed de l'admin
-  // par défaut (init.sql, login « Admin » / mot de passe « Admin ») et la
-  // création de comptes via l'API (POST /api/users) le posent à TRUE ; le
+  // changé ses identifiants de première installation. La création de comptes
+  // via l'API (POST /api/users) le pose à TRUE ; le seed de l'admin de test
+  // (init.sql, login « admin » / mot de passe « admin ») le pose à FALSE. Le
   // backend force alors l'onboarding (POST /api/auth/onboarding : nouveau
   // mot de passe OBLIGATOIRE + pseudo de login personnalisable) et le remet
   // à FALSE une fois validé. Défaut NOT NULL FALSE : les comptes existants
-  // ne sont JAMAIS bloqués par cette migration (seuls les comptes créés
-  // après son application — ou l'admin seedé — sont concernés).
+  // ne sont JAMAIS bloqués par cette migration (seuls les comptes créés via
+  // l'API après son application sont concernés ; l'admin de test seedé est à
+  // FALSE).
   {
     name: 'users.must-change-password',
     statements: [
       'ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;',
+    ],
+  },
+  // RÉINITIALISATION DU COMPTE ADMIN DE TEST — le compte de test principal
+  // (identifié par son e-mail de seed stable « admin@geek0thek.local », quel
+  // que soit le login courant : « Admin » du seed initial, « admin » ou un
+  // pseudo personnalisé type « Admirwin ») est remis aux accès de test :
+  //   Login  : admin
+  //   Mot de passe : admin  (bcrypt coût 12)
+  //   must_change_password = FALSE (connexion directe, sans onboarding forcé).
+  // RÈGLE STRICTE RESPECTÉE : seul le triplet (login, password_hash,
+  // must_change_password) de la LIGNE users est modifié — aucune donnée,
+  // collection, historique ni réglage rattaché au compte n'est supprimé ni
+  // réinitialisé (les tables vinyls / comics / artists / series / avatars et
+  // les préférences du profil restent intactes). Idempotent : re-exécuter
+  // produit le même état ; la trace schema_migrations l'exécute une seule fois.
+  {
+    name: 'users.reset-test-admin',
+    statements: [
+      `UPDATE users
+       SET login = 'admin',
+           password_hash = '$2a$12$h547RjPf2TsG0je18jW.gOyhZFKEuxvCqe32Z9EgRPFEqARyz.2wC',
+           must_change_password = FALSE
+       WHERE email = 'admin@geek0thek.local';`,
     ],
   },
 ];

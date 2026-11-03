@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const env = require('../config/env');
 const { query } = require('../config/db');
+const { validatePassword } = require('../utils/password');
 
 function publicUser(row) {
   return {
@@ -75,8 +76,9 @@ const LOGIN_RE = /^[a-zA-Z0-9._-]{2,80}$/;
  * POST /api/auth/onboarding
  * Sécurité à la première connexion : appelé UNIQUEMENT quand le compte
  * courant porte le drapeau must_change_password = TRUE (identifiants de
- * première installation non encore changés — admin seedé « Admin »/« Admin »
- * ou compte créé via l'API). Impose :
+ * première installation non encore changés — compte créé via l'API ; l'admin
+ * de test « admin »/« admin » est seedé avec le drapeau à FALSE, il n'y passe
+ * pas). Impose :
  *   - un NOUVEAU mot de passe OBLIGATOIRE (min. 8 caractères, différent du
  *     mot de passe courant) — la double saisie est vérifiée côté client ;
  *   - un pseudo de login personnalisable (facultatif : si absent ou vide,
@@ -89,8 +91,12 @@ const LOGIN_RE = /^[a-zA-Z0-9._-]{2,80}$/;
 async function onboarding(req, res, next) {
   try {
     const { currentPassword, newPassword, login: newLogin } = req.body || {};
-    if (!newPassword || String(newPassword).length < 8) {
-      return res.status(400).json({ error: 'Le nouveau mot de passe doit contenir au moins 8 caractères.' });
+    // Validation du MOT DE PASSE (règle assouplie : longueur minimale, tous
+    // les caractères autorisés). Le message porte explicitement sur le mot de
+    // passe — jamais sur « l'identifiant » (celui-ci est validé plus bas).
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      return res.status(400).json({ error: passwordError });
     }
 
     const { rows } = await query('SELECT * FROM users WHERE id = $1', [req.user.id]);
@@ -114,8 +120,11 @@ async function onboarding(req, res, next) {
     if (newLogin !== undefined && newLogin !== null && String(newLogin).trim() !== '') {
       nextLogin = String(newLogin).trim();
       if (!LOGIN_RE.test(nextLogin)) {
+        // Ce message concerne l'IDENTIFIANT / pseudo de login (et non le mot
+        // de passe) : il est volontairement explicite pour ne jamais être
+        // confondu avec une erreur de mot de passe.
         return res.status(400).json({
-          error: 'Identifiant invalide (2 à 80 caractères : lettres, chiffres, point, tiret, underscore).',
+          error: "L'identifiant (pseudo) n'est pas valide : 2 à 80 caractères, lettres, chiffres, point, tiret ou underscore uniquement.",
         });
       }
     }

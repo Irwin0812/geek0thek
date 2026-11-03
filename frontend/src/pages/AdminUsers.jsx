@@ -4,6 +4,7 @@ import { api } from '../services/api.js'
 import { useAuth } from '../App.jsx'
 import { SUPPORTED_LANGUAGES } from '../i18n/i18n.js'
 import Avatar, { AvatarCropModal, revokePreviewUrl } from '../components/Avatar.jsx'
+import PasswordInput from '../components/PasswordInput.jsx'
 
 // Valeurs stockées (colonnes `users.gender`) ; H / F sont des valeurs de
 // données affichées telles quelles — seul « Autre » passe par i18n.
@@ -383,7 +384,7 @@ export default function AdminUsers() {
             <Field label={t('profile.email')}><input className="input" type="email" value={form.email} onChange={set('email')} required /></Field>
             <Field label={t('adminUsers.loginField')}><input className="input" value={form.login} onChange={set('login')} required /></Field>
             <Field label={t('adminUsers.passwordField')}>
-              <input className="input" type="password" value={form.password} onChange={set('password')} minLength="8" required placeholder={t('profile.minChars')} />
+              <PasswordInput value={form.password} onChange={set('password')} minLength="8" required placeholder={t('profile.minChars')} />
             </Field>
             <Field label={t('adminUsers.role')}>
               <select className="input" value={form.role} onChange={set('role')}>
@@ -609,7 +610,7 @@ export default function AdminUsers() {
             </div>
 
             <Field label={t('adminUsers.newPasswordField')}>
-              <input className="input" type="password" value={editForm.newPassword || ''} onChange={setEdit('newPassword')} minLength="8" placeholder={t('profile.minChars')} />
+              <PasswordInput value={editForm.newPassword || ''} onChange={setEdit('newPassword')} minLength="8" placeholder={t('profile.minChars')} />
             </Field>
             <div className="flex justify-end gap-2">
               <button type="button" className="btn-ghost" onClick={closeEdit} disabled={saving}>{t('common.cancel')}</button>

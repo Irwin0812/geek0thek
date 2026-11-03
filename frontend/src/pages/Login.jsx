@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../App.jsx'
+import PasswordInput from '../components/PasswordInput.jsx'
 
 export default function Login() {
   const { t } = useTranslation()
@@ -52,7 +53,7 @@ export default function Login() {
               id="login"
               className="input"
               autoComplete="username"
-              placeholder="Admin"
+              placeholder="admin"
               value={form.login}
               onChange={(e) => setForm({ ...form, login: e.target.value })}
               autoFocus
@@ -60,10 +61,8 @@ export default function Login() {
           </div>
           <div>
             <label htmlFor="password" className="label">{t('auth.password')}</label>
-            <input
+            <PasswordInput
               id="password"
-              className="input"
-              type="password"
               autoComplete="current-password"
               placeholder="••••••••"
               value={form.password}

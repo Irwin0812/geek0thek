@@ -3,6 +3,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const env = require('../config/env');
 const { query } = require('../config/db');
+const { validatePassword } = require('../utils/password');
 
 // ------------------------------------------------------------
 // Helpers
@@ -55,7 +56,10 @@ const BASE_SELECT = `
          (SELECT COUNT(*) FROM comics c WHERE c.user_id = u.id)::int AS comic_count
   FROM users u`;
 
-const PASSWORD_MIN = 8;
+// Règle de mot de passe assouplie : longueur minimale (8) + TOUS les
+// caractères autorisés (lettres, chiffres, accents et symboles). La validation
+// est centralisée dans utils/password.js (validatePassword) pour que tous les
+// points d'entrée renvoient le même message clair portant sur le mot de passe.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GENDERS = ['H', 'F', 'O'];
 // Langues supportées par l'interface (codes ISO 639-1, cf. frontend/src/i18n/i18n.js)
@@ -252,8 +256,10 @@ async function updateUserRow(userId, fields, values) {
  */
 async function resolvePasswordChange(userId, currentPassword, newPassword) {
   if (!newPassword) return null;
-  if (String(newPassword).length < PASSWORD_MIN) {
-    return { error: `Le nouveau mot de passe doit contenir au moins ${PASSWORD_MIN} caractères.`, status: 400 };
+  // Règle assouplie : longueur minimale + tous les caractères autorisés.
+  const passwordError = validatePassword(newPassword);
+  if (passwordError) {
+    return { error: passwordError, status: 400 };
   }
   const { rows } = await query('SELECT password_hash FROM users WHERE id = $1', [userId]);
   if (!rows[0]) return { error: 'Compte introuvable.', status: 404 };
@@ -313,8 +319,10 @@ async function createUser(req, res, next) {
     if (!EMAIL_RE.test(String(email).trim())) {
       return res.status(400).json({ error: "Adresse e-mail invalide." });
     }
-    if (String(password).length < PASSWORD_MIN) {
-      return res.status(400).json({ error: `Le mot de passe doit contenir au moins ${PASSWORD_MIN} caractères.` });
+    // Règle assouplie : longueur minimale + tous les caractères autorisés.
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return res.status(400).json({ error: passwordError });
     }
     const userRole = String(role || 'user').trim();
     if (!['admin', 'user'].includes(userRole)) {
@@ -452,10 +460,10 @@ async function updateUser(req, res, next) {
       fields.push(`avatar_url = $${values.length}`);
     }
     if (body.newPassword) {
-      if (String(body.newPassword).length < PASSWORD_MIN) {
-        return res
-          .status(400)
-          .json({ error: `Le nouveau mot de passe doit contenir au moins ${PASSWORD_MIN} caractères.` });
+      // Règle assouplie : longueur minimale + tous les caractères autorisés.
+      const passwordError = validatePassword(body.newPassword);
+      if (passwordError) {
+        return res.status(400).json({ error: passwordError });
       }
       values.push(await bcrypt.hash(String(body.newPassword), 10));
       fields.push(`password_hash = $${values.length}`);

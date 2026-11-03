@@ -20,7 +20,9 @@
     "noImage": "No image",
     "retiredVinyl": "“{{title}}” was removed from your collection.",
     "retiredComic": "“{{title}}” was removed from your collection.",
-    "backToTop": "Back to top"
+    "backToTop": "Back to top",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "collection": {
     "searchPlaceholder": "Search my collection…",
@@ -445,7 +447,7 @@
     "currentPassword": "Current password",
     "currentPasswordPlaceholder": "Required to change the password",
     "newPassword": "New password",
-    "minChars": "Minimum 8 characters",
+    "minChars": "Minimum 8 characters — letters, digits and any special character are allowed.",
     "confirmPassword": "Confirm the new password",
     "confirmPasswordPlaceholder": "Repeat the new password",
     "cropLabel": "Adjust profile picture"
@@ -483,7 +485,7 @@
     "password": "Password",
     "login": "Sign in",
     "loginBusy": "Signing in…",
-    "firstLoginHint": "First login: admin “Admin” / “Admin” (created when the database was initialized) — password change required."
+    "firstLoginHint": "Main test account: admin “admin” / “admin” (created when the database was initialized)."
   },
   "onboarding": {
     "title": "Secure your account",
@@ -492,7 +494,7 @@
     "newPassword": "New password",
     "confirmPassword": "Confirm new password",
     "login": "Login name (username)",
-    "passwordHint": "At least 8 characters, different from the current password.",
+    "passwordHint": "At least 8 characters, different from the current password. All characters (letters, digits, accents and symbols) are allowed.",
     "loginHint": "Optional: leave empty to keep the current login name.",
     "passwordTooShort": "The new password must contain at least 8 characters.",
     "passwordMismatch": "The two passwords do not match.",

@@ -20,7 +20,9 @@
     "noImage": "Geen afbeelding",
     "retiredVinyl": "« {{title}} » is uit je collectie verwijderd.",
     "retiredComic": "« {{title}} » is uit je collectie verwijderd.",
-    "backToTop": "Terug naar boven"
+    "backToTop": "Terug naar boven",
+    "showPassword": "Wachtwoord tonen",
+    "hidePassword": "Wachtwoord verbergen"
   },
   "collection": {
     "searchPlaceholder": "Zoek in mijn collectie…",
@@ -445,7 +447,7 @@
     "currentPassword": "Huidig wachtwoord",
     "currentPasswordPlaceholder": "Vereist om het wachtwoord te wijzigen",
     "newPassword": "Nieuw wachtwoord",
-    "minChars": "Minimaal 8 tekens",
+    "minChars": "Minimaal 8 tekens — letters, cijfers en alle speciale tekens zijn toegestaan.",
     "confirmPassword": "Bevestig het nieuwe wachtwoord",
     "confirmPasswordPlaceholder": "Herhaal het nieuwe wachtwoord",
     "cropLabel": "Profielfoto aanpassen"
@@ -483,7 +485,7 @@
     "password": "Wachtwoord",
     "login": "Aanmelden",
     "loginBusy": "Aan het aanmelden…",
-    "firstLoginHint": "Eerste inlog: admin « Admin » / « Admin » (gemaakt bij het initialiseren van de database) — wachtwoordwijziging verplicht."
+    "firstLoginHint": "Hoofdtestaccount: admin « admin » / « admin » (gemaakt bij het initialiseren van de database)."
   },
   "onboarding": {
     "title": "Beveilig je account",
@@ -492,7 +494,7 @@
     "newPassword": "Nieuw wachtwoord",
     "confirmPassword": "Bevestig het nieuwe wachtwoord",
     "login": "Gebruikersnaam",
-    "passwordHint": "Minimaal 8 tekens, anders dan het huidige wachtwoord.",
+    "passwordHint": "Minimaal 8 tekens, anders dan het huidige wachtwoord. Alle tekens (letters, cijfers, accenten en symbolen) zijn toegestaan.",
     "loginHint": "Optioneel: laat leeg om de huidige gebruikersnaam te behouden.",
     "passwordTooShort": "Het nieuwe wachtwoord moet minimaal 8 tekens bevatten.",
     "passwordMismatch": "De twee wachtwoorden komen niet overeen.",

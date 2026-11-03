@@ -20,7 +20,9 @@
     "noImage": "Aucune image",
     "retiredVinyl": "« {{title}} » a été retiré de votre collection.",
     "retiredComic": "« {{title}} » a été retirée de votre collection.",
-    "backToTop": "Retour en haut de page"
+    "backToTop": "Retour en haut de page",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
   },
   "collection": {
     "searchPlaceholder": "Rechercher dans ma collection…",
@@ -445,7 +447,7 @@
     "currentPassword": "Mot de passe actuel",
     "currentPasswordPlaceholder": "Requis pour changer le mot de passe",
     "newPassword": "Nouveau mot de passe",
-    "minChars": "8 caractères minimum",
+    "minChars": "8 caractères minimum — lettres, chiffres et tous les caractères spéciaux sont autorisés.",
     "confirmPassword": "Confirmer le nouveau mot de passe",
     "confirmPasswordPlaceholder": "Répétez le nouveau mot de passe",
     "cropLabel": "Ajuster l'image de profil"
@@ -483,7 +485,7 @@
     "password": "Mot de passe",
     "login": "Se connecter",
     "loginBusy": "Connexion…",
-    "firstLoginHint": "Première connexion : admin « Admin » / « Admin » (créé à l'initialisation de la base) — changement de mot de passe obligatoire."
+    "firstLoginHint": "Compte de test principal : admin « admin » / « admin » (créé à l'initialisation de la base)."
   },
   "onboarding": {
     "title": "Sécurisez votre compte",
@@ -492,7 +494,7 @@
     "newPassword": "Nouveau mot de passe",
     "confirmPassword": "Confirmer le nouveau mot de passe",
     "login": "Identifiant (pseudo)",
-    "passwordHint": "8 caractères minimum, différent du mot de passe actuel.",
+    "passwordHint": "8 caractères minimum, différent du mot de passe actuel. Tous les caractères (lettres, chiffres, accents et symboles) sont autorisés.",
     "loginHint": "Facultatif : laissez vide pour conserver l'identifiant actuel.",
     "passwordTooShort": "Le nouveau mot de passe doit contenir au moins 8 caractères.",
     "passwordMismatch": "Les deux mots de passe ne correspondent pas.",

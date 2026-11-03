@@ -17,10 +17,10 @@ natif, UI soignée, stockage local des couvertures.
 Fonctionnalités clés :
 
 - Authentification **login + mot de passe (bcrypt)** avec JWT, rôles `admin` / `user`.
-- Admin unique créé à l'initialisation : `Admin` / `Admin` — **changement de mot de
-  passe obligatoire à la première connexion** (onboarding forcé : nouveau mot de
-  passe en double saisie + pseudo de login personnalisable, drapeau
-  `must_change_password`).
+- Admin de test principal créé à l'initialisation : `admin` / `admin` — **prêt à
+  l'emploi** (drapeau `must_change_password = FALSE`, connexion directe sans
+  onboarding forcé). Les données, collections et réglages du compte sont
+  conservés lors d'une réinitialisation.
 - **Vinyles** : import par **code-barres (EAN/UPC)** interrogeant **MusicBrainz**
   (fiche de référence : titre, artiste, date, label, tracklist, MBID)
   **+ Discogs en complément** (si jeton configuré : date, label, genre,
@@ -46,7 +46,7 @@ geek0thek/
 ├── docker-compose.yml         # Orchestration : db + backend + frontend
 ├── README.md
 ├── database/
-│   └── init.sql               # Schéma (users, vinyls, comics, vues) + seed de l'admin Admin/Admin (bcrypt coût 12, must_change_password = TRUE)
+│   └── init.sql               # Schéma (users, vinyls, comics, vues) + seed de l'admin admin/admin (bcrypt coût 12, must_change_password = FALSE)
 ├── uploads/                   # Volume local des couvertures (disque de la VM hôte)
 │   ├── vinyls/                # Jaquettes de disques (créé automatiquement au 1er démarrage)
 │   └── comics/                # Couvertures de BD (créé automatiquement au 1er démarrage)
@@ -317,8 +317,8 @@ docker compose ps
 La base PostgreSQL exécute automatiquement `database/init.sql` **à la toute
 première création** du volume `./data` : le schéma complet (tables `users`,
 `vinyls`, `comics` + vues publiques) est mis en place et
-**l'admin par défaut est créé** (`Admin` / `Admin`, mot de passe hashé bcrypt,
-drapeau `must_change_password = TRUE`).
+**l'admin de test principal est créé** (`admin` / `admin`, mot de passe hashé
+bcrypt, drapeau `must_change_password = FALSE`).
 
 L'application est alors joignable à l'URL **`http://172.16.2.75`**.
 
@@ -328,7 +328,7 @@ L'application est alors joignable à l'URL **`http://172.16.2.75`**.
 
 | Login | Mot de passe | Rôle |
 |---|---|---|
-| `Admin` | `Admin` | `admin` (unique, seedé dans `init.sql`) |
+| `admin` | `admin` | `admin` (compte de test principal, seedé dans `init.sql`) |
 
 - Seul un **admin** peut créer / modifier / supprimer des comptes
   (section *Utilisateurs*).
@@ -337,9 +337,10 @@ L'application est alors joignable à l'URL **`http://172.16.2.75`**.
 
 ### 🔒 Sécurité à la première connexion (onboarding forcé)
 
-Tant que le compte porte le drapeau `must_change_password = TRUE` — c'est le
-cas de l'admin seedé (`Admin` / `Admin`) et de **tout compte créé via l'API**
-— l'accès à l'application est **bloqué** :
+Tant que le compte porte le drapeau `must_change_password = TRUE` — c'est le cas
+de **tout compte créé via l'API** (l'admin de test `admin` / `admin` est seedé
+avec le drapeau à `FALSE`, il n'est donc pas concerné) — l'accès à
+l'application est **bloqué** :
 
 1. **Login** avec les identifiants de première installation → redirection
    obligatoire vers la page **Onboarding** (`/onboarding`).
@@ -454,7 +455,7 @@ docker compose exec -T db pg_restore -U vinyl -d geek0thek --clean < backup.dump
 - **JWT** signé (HS256) avec `JWT_SECRET` à longue valeur aléatoire ; expiration `7d`.
 - **bcrypt** pour tous les mots de passe (jamais en clair, ni en log).
 - **Onboarding forcé à la première connexion** : drapeau
-  `users.must_change_password` (seed `Admin`/`Admin` + comptes créés via l'API)
+  `users.must_change_password` (comptes créés via l'API ; le seed admin/admin est à FALSE)
   → changement de mot de passe obligatoire (double saisie) et pseudo de login
   personnalisable avant tout accès ; garde API `requirePasswordChanged`
   (`403 must-change-password`) sur toutes les routes protégées.

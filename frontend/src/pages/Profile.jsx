@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
 import { useAuth } from '../App.jsx'
 import Avatar, { AvatarCropModal, revokePreviewUrl } from '../components/Avatar.jsx'
+import PasswordInput from '../components/PasswordInput.jsx'
 
 // « H » et « F » restent des libellés universels (une lettre) ;
 // « O » est traduit ici via t('profile.genderOther').
@@ -462,9 +463,7 @@ export default function Profile() {
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2 text-xs text-slate-400 -mt-2">{t('profile.keepPassword')}</div>
           <Field label={t('profile.currentPassword')}>
-            <input
-              className="input"
-              type="password"
+            <PasswordInput
               value={form.currentPassword}
               onChange={set('currentPassword')}
               autoComplete="current-password"
@@ -473,9 +472,7 @@ export default function Profile() {
           </Field>
           <div />
           <Field label={t('profile.newPassword')}>
-            <input
-              className="input"
-              type="password"
+            <PasswordInput
               value={form.newPassword}
               onChange={set('newPassword')}
               minLength="8"
@@ -484,9 +481,7 @@ export default function Profile() {
             />
           </Field>
           <Field label={t('profile.confirmPassword')}>
-            <input
-              className="input"
-              type="password"
+            <PasswordInput
               value={form.confirmPassword}
               onChange={set('confirmPassword')}
               minLength="8"

@@ -20,7 +20,9 @@
     "noImage": "Sin imagen",
     "retiredVinyl": "« {{title}} » ha sido retirado de su colección.",
     "retiredComic": "« {{title}} » ha sido retirada de su colección.",
-    "backToTop": "Volver arriba"
+    "backToTop": "Volver arriba",
+    "showPassword": "Mostrar la contraseña",
+    "hidePassword": "Ocultar la contraseña"
   },
   "collection": {
     "searchPlaceholder": "Buscar en mi colección…",
@@ -445,7 +447,7 @@
     "currentPassword": "Contraseña actual",
     "currentPasswordPlaceholder": "Requerida para cambiar la contraseña",
     "newPassword": "Nueva contraseña",
-    "minChars": "Mínimo 8 caracteres",
+    "minChars": "Mínimo 8 caracteres — letras, dígitos y cualquier carácter especial están permitidos.",
     "confirmPassword": "Confirmar la nueva contraseña",
     "confirmPasswordPlaceholder": "Repite la nueva contraseña",
     "cropLabel": "Ajustar la imagen de perfil"
@@ -483,7 +485,7 @@
     "password": "Contraseña",
     "login": "Iniciar sesión",
     "loginBusy": "Iniciando sesión…",
-    "firstLoginHint": "Primera conexión: admin « Admin » / « Admin » (creado al inicializar la base de datos) — cambio de contraseña obligatorio."
+    "firstLoginHint": "Cuenta principal de prueba: admin « admin » / « admin » (creada al inicializar la base de datos)."
   },
   "onboarding": {
     "title": "Protege tu cuenta",
@@ -492,7 +494,7 @@
     "newPassword": "Nueva contraseña",
     "confirmPassword": "Confirmar la nueva contraseña",
     "login": "Nombre de usuario",
-    "passwordHint": "Mínimo 8 caracteres, diferente a la contraseña actual.",
+    "passwordHint": "Mínimo 8 caracteres, diferente a la contraseña actual. Todos los caracteres (letras, dígitos, acentos y símbolos) están permitidos.",
     "loginHint": "Opcional: déjalo vacío para conservar el nombre de usuario actual.",
     "passwordTooShort": "La nueva contraseña debe contener al menos 8 caracteres.",
     "passwordMismatch": "Las dos contraseñas no coinciden.",

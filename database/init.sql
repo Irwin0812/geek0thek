@@ -266,23 +266,23 @@ CREATE TRIGGER trg_series_updated_at
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ------------------------------------------------------------
--- Admin par défaut (unique)
---   Login  : Admin
---   Mot de passe : Admin  (hashé bcrypt, coût 12)
---   must_change_password = TRUE : la première connexion OBLIGE à changer
---   le mot de passe (et permet de personnaliser le pseudo de login) via
---   l'onboarding forcé (POST /api/auth/onboarding). Le drapeau est remis
---   à FALSE une fois les nouveaux identifiants validés.
+-- Admin de test principal (unique)
+--   Login  : admin
+--   Mot de passe : admin  (hashé bcrypt, coût 12)
+--   must_change_password = FALSE : le compte de test est utilisable
+--   directement avec admin / admin (pas d'onboarding forcé). Les données,
+--   collections, historiques et réglages du compte sont conservés — seule la
+--   ligne d'identifiants est (re)posée.
 -- ------------------------------------------------------------
 INSERT INTO users (last_name, first_name, email, login, password_hash, role, is_public, must_change_password)
 VALUES (
     'Admin',
     'Admin',
     'admin@geek0thek.local',
-    'Admin',
-    '$2a$12$QDqyE3Sz2nJCOyZijm.JbuB/TgDLYfuuFg/0k8c7yzNcD7p5QbAti',
+    'admin',
+    '$2a$12$h547RjPf2TsG0je18jW.gOyhZFKEuxvCqe32Z9EgRPFEqARyz.2wC',
     'admin',
     TRUE,
-    TRUE
+    FALSE
 )
 ON CONFLICT (login) DO NOTHING;

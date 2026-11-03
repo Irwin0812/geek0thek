@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../App.jsx'
 import { api } from '../services/api.js'
+import PasswordInput from '../components/PasswordInput.jsx'
 
 /**
  * SÉCURITÉ À LA PREMIÈRE CONNEXION (onboarding forcé).
  * Rendu par App.jsx dès que le compte connecté porte le drapeau
- * must_change_password = TRUE (admin seedé « Admin »/« Admin » ou compte
- * créé via l'API) : la modification du mot de passe est OBLIGATOIRE
+ * must_change_password = TRUE (compte créé via l'API — l'admin de test
+ * « admin »/« admin » est seedé avec le drapeau à FALSE, il n'y passe pas) :
+ * la modification du mot de passe est OBLIGATOIRE
  * (double saisie) et le pseudo de login peut être personnalisé.
  * Une fois validé, l'API remet le drapeau à FALSE, renvoie un nouveau JWT
  * et le profil mis à jour : la session est renouvelée puis redirection
@@ -73,10 +75,8 @@ export default function Onboarding() {
         <form onSubmit={submit} className="card p-6 space-y-4 shadow-2xl shadow-black/40">
           <div>
             <label htmlFor="currentPassword" className="label">{t('onboarding.currentPassword')}</label>
-            <input
+            <PasswordInput
               id="currentPassword"
-              className="input"
-              type="password"
               autoComplete="current-password"
               placeholder="••••••••"
               value={form.currentPassword}
@@ -87,10 +87,8 @@ export default function Onboarding() {
 
           <div>
             <label htmlFor="newPassword" className="label">{t('onboarding.newPassword')}</label>
-            <input
+            <PasswordInput
               id="newPassword"
-              className="input"
-              type="password"
               autoComplete="new-password"
               placeholder="••••••••"
               value={form.newPassword}
@@ -101,10 +99,8 @@ export default function Onboarding() {
 
           <div>
             <label htmlFor="confirmPassword" className="label">{t('onboarding.confirmPassword')}</label>
-            <input
+            <PasswordInput
               id="confirmPassword"
-              className="input"
-              type="password"
               autoComplete="new-password"
               placeholder="••••••••"
               value={form.confirmPassword}
@@ -118,7 +114,7 @@ export default function Onboarding() {
               id="login"
               className="input"
               autoComplete="username"
-              placeholder={user?.login || 'Admin'}
+              placeholder={user?.login || 'admin'}
               value={form.login}
               onChange={(e) => setForm({ ...form, login: e.target.value })}
             />
