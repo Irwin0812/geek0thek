@@ -98,10 +98,14 @@ export default function Dashboard() {
           d'origine sur la photo bg_comics.jpg ; inerte sous les autres thèmes. */}
       <section>
         <div className="cb-actions flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* En-tête de bienvenue : sous le thème « Comic Books », lettrage de
-              case de BD (Bangers, blanc + liseré/ombre noir via .font-comic-title)
-              → contraste maximal sur bg_comics.jpg. Autres thèmes : style d'origine. */}
-          <h1 className={comicTheme ? 'font-comic-title text-3xl tracking-wide md:text-5xl' : 'text-2xl md:text-3xl font-bold tracking-wide text-white'}>
+          {/* Message de bienvenue (« Bonjour, xxx ») : même police stylisée que les
+              sections de l'application (ex. « Mes Disques ») — comics US (Bangers),
+              majuscules avec contour/ombre portée :
+                - thème « Comic Books » → .font-comic-title (case de BD, contraste
+                  maximal sur bg_comics.jpg) ;
+                - les autres thèmes (« Geek0thek » et suivants) → .comic-greeting
+                  (index.css), lettrage identique aux titres principaux. */}
+          <h1 className={comicTheme ? 'font-comic-title text-3xl tracking-wide md:text-5xl' : 'comic-greeting text-2xl md:text-3xl'}>
             {t('dashboard.greeting', { name: user.firstName })}
           </h1>
           {/* Bouton unique « Ajouter un média » (menu déroulant, cf. doc bas de page). */}

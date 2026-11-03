@@ -114,9 +114,9 @@ const MIGRATIONS = [
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS language VARCHAR(5) NOT NULL DEFAULT 'fr';`,
     ],
   },
-  // Thème visuel préféré (dark / light / vinyl / comic / comic-books / pastel,
-  // « cartoon » désormais mappé vers « comic-books », cf. migration dédiée) :
-  // NOT NULL DEFAULT 'dark' (thème sombre = thème par défaut de l'appli).
+  // Thème visuel préféré (dark / library / vinyl / comic / comic-books / neon ;
+  // « cartoon » mappé vers « comic-books », « pastel » vers « neon »,
+  // cf. migrations dédiées) : NOT NULL DEFAULT 'dark' (défaut de l'appli).
   {
     name: 'users.theme',
     statements: [
@@ -401,6 +401,17 @@ const MIGRATIONS = [
     name: 'users.theme-cartoon-to-comic-books',
     statements: [
       `UPDATE users SET theme = 'comic-books' WHERE lower(theme) = 'cartoon';`,
+    ],
+  },
+  // Thèmes visuels : le 6e thème « pastel » (ex-« Pastel », fichier
+  // frontend/src/themes/pastel.css) a été REMPLACÉ par « neon » (Néon).
+  // Les préférences déjà stockées sont résolues côté API via l'alias
+  // LEGACY_THEME_ALIASES ; ce rétro-remplissage idempotent évite que la clé
+  // « pastel » reste définitivement dans users.theme.
+  {
+    name: 'users.theme-pastel-to-neon',
+    statements: [
+      `UPDATE users SET theme = 'neon' WHERE lower(theme) = 'pastel';`,
     ],
   },
 ];

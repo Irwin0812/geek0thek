@@ -1,9 +1,13 @@
 import { useTranslation } from 'react-i18next'
 
 /**
- * Badge compteur de collection (« X artistes — Y disques » / « X séries — Y albums ») :
+ * Badge compteur de collection (« X artistes — Y disques BD » / « X séries BD — Y albums BD ») :
  * positionné à GAUCHE de la barre de recherche, sur une seule ligne (shrink-0),
  * hauteur harmonisée h-12 comme le reste de la barre d'actions.
+ *
+ * Le type de collection est EXPLICITE (prop `type`, « disks » ou « comics ») —
+ * jamais déduit de la présence d'`items` : la page « Mes BD » transmet bien
+ * `items={comics.length}` et un `type` incertain affichait les libellés disques.
  *
  * Typographie imposée :
  *  - thème « Comic Books » → police JAUNE VIF (--cb-yellow) avec OMBRAGE NOIR,
@@ -15,9 +19,9 @@ import { useTranslation } from 'react-i18next'
  * sont définies dans index.css (@layer components → gagne sur les utilitaires
  * Tailwind text-* du JSX lors du tie-break source).
  */
-export default function CollectionCounter({ groups, items }) {
+export default function CollectionCounter({ groups, items, type = 'comics' }) {
   const { t } = useTranslation()
-  const isDisks = items !== undefined // true → disques, false → albums (BD)
+  const isDisks = type === 'disks' // « Mes Disques » / « Mes BD »
   const value = t(
     isDisks ? 'collection.collectionBadge' : 'collection.comicBadge',
     isDisks

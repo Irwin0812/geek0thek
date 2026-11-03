@@ -177,7 +177,7 @@ function ComicCollectionView() {
           {/* Compteur de collection « X séries — Y albums » : à GAUCHE de la
               barre de recherche (gras + ombrage noir ; jaune liseré d'encre sous
               le thème Comic Books — cf. CollectionCounter / index.css). */}
-          <CollectionCounter groups={groups.length} items={comics.length} />
+          <CollectionCounter type="comics" groups={groups.length} items={comics.length} />
           <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
           <ViewToolbar />
           <Link to="/comics/nouveau" className="btn-primary !h-12">{t('dashboard.addComic')}</Link>

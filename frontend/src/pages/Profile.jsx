@@ -315,8 +315,11 @@ export default function Profile() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
       <header>
-        {/* Nomenclature officielle (i18n profile.title / navbar.myProfile) : « Mon profil ». */}
-        <h1 className="text-2xl font-extrabold text-white">{t('profile.title')}</h1>
+        {/* Nomenclature officielle (i18n profile.title / navbar.myProfile) : « Mon profil ».
+            Lettrage COMICS US (Bangers, majuscules, blanc + liseré/ombre noire —
+            .comic-page-title dans index.css), harmonisé aux titres principaux
+            « MES DISQUES » / « MES BD » — identique sous tous les thèmes. */}
+        <h1 className="cb-page-title comic-page-title text-2xl font-extrabold">{t('profile.title')}</h1>
       </header>
 
       {toast && (

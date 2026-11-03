@@ -161,7 +161,7 @@ function CollectionView() {
           {/* Compteur de collection « X artistes — Y disques » : à GAUCHE de la
               barre de recherche (gras + ombrage noir ; jaune liseré d'encre sous
               le thème Comic Books — cf. CollectionCounter / index.css). */}
-          <CollectionCounter groups={groups.length} items={vinyls.length} />
+          <CollectionCounter type="disks" groups={groups.length} items={vinyls.length} />
           <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
           <ViewToolbar />
           <Link to="/vinyles/nouveau" className="btn-primary !h-12">{t('dashboard.addVinyl')}</Link>

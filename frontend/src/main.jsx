@@ -16,7 +16,7 @@ import './themes/library.css' // ex-« light » — thème « Médiathèque » (
 import './themes/vinyl.css'
 import './themes/comic.css'
 import './themes/comic-books.css' // thème « Comic Books » (photo bg_comics.jpg en fond)
-import './themes/pastel.css'
+import './themes/neon.css' // ex-« Pastel » — thème « Néon » (halos néon sur fond sombre)
 
 // Applique la préférence conservée (localStorage) AVANT le premier rendu :
 // sans cet appel, l'attribut data-theme ne serait posé qu'après l'API

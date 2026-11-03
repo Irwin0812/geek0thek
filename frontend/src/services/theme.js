@@ -13,7 +13,7 @@
  *   <html data-theme="comic">       →  src/themes/comic.css       (bande dessinée)
  *   <html data-theme="comic-books"> →  src/themes/comic-books.css (Comic Books :
  *                                    photo bg_comics.jpg en fond principal)
- *   <html data-theme="pastel">      →  src/themes/pastel.css      (couleurs pastel)
+ *   <html data-theme="neon">        →  src/themes/neon.css        (Néon, ex-« Pastel »)
  *
  * Valeurs de clés possibles : identiques à l'enum du backend
  * (backend/src/controllers/userController.js, tableau THEMES) et à la
@@ -30,13 +30,16 @@ export const THEME_STORAGE_KEY = 'geek0thek_theme'
  *   en fond semi-transparent ;
  * - le thème « Cartoon » (« cartoon », ex-« src/themes/cartoon.css ») a été
  *   retiré : sa place est prise par « Comic Books » (« comic-books »,
- *   photo bg_comics.jpg en fond principal).
+ *   photo bg_comics.jpg en fond principal) ;
+ * - le 6e thème « Pastel » (« pastel ») a été remplacé par « Néon » (« neon »,
+ *   ex-« src/themes/pastel.css »).
  * Les préférences stockées (localStorage, BDD `users.theme`) continuent
  * donc de s'appliquer sans réinitialisation.
  */
 export const LEGACY_THEME_ALIASES = {
   light: 'library',
   cartoon: 'comic-books',
+  pastel: 'neon',
 }
 
 /** Liste ordonnée des thèmes : id + libellé (FR, neutre) + échantillons. */
@@ -58,7 +61,13 @@ export const THEMES = [
     // échantillon = teinte du voile (première teinte perçue par l'œil).
     swatches: ['#f2d94e', '#fffdf5', '#1d4ed8'],
   },
-  { id: 'pastel', label: 'Pastel', swatches: ['#f7efe3', '#fffbf4', '#a4552e'] },
+  {
+    id: 'neon',
+    label: 'Néon',
+    // Ex-« Pastel » (« pastel ») : palette remplacée par du néon vibrant sur
+    // fond sombre — échantillons = halo cyan, fond, accent fuchsia.
+    swatches: ['#0d1422', '#060a13', '#e879f9'],
+  },
 ]
 
 /**

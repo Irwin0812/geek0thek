@@ -7,6 +7,7 @@ import { ChevronDown } from 'lucide-react'
 import { api, saveSession } from '../services/api.js'
 import Avatar from './Avatar.jsx'
 import { CheckIcon, GlobeIcon } from './icons.jsx'
+import ThemeIcon from './ThemeIcon.jsx'
 import { useDismiss, useHoverClose } from './hooks.js'
 import { getAppliedTheme, isKnownTheme, switchTheme, THEMES } from '../services/theme.js'
 
@@ -400,9 +401,10 @@ export default function Navbar() {
                   </div>
 
                   {/* « Thème » : rangée de bascule → SOUS-MENU indenté listant les
-                      6 thèmes (pastilles + coche sur le thème actif). La rangée
-                      affiche les pastilles + le nom du thème ACTUELLEMENT ACTIF
-                      (à droite du libellé, sur le modèle de la rangée « Langue »).
+                      6 thèmes (ICÔNE spécifique par thème + coche sur le thème actif,
+                      cf. src/components/ThemeIcon.jsx). La rangée affiche l'icône +
+                      le nom du thème ACTUELLEMENT ACTIF (à droite du libellé, sur le
+                      modèle de la rangée « Langue » qui montre Globe + langue courante).
                       Bascule IMMÉDIATE (switchTheme) + sauvegarde du profil via
                       PATCH, non bloquante (indicateur « Enregistrement… »). */}
                   <div className="px-1.5">
@@ -413,20 +415,12 @@ export default function Navbar() {
                       title={t('navbar.themeMenu')}
                       className={subToggleCls(subMenu === 'theme')}
                     >
-                      {/* Pastilles + nom du thème actuellement actif, à droite du
+                      {/* Icône + nom du thème actuellement actif, à droite du
                           libellé (même modèle que la rangée « Langue » qui affiche
                           l'icône Globe + la langue courante). Le sous-menu déroulant
                           reste accessible pour changer de thème. */}
                       <span className="flex items-center gap-2">
-                        <span className="flex items-center -space-x-0.5" aria-hidden="true">
-                          {activeTheme.swatches.map((c, i) => (
-                            <span
-                              key={i}
-                              className="h-2.5 w-2.5 rounded-full border"
-                              style={{ backgroundColor: c, borderColor: 'rgba(255,255,255,0.35)' }}
-                            />
-                          ))}
-                        </span>
+                        <ThemeIcon theme={appliedTheme} size={20} className="shrink-0" />
                         {t('navbar.theme')}
                         <span className="text-xs font-normal text-cyan-300">{activeTheme.label}</span>
                       </span>
@@ -464,15 +458,15 @@ export default function Navbar() {
                                   : 'text-slate-300 hover:bg-night-700/60 hover:text-white'
                               }`}
                             >
-                              <span className="flex items-center -space-x-1" aria-hidden="true">
-                                {th.swatches.map((c, i) => (
-                                  <span
-                                    key={i}
-                                    className="h-2.5 w-2.5 rounded-full border"
-                                    style={{ backgroundColor: c, borderColor: 'rgba(255,255,255,0.35)' }}
-                                  />
-                                ))}
-                              </span>
+                               {/* Icône graphique dédiée au thème (favicon du site pour « Geek0thek »,
+                                   explosion rétro « BOOM » pour Comic Books, bouton play néon pour Néon…) :
+                                   les glyphes courants (casque, bulle) suivent currentColor et passent à l'encre sombre
+                                   sur la ligne active ; favicon, vinyle, explosion et play sont à couleurs fixes. */}
+                               <ThemeIcon
+                                 theme={th.id}
+                                 size={20}
+                                 className={`shrink-0 ${active ? 'text-slate-950' : 'text-slate-300'}`}
+                               />
                               {th.label}
                               {th.id === 'dark' ? ` (${t('navbar.themeDefault')})` : ''}
                               {active && <CheckIcon size={12} className="ml-auto shrink-0 text-slate-950" />}

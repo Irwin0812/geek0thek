@@ -575,7 +575,11 @@ export default function AddComic() {
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-white">
+          {/* Titre « Nouvelle bande dessinée » / « Modifier la BD » : lettrage COMICS US
+              (Bangers, majuscules, blanc + liseré/ombre noire — .comic-page-title dans
+              index.css), harmonisé aux titres principaux « MES DISQUES » / « MES BD »
+              — identique sous tous les thèmes. */}
+          <h1 className="cb-page-title comic-page-title text-2xl font-extrabold">
             {isEdit ? t('comicForm.pageTitleEdit') : t('comicForm.pageTitleNew')}
           </h1>
 

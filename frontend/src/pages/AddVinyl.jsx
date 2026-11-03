@@ -503,7 +503,11 @@ export default function AddVinyl() {
         <div>
           {/* Nomenclature officielle (libellés du formulaire) :
               « Modifier le disque » / « Nouveau disque ». */}
-          <h1 className="text-2xl font-extrabold text-white">
+          {/* Titre « Nouveau disque » / « Modifier le disque » : lettrage COMICS US
+              (Bangers, majuscules, blanc + liseré/ombre noire — .comic-page-title
+              dans index.css), harmonisé aux titres principaux « MES DISQUES » /
+              « MES BD » — identique sous tous les thèmes. */}
+          <h1 className="cb-page-title comic-page-title text-2xl font-extrabold">
             {isEdit ? t('vinylForm.pageTitleEdit') : t('vinylForm.pageTitleNew')}
           </h1>
 

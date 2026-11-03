@@ -68,7 +68,8 @@ export const api = {
     // Langue préférée (endpoint dédié) : body { language: 'fr' | 'en' | ... }
     patchLanguage: (language) => request('/users/profile/language', { method: 'PATCH', body: { language } }),
     // Thème visuel préféré (endpoint dédié) : body
-    // { theme: 'dark' | 'library' | 'vinyl' | 'comic' | 'comic-books' | 'pastel' }
+    // { theme: 'dark' | 'library' | 'vinyl' | 'comic' | 'comic-books' | 'neon' }
+    // ('pastel', ex-« Pastel », accepté et résolu vers 'neon' — cf. backend)
     patchTheme: (theme) => request('/users/profile/theme', { method: 'PATCH', body: { theme } }),
     remove: (id) => request(`/users/${id}`, { method: 'DELETE' }),
   },

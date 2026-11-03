@@ -24,8 +24,8 @@
   },
   "collection": {
     "searchPlaceholder": "Rechercher dans ma collection…",
-    "collectionBadge": "{{artists}} artistes — {{vinyls}} disques",
-    "comicBadge": "{{series}} séries — {{albums}} albums",
+    "collectionBadge": "{{artists}} artistes — {{vinyls}} disques BD",
+    "comicBadge": "{{series}} séries BD — {{albums}} albums BD",
     "groupNoSeries": "Hors série",
     "groupNoArtist": "Divers",
     "vinylsCount_one": "{{count}} disque",

@@ -1,0 +1,165 @@
+/* ============================================================
+   Geek0thek — Thème « Néon » (ex-« Pastel », clé 'pastel')
+   Vibrant sur fond sombre : halos cyan/magenta/fuchsia diffus,
+   textes clairs froids, accent fuchsia néon. Même logique de
+   variables que les autres thèmes.
+   Note : l'icône du thème dans le menu « Thème » est le bouton
+   play lumineux (cf. src/components/ThemeIcon.jsx).
+   ============================================================ */
+
+[data-theme='neon'] {
+  --bg-app: #060a13; /* nuit profonde */
+  --bg-surface: #0d1422;
+  --bg-elevated: #121d31; /* cartes / champs : bleu nuit */
+  --bg-raised: #16223a;
+  --bg-hover: #1b2a45;
+  --border-subtle: #1e2c47;
+  --border-default: #29406a;
+  --text-primary: #eef4ff; /* blanc très froid, jamais noir franc */
+  --text-secondary: #c3d2ee;
+  --text-muted: #8fa3c7;
+  --text-subtle: #6b7fa5;
+  --text-faint: #4b5a7a;
+  --accent-soft: #e879f9; /* texte accent fuchsia lisible */
+  --accent: #d94cf0;
+  --accent-strong: #c93df0; /* boutons fuchsia néon */
+  --accent-deep: #a326b8;
+  --accent-dark: #831e98;
+  --accent-contrast: #fff7ff;
+  --ring: rgba(217, 76, 240, 0.35);
+  --shadow-color: rgba(6, 10, 19, 0.5);
+  --card-radius: 0.9rem;
+  --app-font: 'Segoe UI', system-ui, ui-sans-serif, sans-serif;
+  --body-font-weight: 400;
+  --body-letter-spacing: 0.01em;
+  --input-bg: #121d31;
+  --input-border: #29406a;
+  --input-focus-border: rgba(217, 76, 240, 0.65);
+  --scrollbar-thumb: rgba(41, 64, 106, 0.85);
+  --scrollbar-thumb-hover: #3a5896;
+  --ghost-bg: rgba(18, 29, 49, 0.7);
+  --ghost-hover: #1b2a45;
+  --ghost-border: #29406a;
+  --ghost-text: #c3d2ee;
+  --selection-bg: rgba(217, 76, 240, 0.4);
+  --selection-text: #fff7ff;
+  --danger: rgba(244, 63, 94, 0.95); /* rose vif néon */
+  --danger-hover: #f1386a;
+  --menu-pop-bg: #121d31;
+  --menu-pop-shadow: rgba(6, 10, 19, 0.6);
+  --card-bg: #121d31;
+  --card-border: #1e2c47;
+  --card-blur: 0px;
+  --card-shadow: 0 0 0 1px rgba(56, 189, 248, 0.06), 0 10px 30px -10px rgba(56, 189, 248, 0.15);
+}
+
+[data-theme='neon'] {
+  color-scheme: dark;
+}
+
+[data-theme='neon'] body {
+  background: var(--bg-app);
+  color: var(--text-secondary);
+  font-family: var(--app-font);
+  font-weight: var(--body-font-weight);
+  letter-spacing: var(--body-letter-spacing);
+  /* halos néon : cyan (haut-droite), fuchsia (bas-gauche), indigo (marge) */
+  background-image:
+    radial-gradient(1000px 520px at 85% -10%, rgba(34, 211, 238, 0.16), transparent 60%),
+    radial-gradient(850px 500px at -10% 110%, rgba(232, 121, 249, 0.13), transparent 60%),
+    radial-gradient(700px 400px at 105% 60%, rgba(99, 102, 241, 0.13), transparent 60%);
+  background-attachment: fixed;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+[data-theme='neon'] ::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+[data-theme='neon'] .input {
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-primary);
+}
+
+[data-theme='neon'] .input::placeholder {
+  color: var(--text-subtle);
+}
+
+[data-theme='neon'] .input:focus {
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+[data-theme='neon'] .label {
+  color: var(--text-muted);
+  font-family: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-theme='neon'] .btn {
+  --tw-ring-offset: transparent;
+  font-family: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-theme='neon'] .btn-primary {
+  background: var(--accent-strong);
+  color: var(--accent-contrast);
+  box-shadow: 0 0 18px -4px var(--ring), 0 8px 18px -8px var(--ring);
+}
+
+[data-theme='neon'] .btn-primary:hover {
+  background: var(--accent);
+  box-shadow: 0 0 26px -4px var(--ring);
+}
+
+[data-theme='neon'] .btn-ghost {
+  background: var(--ghost-bg);
+  color: var(--ghost-text);
+  border-color: var(--ghost-border);
+}
+
+[data-theme='neon'] .btn-ghost:hover {
+  background: var(--ghost-hover);
+}
+
+[data-theme='neon'] .btn-danger {
+  background: var(--danger);
+}
+
+[data-theme='neon'] .btn-danger:hover {
+  background: var(--danger-hover);
+}
+
+[data-theme='neon'] .card {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+  border-radius: var(--card-radius);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: var(--card-shadow);
+}
+
+[data-theme='neon'] .badge {
+  background: var(--bg-raised);
+  color: var(--text-muted);
+}
+
+[data-theme='neon'] .icon-btn {
+  color: var(--text-subtle);
+}
+
+[data-theme='neon'] .icon-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+[data-theme='neon'] ::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+
+[data-theme='neon'] ::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}

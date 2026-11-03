@@ -24,8 +24,8 @@
   },
   "collection": {
     "searchPlaceholder": "Search my collection…",
-    "collectionBadge": "{{artists}} artists — {{vinyls}} vinyls",
-    "comicBadge": "{{series}} series — {{albums}} albums",
+    "collectionBadge": "{{artists}} artists — {{vinyls}} comic record discs",
+    "comicBadge": "{{series}} comics series — {{albums}} comic books",
     "groupNoSeries": "No series",
     "groupNoArtist": "Various",
     "vinylsCount_one": "{{count}} vinyl",
