@@ -21,7 +21,7 @@ const {
   isConfigured: isDiscogsConfigured,
 } = require('../utils/discogsClient');
 const { canEditItem } = require('../middlewares/auth');
-const { ensureArtist, removeArtistImageGlobally } = require('../utils/artistService');
+const { findArtistId, ensureArtist, removeArtistImageGlobally } = require('../utils/artistService');
 
 function toVinylDto(row) {
   return {
@@ -57,7 +57,11 @@ function toVinylDto(row) {
     lastfmUrl: row.lastfm_url || null,
     // Remplace l'ancien « Année d'acquisition » : date exacte d'ajout du
     // disque à la collection (DATE YYYY-MM-DD), alignée sur comics.added_date.
-    addedDate: row.acquired_date ? String(row.acquired_date).slice(0, 10) : null,
+    // ⚠ node-postgres renvoie les colonnes DATE comme objets JS Date (minuit
+    // UTC) : String(date).slice(0, 10) donnait « Sat Oct 24 » — non parsable
+    // par le frontend, la ligne « Date d'ajout » disparaissait de la modale
+    // de détails. toIsoDate() formate proprement en YYYY-MM-DD (cf. helper).
+    addedDate: toIsoDate(row.acquired_date),
     notes: row.notes,
     // Options du disque (rangée horizontale du formulaire) : TYPE DE DISQUE
     // (« Vinyle » / « Compact », défaut « Vinyle »), booléens, nombre de
@@ -89,6 +93,27 @@ function parseAcquiredDate(value) {
   if (year < 1000 || year > 9999) return null;
   const pad = (n) => String(n).padStart(2, '0');
   return `${m[1]}-${m[2] ? pad(Number(m[2])) : '01'}-${m[3] ? pad(Number(m[3])) : '01'}`;
+}
+
+/**
+ * Convertit une valeur DATE venant de PostgreSQL en chaîne « YYYY-MM-DD ».
+ * node-postgres renvoie les colonnes DATE comme objets JS Date (minuit UTC) :
+ * `String(date).slice(0, 10)` produisait alors « Sat Oct 24 » — non parsable
+ * par le frontend (addDateFr), la ligne « Date d'ajout » était filtrée de la
+ * modale de détails. toISOString() renvoie le minuit UTC exact de la date
+ * stockée : le slice(0, 10) est donc fidèle. Tolère aussi les chaînes ISO /
+ * « YYYY-MM-DD » déjà formattées (repli par regex). null si absente / invalide.
+ */
+function toIsoDate(value) {
+  if (value == null) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  const s = String(value).trim();
+  const m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (!m) return null;
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${m[1]}-${pad(Number(m[2]))}-${pad(Number(m[3]))}`;
 }
 
 /**
@@ -544,6 +569,75 @@ async function syncArtistEntity(artistName, artistImage = null) {
 }
 
 /**
+ * Propage le GENRE MUSICAL d'un disque à TOUS les disques existants de cet
+ * artiste (tous users) et le conserve sur l'ENTITÉ Artiste comme valeur par
+ * défaut pour les futurs albums. Même périmètre que la photo d'artiste
+ * (syncArtistEntity) : lignes rattachées à l'entité PAR ID + lignes legacy
+ * sans entité, rattachées par nom strict (`artist_id IS NULL AND btrim(artist)`).
+ *  - l'ENTITÉ Artiste (table `artists`) reçoit le genre (INSERT si première
+ *    création de l'artiste, UPDATE sinon) — c'est LA source du pré-remplissage
+ *    du champ « Genre » à la création d'un futur album de cet artiste ;
+ *  - TOUS les disques déjà enregistrés sous ce nom adoptent le genre (tous
+ *    users) : le disque courant, inséré / mis à jour AVANT cet appel, est
+ *    couvert par le même UPDATE (réécriture idempotente).
+ * Non bloquant : toute panne (base non migrée « artists.genre »…) ne doit
+ * JAMAIS empêcher la création / la modification du disque — le genre reste
+ * écrit sur la ligne courante par l'INSERT / UPDATE principal.
+ * @param {string} artistName nom d'affichage tel qu'enregistré sur le disque
+ * @param {string|null} genre genre musical à propager — null : aucune écriture
+ * @returns {Promise<number|null>} id de l'entité Artiste (null si inconnue).
+ */
+async function syncArtistGenre(artistName, genre = null) {
+  const name = String(artistName || '').trim();
+  const g = String(genre || '').trim() || null;
+  if (!name || !g) return null;
+
+  // 1) Entité Artiste : création (1er disque de l'artiste -> 1er genre) ou
+  //    mise à jour du genre par défaut sur l'entité.
+  const ent = await ensureArtist(name, null);
+  const targetId = ent.artistId;
+  if (targetId == null) return null;
+  await query(
+    'UPDATE artists SET genre = $1, updated_at = now() WHERE id = $2',
+    [g, targetId]
+  );
+
+  // 2) Propagation à TOUS les disques de cet artiste (tous users) :
+  //    - lignes rattachées à l'entité (`artist_id = targetId`) ;
+  //    - lignes legacy sans entité, rattachées par nom strict.
+  await query(
+    `UPDATE vinyls SET genre = $3
+     WHERE artist_id = $1 OR (artist_id IS NULL AND btrim(artist) = $2)`,
+    [targetId, name, g]
+  );
+
+  return targetId;
+}
+
+/**
+ * Renvoie le GENRE MUSICAL par défaut porté par l'ENTITÉ Artiste (table
+ * `artists`) pour un nom donné — null si inconnu ou jamais défini. Sert au
+ * pré-remplissage du champ « Genre » à la création d'un album : les futurs
+ * disques de l'artiste repartent sur le genre déjà propagé. Lecture seule,
+ * non bloquante (base non migrée « artists.genre » -> null).
+ * @param {string} artistName nom d'affichage tel qu'enregistré sur le disque
+ * @returns {Promise<string|null>}
+ */
+async function defaultGenreOfArtist(artistName) {
+  const name = String(artistName || '').trim();
+  if (!name) return null;
+  try {
+    const id = await findArtistId(name);
+    if (id == null) return null;
+    const { rows } = await query('SELECT genre FROM artists WHERE id = $1', [id]);
+    return rows[0] && rows[0].genre ? String(rows[0].genre).trim() : null;
+  } catch {
+    // Base non migrée (colonne `artists.genre` absente) : aucun défaut.
+    return null;
+  }
+}
+
+/**
  * Sanitize une valeur numérique entrante (JSON, FormData ou query string).
  * null, undefined, chaîne vide, "NaN" ou texte non numérique → `fallback`.
  * Retourne toujours un entier fini (ou le fallback) : jamais NaN, jamais une
@@ -784,6 +878,16 @@ async function createVinyl(req, res, next) {
       });
       return res.status(400).json({ error });
     }
+    // --------------------------------------------------------------
+    // GENRE MUSICAL PAR DÉFAUT : si le formulaire n'en fournit pas, le
+    // disque repart sur le genre porté par l'ENTITÉ Artiste (table
+    // `artists`) — valeur propagée lors de la dernière définition /
+    // modification du genre d'un disque de cet artiste. Lecture seule,
+    // non bloquante (base non migrée -> null : aucun pré-remplissage).
+    // --------------------------------------------------------------
+    if (!values.genre) {
+      values.genre = await defaultGenreOfArtist(values.artist);
+    }
     const coverUrl = await resolveCover(req);
     if (!coverUrl) {
       // La route utilise upload.fields() : les fichiers arrivent dans
@@ -967,6 +1071,23 @@ async function createVinyl(req, res, next) {
         values.discColor,
       ]
     );
+    // --------------------------------------------------------------
+    // PROPAGATION DU GENRE MUSICAL : un genre défini sur ce disque devient le
+    // genre de TOUS les disques existants de cet artiste (tous users) et la
+    // valeur par défaut des futurs albums (entité Artiste). Non bloquant :
+    // toute panne ne doit jamais empêcher la création du disque — le genre
+    // reste écrit sur la ligne courante par l'INSERT ci-dessus.
+    // --------------------------------------------------------------
+    if (values.genre) {
+      try {
+        await syncArtistGenre(values.artist, values.genre);
+      } catch (err) {
+        console.warn(
+          `[genre] Propagation du genre « ${values.genre} » à l'artiste « ${values.artist} » impossible :`,
+          err.message
+        );
+      }
+    }
     return res.status(201).json({ vinyl: toVinylDto(rows[0]) });
   } catch (err) {
     if (err instanceof MusicBrainzError) {
@@ -1418,6 +1539,25 @@ async function updateVinyl(req, res, next) {
         const resetRes = await query('SELECT * FROM vinyls WHERE id = $1', [id]);
         finalRow = resetRes.rows[0] || { ...finalRow, artist_image: null };
       } catch {}
+    }
+
+    // --------------------------------------------------------------
+    // PROPAGATION DU GENRE MUSICAL : un genre défini / modifié sur ce disque
+    // devient le genre de TOUS les disques existants de cet artiste (tous
+    // users) et la valeur par défaut des futurs albums (entité Artiste).
+    // Non bloquant : toute panne ne doit jamais empêcher la modification du
+    // disque — le genre reste écrit sur la ligne courante par l'UPDATE
+    // principal ci-dessus.
+    // --------------------------------------------------------------
+    if (values.genre) {
+      try {
+        await syncArtistGenre(values.artist, values.genre);
+      } catch (err) {
+        console.warn(
+          `[genre] Propagation du genre « ${values.genre} » à l'artiste « ${values.artist} » impossible :`,
+          err.message
+        );
+      }
     }
 
     return res.json({ vinyl: toVinylDto(finalRow) });

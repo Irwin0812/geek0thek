@@ -414,6 +414,17 @@ const MIGRATIONS = [
       `UPDATE users SET theme = 'neon' WHERE lower(theme) = 'pastel';`,
     ],
   },
+  // GENRE MUSICAL de l'ENTITÉ ARTISTE — quand un utilisateur définit / modifie
+  // le genre d'un disque, le genre est propagé à TOUS les disques existants de
+  // cet artiste (tous users) ET conservé sur l'entité Artiste pour servir de
+  // valeur par défaut aux futurs albums. Colonne VARCHAR(120) (même largeur que
+  // vinyls.genre), NULL si jamais défini. Idempotent : ADD COLUMN IF NOT EXISTS.
+  {
+    name: 'artists.genre',
+    statements: [
+      'ALTER TABLE artists ADD COLUMN IF NOT EXISTS genre VARCHAR(120);',
+    ],
+  },
 ];
 
 /**

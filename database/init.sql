@@ -220,6 +220,7 @@ CREATE TABLE IF NOT EXISTS artists (
     name        VARCHAR(255) NOT NULL,
     norm_name   VARCHAR(255) NOT NULL,
     image_url   TEXT,                      -- « /uploads/artists/… » ou « /img/no_group.jpg »
+    genre       VARCHAR(120),              -- genre musical par défaut (propagé depuis un disque de l'artiste)
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT artists_norm_name_unique UNIQUE (norm_name)
