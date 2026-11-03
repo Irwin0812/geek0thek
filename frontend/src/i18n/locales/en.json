@@ -483,6 +483,21 @@
     "password": "Password",
     "login": "Sign in",
     "loginBusy": "Signing in…",
-    "firstLoginHint": "First login: admin Admirwin (created when the database was initialized)."
+    "firstLoginHint": "First login: admin “Admin” / “Admin” (created when the database was initialized) — password change required."
+  },
+  "onboarding": {
+    "title": "Secure your account",
+    "subtitle": "To continue, you must set a new password. You can also customize your login name.",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "login": "Login name (username)",
+    "passwordHint": "At least 8 characters, different from the current password.",
+    "loginHint": "Optional: leave empty to keep the current login name.",
+    "passwordTooShort": "The new password must contain at least 8 characters.",
+    "passwordMismatch": "The two passwords do not match.",
+    "submit": "Validate and continue",
+    "busy": "Validating…",
+    "backToLogin": "Sign out"
   }
 }

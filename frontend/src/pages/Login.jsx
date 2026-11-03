@@ -17,8 +17,12 @@ export default function Login() {
     setError('')
     setBusy(true)
     try {
-      await login({ login: form.login.trim(), password: form.password })
-      navigate(location.state?.from || '/', { replace: true })
+      const logged = await login({ login: form.login.trim(), password: form.password })
+      // Sécurité à la première connexion : si le compte porte encore les
+      // identifiants de première installation (drapeau must_change_password),
+      // redirection OBLIGATOIRE vers l'onboarding (nouveau mot de passe +
+      // pseudo personnalisable) avant tout accès à l'application.
+      navigate(logged.mustChangePassword ? '/onboarding' : (location.state?.from || '/'), { replace: true })
     } catch (err) {
       setError(err.message)
     } finally {
@@ -48,7 +52,7 @@ export default function Login() {
               id="login"
               className="input"
               autoComplete="username"
-              placeholder="Admirwin"
+              placeholder="Admin"
               value={form.login}
               onChange={(e) => setForm({ ...form, login: e.target.value })}
               autoFocus

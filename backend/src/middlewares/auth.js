@@ -20,7 +20,7 @@ async function authenticate(req, res, next) {
 
     const { rows } = await query(
       `SELECT id, login, role, first_name, last_name, email, is_public, is_active,
-              avatar_url, language
+              avatar_url, language, must_change_password
        FROM users WHERE id = $1`,
       [payload.sub]
     );
@@ -52,6 +52,22 @@ function requireAdmin(req, res, next) {
 }
 
 /**
+ * Sécurité à la première connexion (onboarding) : refuse TOUTE requête
+ * applicative tant que le compte porte le drapeau must_change_password =
+ * TRUE (identifiants de première installation non encore changés). Le seul
+ * chemin autorisé est POST /api/auth/onboarding (déclaré AVANT ce garde,
+ * sans passer par lui) : nouveau mot de passe obligatoire + pseudo de
+ * login personnalisable. Renvoie 403 avec le code « must-change-password »
+ * que le frontend intercepte pour afficher la page de forçage.
+ */
+function requirePasswordChanged(req, res, next) {
+  if (req.user && req.user.must_change_password === true) {
+    return res.status(403).json({ code: 'must-change-password', error: 'Modification du mot de passe requise.' });
+  }
+  return next();
+}
+
+/**
  * Contrôleur d'accès aux objets d'une collection (disque / BD) :
  * renvoie true si l'utilisateur courant est l'ADMIN (accès global) ou le
  * PROPRIÉTAIRE du document. S'applique aux contrôles de lecture/écriture.
@@ -60,4 +76,4 @@ function canEditItem(user, ownerId) {
   return user.role === 'admin' || String(user.id) === String(ownerId);
 }
 
-module.exports = { authenticate, requireAdmin, canEditItem };
+module.exports = { authenticate, requireAdmin, requirePasswordChanged, canEditItem };

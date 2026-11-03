@@ -9,7 +9,7 @@ const {
   deleteComic,
   importComicByIsbn,
 } = require('../controllers/comicController');
-const { authenticate } = require('../middlewares/auth');
+const { authenticate, requirePasswordChanged } = require('../middlewares/auth');
 const { upload } = require('../middlewares/upload');
 
 const router = express.Router();
@@ -19,6 +19,8 @@ const router = express.Router();
 router.get('/public/user/:userId', listPublicComicsByUser);
 
 router.use(authenticate);
+// Sécurité à la première connexion : onboarding obligatoire avant l'API.
+router.use(requirePasswordChanged);
 
 router.get('/', listMyComics);
 router.get('/user/:userId', listComicsByUser);

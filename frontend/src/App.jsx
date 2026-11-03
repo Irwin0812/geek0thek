@@ -4,6 +4,7 @@ import { api, clearSession, getToken, saveSession } from './services/api.js'
 import Navbar from './components/Navbar.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Login from './pages/Login.jsx'
+import Onboarding from './pages/Onboarding.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Collection from './pages/Collection.jsx'
 import AddVinyl from './pages/AddVinyl.jsx'
@@ -73,6 +74,9 @@ export default function App() {
     () => ({
       user,
       isAdmin: Boolean(user && user.role === 'admin'),
+      // Sécurité à la première connexion : le compte doit-il passer par
+      // l'onboarding forcé (nouveau mot de passe + pseudo personnalisable) ?
+      mustChangePassword: Boolean(user && user.mustChangePassword),
       login: async (payload) => {
         const { token, user: logged } = await api.login(payload)
         // Thème enregistré dans le profil du compte qui se connecte :
@@ -81,6 +85,15 @@ export default function App() {
         saveSession({ token, user: logged })
         setUser(logged)
         return logged
+      },
+      // Onboarding validé : la session est renouvelée avec le NOUVEAU jeton
+      // renvoyé par l'API (le drapeau must_change_password est remis à FALSE
+      // côté base) et le profil mis à jour (nouveau login éventuel).
+      completeOnboarding: ({ token: newToken, user: onboarded }) => {
+        saveSession({ token: newToken || getToken(), user: onboarded })
+        switchTheme(onboarded.theme)
+        setUser(onboarded)
+        return onboarded
       },
       refresh: async () => {
         const { user: current } = await api.users.me()
@@ -108,6 +121,22 @@ export default function App() {
     )
   }
 
+  // SÉCURITÉ À LA PREMIÈRE CONNEXION (onboarding forcé) : un compte dont le
+  // drapeau must_change_password est encore TRUE ne peut accéder à AUCUNE
+  // page applicative — il est redirigé vers /onboarding, où la modification
+  // du mot de passe est OBLIGATOIRE (double saisie) et le pseudo de login
+  // personnalisable. Le backend applique le même garde côté API (403
+  // « must-change-password » sur toutes les routes protégées).
+  if (user && user.mustChangePassword) {
+    return (
+      <AuthContext.Provider value={auth}>
+        <DisplayProvider>
+          <Onboarding />
+        </DisplayProvider>
+      </AuthContext.Provider>
+    )
+  }
+
   return (
     <AuthContext.Provider value={auth}>
       <DisplayProvider>
@@ -117,6 +146,9 @@ export default function App() {
           <div key={location.pathname} className="animate-fadein">
             <Routes>
               <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+              {/* Route défensive : l'onboarding est déjà rendu ci-dessus dès
+                  que user.mustChangePassword est TRUE (avant le layout). */}
+              <Route path="/onboarding" element={<Onboarding />} />
 
               <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<Dashboard />} />

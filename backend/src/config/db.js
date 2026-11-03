@@ -425,6 +425,22 @@ const MIGRATIONS = [
       'ALTER TABLE artists ADD COLUMN IF NOT EXISTS genre VARCHAR(120);',
     ],
   },
+  // SÉCURITÉ À LA PREMIÈRE CONNEXION (onboarding) — drapeau
+  // users.must_change_password : TRUE tant que le compte n'a pas encore
+  // changé ses identifiants de première installation. Le seed de l'admin
+  // par défaut (init.sql, login « Admin » / mot de passe « Admin ») et la
+  // création de comptes via l'API (POST /api/users) le posent à TRUE ; le
+  // backend force alors l'onboarding (POST /api/auth/onboarding : nouveau
+  // mot de passe OBLIGATOIRE + pseudo de login personnalisable) et le remet
+  // à FALSE une fois validé. Défaut NOT NULL FALSE : les comptes existants
+  // ne sont JAMAIS bloqués par cette migration (seuls les comptes créés
+  // après son application — ou l'admin seedé — sont concernés).
+  {
+    name: 'users.must-change-password',
+    statements: [
+      'ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;',
+    ],
+  },
 ];
 
 /**

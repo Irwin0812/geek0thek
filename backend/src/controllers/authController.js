@@ -15,6 +15,9 @@ function publicUser(row) {
     bio: row.bio,
     isPublic: row.is_public,
     isActive: Boolean(row.is_active !== false),
+    // Sécurité à la première connexion : TRUE tant que le compte n'a pas
+    // changé ses identifiants de première installation (onboarding forcé).
+    mustChangePassword: row.must_change_password === true,
     // Langue préférée (code ISO 639-1) : « fr » en dépit de toute valeur NULL
     // résiduelle (la colonne est NOT NULL DEFAULT 'fr' depuis la migration).
     language: row.language || 'fr',
@@ -66,4 +69,80 @@ function me(req, res) {
   return res.json({ user: publicUser(req.user) });
 }
 
-module.exports = { login, me };
+const LOGIN_RE = /^[a-zA-Z0-9._-]{2,80}$/;
+
+/**
+ * POST /api/auth/onboarding
+ * Sécurité à la première connexion : appelé UNIQUEMENT quand le compte
+ * courant porte le drapeau must_change_password = TRUE (identifiants de
+ * première installation non encore changés — admin seedé « Admin »/« Admin »
+ * ou compte créé via l'API). Impose :
+ *   - un NOUVEAU mot de passe OBLIGATOIRE (min. 8 caractères, différent du
+ *     mot de passe courant) — la double saisie est vérifiée côté client ;
+ *   - un pseudo de login personnalisable (facultatif : si absent ou vide,
+ *     le login courant est conservé).
+ * Valide le mot de passe ACTUEL (celui de première installation), met à jour
+ * la base (login + password_hash) et remet must_change_password = FALSE.
+ * Renvoie un NOUVEAU JWT (le payload ne change pas mais on repart d'un jeton
+ * propre) + le profil mis à jour : le frontend renouvelle sa session.
+ */
+async function onboarding(req, res, next) {
+  try {
+    const { currentPassword, newPassword, login: newLogin } = req.body || {};
+    if (!newPassword || String(newPassword).length < 8) {
+      return res.status(400).json({ error: 'Le nouveau mot de passe doit contenir au moins 8 caractères.' });
+    }
+
+    const { rows } = await query('SELECT * FROM users WHERE id = $1', [req.user.id]);
+    const user = rows[0];
+    if (!user) return res.status(404).json({ error: 'Compte introuvable.' });
+    if (user.must_change_password !== true) {
+      // Déjà onbordé : rien à faire (idempotent, ex. double soumission).
+      return res.json({ token: null, user: publicUser(user) });
+    }
+
+    // Le mot de passe de première installation doit être fourni et correct.
+    if (!currentPassword || !(await bcrypt.compare(String(currentPassword), user.password_hash))) {
+      return res.status(401).json({ error: 'Mot de passe actuel incorrect.' });
+    }
+    if (String(newPassword) === String(currentPassword)) {
+      return res.status(400).json({ error: 'Le nouveau mot de passe doit être différent du mot de passe actuel.' });
+    }
+
+    // Pseudo de login personnalisable : facultatif, validé si fourni.
+    let nextLogin = user.login;
+    if (newLogin !== undefined && newLogin !== null && String(newLogin).trim() !== '') {
+      nextLogin = String(newLogin).trim();
+      if (!LOGIN_RE.test(nextLogin)) {
+        return res.status(400).json({
+          error: 'Identifiant invalide (2 à 80 caractères : lettres, chiffres, point, tiret, underscore).',
+        });
+      }
+    }
+
+    const passwordHash = await bcrypt.hash(String(newPassword), 10);
+    try {
+      const { rows: updated } = await query(
+        `UPDATE users SET login = $1, password_hash = $2, must_change_password = FALSE
+         WHERE id = $3 RETURNING *`,
+        [nextLogin, passwordHash, user.id]
+      );
+      if (!updated[0]) return res.status(404).json({ error: 'Compte introuvable.' });
+
+      const token = jwt.sign({ sub: updated[0].id, role: updated[0].role }, env.jwt.secret, {
+        expiresIn: env.jwt.expiresIn,
+        issuer: 'geek0thek',
+      });
+      return res.json({ token, user: publicUser(updated[0]) });
+    } catch (dbErr) {
+      if (dbErr.code === '23505') {
+        return res.status(409).json({ error: 'Identifiant ou e-mail déjà utilisé.' });
+      }
+      throw dbErr;
+    }
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = { login, me, onboarding };

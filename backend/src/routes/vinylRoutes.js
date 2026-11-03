@@ -8,7 +8,7 @@ const {
   updateVinyl,
   deleteVinyl,
 } = require('../controllers/vinylController');
-const { authenticate } = require('../middlewares/auth');
+const { authenticate, requirePasswordChanged } = require('../middlewares/auth');
 const { upload } = require('../middlewares/upload');
 
 const router = express.Router();
@@ -17,6 +17,8 @@ const router = express.Router();
 router.get('/public', listPublicVinyls);
 
 router.use(authenticate);
+// Sécurité à la première connexion : onboarding obligatoire avant l'API.
+router.use(requirePasswordChanged);
 
 router.get('/', listMyVinyls);
 router.get('/user/:userId', listVinylsByUser);

@@ -483,6 +483,21 @@
     "password": "Wachtwoord",
     "login": "Aanmelden",
     "loginBusy": "Aan het aanmelden…",
-    "firstLoginHint": "Eerste inlog: admin Admirwin (gemaakt bij het initialiseren van de database)."
+    "firstLoginHint": "Eerste inlog: admin « Admin » / « Admin » (gemaakt bij het initialiseren van de database) — wachtwoordwijziging verplicht."
+  },
+  "onboarding": {
+    "title": "Beveilig je account",
+    "subtitle": "Om door te gaan moet je een nieuw wachtwoord instellen. Je kunt ook je gebruikersnaam aanpassen.",
+    "currentPassword": "Huidig wachtwoord",
+    "newPassword": "Nieuw wachtwoord",
+    "confirmPassword": "Bevestig het nieuwe wachtwoord",
+    "login": "Gebruikersnaam",
+    "passwordHint": "Minimaal 8 tekens, anders dan het huidige wachtwoord.",
+    "loginHint": "Optioneel: laat leeg om de huidige gebruikersnaam te behouden.",
+    "passwordTooShort": "Het nieuwe wachtwoord moet minimaal 8 tekens bevatten.",
+    "passwordMismatch": "De twee wachtwoorden komen niet overeen.",
+    "submit": "Bevestigen en doorgaan",
+    "busy": "Bevestiging…",
+    "backToLogin": "Afmelden"
   }
 }

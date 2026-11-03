@@ -24,9 +24,9 @@ require.cache[dbFile] = {
           created_at: new Date().toISOString(), updated_at: new Date().toISOString() }] };
       }
       // UPDATE ... SET ... RETURNING *
-      const row = { id: '1', login: 'Admirwin', role: 'admin', first_name: 'Admir',
-        last_name: 'Admirwin', email: 'a@b.c', phone: null, bio: null, is_public: true,
-        is_active: true, avatar_url: null, gender: null, birth_date: null, address: null,
+      const row = { id: '1', login: 'Admin', role: 'admin', first_name: 'Admin',
+        last_name: 'Admin', email: 'a@b.c', phone: null, bio: null, is_public: true,
+        is_active: true, must_change_password: false, avatar_url: null, gender: null, birth_date: null, address: null,
         country: null, created_at: new Date().toISOString() };
       const m = sql.match(/SET ([^W]+) WHERE/i);
       if (m) m[1].split(',').map(s => s.trim()).forEach((c, i) => {
@@ -72,7 +72,7 @@ const server = app.listen(0, async () => {
     r.end();
   });
 
-  const full = { lastName: 'Admirwin', firstName: 'Admir', email: 'a@b.c', login: 'Admirwin',
+  const full = { lastName: 'Admin', firstName: 'Admin', email: 'a@b.c', login: 'Admin',
     phone: null, bio: null, isPublic: true, gender: null, birthDate: null, address: null, country: null };
   const json = (body) => req('/api/users/me', { method: 'PUT',
     headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -112,9 +112,9 @@ const server = app.listen(0, async () => {
   const BOUNDARY = '----smokeboundary123';
   const lines = [
     '--' + BOUNDARY,
-    'Content-Disposition: form-data; name="lastName"', '', 'Admirwin',
+    'Content-Disposition: form-data; name="lastName"', '', 'Admin',
     '--' + BOUNDARY,
-    'Content-Disposition: form-data; name="firstName"', '', 'Admir',
+    'Content-Disposition: form-data; name="firstName"', '', 'Admin',
     '--' + BOUNDARY,
     'Content-Disposition: form-data; name="avatar"; filename="pic.png"',
     'Content-Type: image/png',

@@ -1,6 +1,6 @@
 const express = require('express');
 const { getDashboard } = require('../controllers/dashboardController');
-const { authenticate } = require('../middlewares/auth');
+const { authenticate, requirePasswordChanged } = require('../middlewares/auth');
 
 const router = express.Router();
 
@@ -9,6 +9,8 @@ const router = express.Router();
 // le dashboard reflète la collection PERSONNELLE de l'utilisateur courant,
 // et l'agrégation SQL part de ses deux tables (vinyls / comics).
 router.use(authenticate);
+// Sécurité à la première connexion : onboarding obligatoire avant l'API.
+router.use(requirePasswordChanged);
 
 // GET /api/dashboard — « Dernier ajout » unique + stats par bibliothèque.
 router.get('/', getDashboard);

@@ -23,6 +23,9 @@ function mapUser(row) {
     shareVinyls: Boolean(row.share_vinyls !== false),
     shareComics: Boolean(row.share_comics !== false),
     isActive: Boolean(row.is_active),
+    // Sécurité à la première connexion : TRUE tant que le compte n'a pas
+    // changé ses identifiants de première installation (onboarding forcé).
+    mustChangePassword: row.must_change_password === true,
     // Langue préférée (code ISO 639-1) : « fr » en dépit de toute valeur NULL
     // résiduelle (la colonne est NOT NULL DEFAULT 'fr' depuis la migration).
     language: row.language || 'fr',
@@ -45,6 +48,7 @@ function mapUser(row) {
 const BASE_SELECT = `
   SELECT u.id, u.login, u.role, u.first_name, u.last_name, u.email, u.phone,
          u.bio, u.is_public, u.share_vinyls, u.share_comics, u.is_active,
+         u.must_change_password,
          u.avatar_url, u.language, u.theme, u.gender, u.birth_date, u.address, u.country,
          u.created_at,
          (SELECT COUNT(*) FROM vinyls v WHERE v.user_id = u.id)::int AS vinyl_count,
@@ -339,9 +343,9 @@ async function createUser(req, res, next) {
       const { rows } = await query(
         `INSERT INTO users (last_name, first_name, email, login, password_hash, role,
                             phone, bio, is_public, share_vinyls, share_comics,
-                            is_active, avatar_url, language, gender, birth_date, address, country)
+                            is_active, must_change_password, avatar_url, language, gender, birth_date, address, country)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, true), true, true,
-                 true, $10, $11, $12, $13, $14, $15)
+                 true, TRUE, $10, $11, $12, $13, $14, $15)
          RETURNING *`,
         [
           String(lastName).trim(),
@@ -455,6 +459,10 @@ async function updateUser(req, res, next) {
       }
       values.push(await bcrypt.hash(String(body.newPassword), 10));
       fields.push(`password_hash = $${values.length}`);
+      // Réinitialisation par un admin : le compte redevient « à onborder » —
+      // sa prochaine connexion forcera la modification du mot de passe.
+      values.push(true);
+      fields.push(`must_change_password = $${values.length}`);
     }
 
     if (fields.length === 0) {

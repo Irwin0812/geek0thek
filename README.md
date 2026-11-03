@@ -17,7 +17,10 @@ natif, UI soignée, stockage local des couvertures.
 Fonctionnalités clés :
 
 - Authentification **login + mot de passe (bcrypt)** avec JWT, rôles `admin` / `user`.
-- Admin unique créé à l'initialisation : `Admirwin`.
+- Admin unique créé à l'initialisation : `Admin` / `Admin` — **changement de mot de
+  passe obligatoire à la première connexion** (onboarding forcé : nouveau mot de
+  passe en double saisie + pseudo de login personnalisable, drapeau
+  `must_change_password`).
 - **Vinyles** : import par **code-barres (EAN/UPC)** interrogeant **MusicBrainz**
   (fiche de référence : titre, artiste, date, label, tracklist, MBID)
   **+ Discogs en complément** (si jeton configuré : date, label, genre,
@@ -43,7 +46,7 @@ geek0thek/
 ├── docker-compose.yml         # Orchestration : db + backend + frontend
 ├── README.md
 ├── database/
-│   └── init.sql               # Schéma (users, vinyls, comics, vues) + seed de l'admin (bcrypt coût 12)
+│   └── init.sql               # Schéma (users, vinyls, comics, vues) + seed de l'admin Admin/Admin (bcrypt coût 12, must_change_password = TRUE)
 ├── uploads/                   # Volume local des couvertures (disque de la VM hôte)
 │   ├── vinyls/                # Jaquettes de disques (créé automatiquement au 1er démarrage)
 │   └── comics/                # Couvertures de BD (créé automatiquement au 1er démarrage)
@@ -96,6 +99,7 @@ geek0thek/
         │   └── IsbnModal.jsx
         ├── pages/
         │   ├── Login.jsx
+        │   ├── Onboarding.jsx         # Sécurité 1re connexion : forçage du changement de mot de passe (+ pseudo)
         │   ├── Dashboard.jsx
         │   ├── Collection.jsx         # Vinyles de l'utilisateur
         │   ├── ComicCollection.jsx    # BDs de l'utilisateur
@@ -313,7 +317,8 @@ docker compose ps
 La base PostgreSQL exécute automatiquement `database/init.sql` **à la toute
 première création** du volume `./data` : le schéma complet (tables `users`,
 `vinyls`, `comics` + vues publiques) est mis en place et
-**l'admin par défaut est créé** (`Admirwin`, mot de passe hashé bcrypt).
+**l'admin par défaut est créé** (`Admin` / `Admin`, mot de passe hashé bcrypt,
+drapeau `must_change_password = TRUE`).
 
 L'application est alors joignable à l'URL **`http://172.16.2.75`**.
 
@@ -323,14 +328,35 @@ L'application est alors joignable à l'URL **`http://172.16.2.75`**.
 
 | Login | Mot de passe | Rôle |
 |---|---|---|
-| `Admirwin` | `IR@08515#Ger!` | `admin` (unique, seedé dans `init.sql`) |
+| `Admin` | `Admin` | `admin` (unique, seedé dans `init.sql`) |
 
 - Seul un **admin** peut créer / modifier / supprimer des comptes
   (section *Utilisateurs*).
 - Le mot de passe est stocké **hashé bcrypt** (coût 12 en base / 10 pour les
   comptes créés via l'UI) ; jamais en clair.
-- **Changez ce mot de passe à la première connexion** (bouton *Modifier* dans
-  la liste des utilisateurs, ou via API).
+
+### 🔒 Sécurité à la première connexion (onboarding forcé)
+
+Tant que le compte porte le drapeau `must_change_password = TRUE` — c'est le
+cas de l'admin seedé (`Admin` / `Admin`) et de **tout compte créé via l'API**
+— l'accès à l'application est **bloqué** :
+
+1. **Login** avec les identifiants de première installation → redirection
+   obligatoire vers la page **Onboarding** (`/onboarding`).
+2. La modification du mot de passe est **obligatoire** (nouveau mot de passe
+   d'au moins 8 caractères, différent de l'actuel, **double saisie**) ; le
+   **pseudo de login peut être personnalisé** (facultatif).
+3. Une fois validé (`POST /api/auth/onboarding`), la base est mise à jour
+   (nouveau `login`, nouveau `password_hash` bcrypt, drapeau remis à `FALSE`)
+   et la session est renouvelée avec un **nouveau JWT** : retour au tableau de
+   bord.
+
+Côté API, le garde `requirePasswordChanged` renvoie `403`
+(`code: "must-change-password"`) sur toutes les routes protégées tant que le
+drapeau n'est pas levé ; le frontend intercepte ce code et redirige vers la
+page de forçage. Une **réinitialisation du mot de passe par un admin**
+(`PUT /api/users/:id` avec `newPassword`) remet le drapeau à `TRUE` : la
+prochaine connexion du compte redevient un onboarding forcé.
 
 ---
 
@@ -427,6 +453,11 @@ docker compose exec -T db pg_restore -U vinyl -d geek0thek --clean < backup.dump
 
 - **JWT** signé (HS256) avec `JWT_SECRET` à longue valeur aléatoire ; expiration `7d`.
 - **bcrypt** pour tous les mots de passe (jamais en clair, ni en log).
+- **Onboarding forcé à la première connexion** : drapeau
+  `users.must_change_password` (seed `Admin`/`Admin` + comptes créés via l'API)
+  → changement de mot de passe obligatoire (double saisie) et pseudo de login
+  personnalisable avant tout accès ; garde API `requirePasswordChanged`
+  (`403 must-change-password`) sur toutes les routes protégées.
 - **Helmet** (en-têtes sécurité) + **CORS** restreint aux origines autorisées.
 - **Express `trust proxy = 1`** pour lire correctement `X-Forwarded-For`.
 - Couvertures servies statiquement (`/uploads/...`) : noms de fichiers
@@ -450,7 +481,9 @@ docker compose exec -T db pg_restore -U vinyl -d geek0thek --clean < backup.dump
 
 ```sql
 users      (id, last_name, first_name, email UNIQUE, login UNIQUE, password_hash,
-            role [admin|user], phone, bio, is_public BOOLEAN, created_at, updated_at)
+            role [admin|user], phone, bio, is_public BOOLEAN,
+            must_change_password BOOLEAN (défaut FALSE ; TRUE = onboarding forcé),
+            created_at, updated_at)
 
 vinyls     (id, user_id FK->users ON DELETE CASCADE, cover_url TEXT NOT NULL,
             artist, title, track_count, tracklist, genre, label, release_date,
@@ -523,7 +556,8 @@ mbid, discogs_release_id)` ; `comics(user_id, isbn, title, authors, publisher)`.
 
 | Méthode | Endpoint | Accès | Description |
 |---|---|---|---|
-| `POST` | `/api/auth/login` | public | `login`/`login or email` + `password` → `{ token, user }` |
+| `POST` | `/api/auth/login` | public | `login`/`login or email` + `password` → `{ token, user }` (le profil renvoyé porte `mustChangePassword`) |
+| `POST` | `/api/auth/onboarding` | auth | **Sécurité 1re connexion** : `currentPassword` + `newPassword` (obligatoire) + `login?` (pseudo personnalisable) → `{ token, user }` ; remet `must_change_password = FALSE` |
 | `GET`  | `/api/auth/me` | auth | Profil courant |
 | `GET`  | `/api/users` | admin | Liste des comptes (+ nb de vinyles / BDs) |
 | `POST` | `/api/users` | admin | Créer un compte (rôle `user`) |

@@ -483,6 +483,21 @@
     "password": "Passwort",
     "login": "Anmelden",
     "loginBusy": "Anmeldung…",
-    "firstLoginHint": "Erste Anmeldung: Admin Admirwin (wird bei der Initialisierung der Datenbank erstellt)."
+    "firstLoginHint": "Erste Anmeldung: Admin „Admin“ / „Admin“ (wird bei der Initialisierung der Datenbank erstellt) — Passwortwechsel erforderlich."
+  },
+  "onboarding": {
+    "title": "Sichern Sie Ihr Konto",
+    "subtitle": "Um fortzufahren, müssen Sie ein neues Passwort festlegen. Sie können auch Ihren Benutzernamen anpassen.",
+    "currentPassword": "Aktuelles Passwort",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Neues Passwort bestätigen",
+    "login": "Benutzername (Anmeldename)",
+    "passwordHint": "Mindestens 8 Zeichen, anders als das aktuelle Passwort.",
+    "loginHint": "Optional: leer lassen, um den aktuellen Benutzernamen zu behalten.",
+    "passwordTooShort": "Das neue Passwort muss mindestens 8 Zeichen enthalten.",
+    "passwordMismatch": "Die beiden Passwörter stimmen nicht überein.",
+    "submit": "Bestätigen und fortfahren",
+    "busy": "Wird bestätigt…",
+    "backToLogin": "Abmelden"
   }
 }

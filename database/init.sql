@@ -24,6 +24,12 @@ CREATE TABLE IF NOT EXISTS users (
     is_public      BOOLEAN      NOT NULL DEFAULT TRUE,
     -- Activation / désactivation du compte (gérée par les administrateurs)
     is_active      BOOLEAN      NOT NULL DEFAULT TRUE,
+    -- Sécurité à la première connexion : TRUE tant que le compte n'a pas
+    -- encore changé ses identifiants de première installation. Le backend
+    -- force alors l'onboarding (POST /api/auth/onboarding) : nouveau mot de
+    -- passe OBLIGATOIRE (double saisie côté client) + pseudo de login
+    -- personnalisable. Le drapeau est remis à FALSE une fois validé.
+    must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
     -- Partage granulaire de la visibilité publique : quels éléments sont
     -- exposés quand is_public = TRUE (défaut TRUE : aucun changement
     -- d'ergonomie pour les comptes existants)
@@ -261,17 +267,22 @@ CREATE TRIGGER trg_series_updated_at
 
 -- ------------------------------------------------------------
 -- Admin par défaut (unique)
---   Login  : Admirwin
---   Mot de passe : IR@08515#Ger!  (hashé bcrypt, coût 12)
+--   Login  : Admin
+--   Mot de passe : Admin  (hashé bcrypt, coût 12)
+--   must_change_password = TRUE : la première connexion OBLIGE à changer
+--   le mot de passe (et permet de personnaliser le pseudo de login) via
+--   l'onboarding forcé (POST /api/auth/onboarding). Le drapeau est remis
+--   à FALSE une fois les nouveaux identifiants validés.
 -- ------------------------------------------------------------
-INSERT INTO users (last_name, first_name, email, login, password_hash, role, is_public)
+INSERT INTO users (last_name, first_name, email, login, password_hash, role, is_public, must_change_password)
 VALUES (
-    'Admirwin',
-    'Admir',
+    'Admin',
+    'Admin',
     'admin@geek0thek.local',
-    'Admirwin',
-    '$2a$12$d.WfqbMEK/FH88i4BWTxR.sA1CLsIfhY/8fK8.3F0WjAe8PcKkkEa',
+    'Admin',
+    '$2a$12$QDqyE3Sz2nJCOyZijm.JbuB/TgDLYfuuFg/0k8c7yzNcD7p5QbAti',
     'admin',
+    TRUE,
     TRUE
 )
 ON CONFLICT (login) DO NOTHING;

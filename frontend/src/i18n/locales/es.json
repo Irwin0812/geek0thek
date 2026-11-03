@@ -483,6 +483,21 @@
     "password": "Contraseña",
     "login": "Iniciar sesión",
     "loginBusy": "Iniciando sesión…",
-    "firstLoginHint": "Primera conexión: admin Admirwin (creado al inicializar la base de datos)."
+    "firstLoginHint": "Primera conexión: admin « Admin » / « Admin » (creado al inicializar la base de datos) — cambio de contraseña obligatorio."
+  },
+  "onboarding": {
+    "title": "Protege tu cuenta",
+    "subtitle": "Para continuar, debes establecer una nueva contraseña. También puedes personalizar tu nombre de usuario.",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar la nueva contraseña",
+    "login": "Nombre de usuario",
+    "passwordHint": "Mínimo 8 caracteres, diferente a la contraseña actual.",
+    "loginHint": "Opcional: déjalo vacío para conservar el nombre de usuario actual.",
+    "passwordTooShort": "La nueva contraseña debe contener al menos 8 caracteres.",
+    "passwordMismatch": "Las dos contraseñas no coinciden.",
+    "submit": "Validar y continuar",
+    "busy": "Validando…",
+    "backToLogin": "Cerrar sesión"
   }
 }

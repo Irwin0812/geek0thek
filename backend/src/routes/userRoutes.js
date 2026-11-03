@@ -10,7 +10,7 @@ const {
   updateProfileTheme,
   deleteUser,
 } = require('../controllers/userController');
-const { authenticate, requireAdmin } = require('../middlewares/auth');
+const { authenticate, requireAdmin, requirePasswordChanged } = require('../middlewares/auth');
 const { uploadAvatar } = require('../middlewares/upload');
 
 const router = express.Router();
@@ -19,6 +19,10 @@ const router = express.Router();
 router.get('/public', listPublicUsers);
 
 router.use(authenticate);
+// Sécurité à la première connexion : tout compte dont le drapeau
+// must_change_password est encore TRUE doit passer par
+// POST /api/auth/onboarding avant d'accéder au reste de l'API.
+router.use(requirePasswordChanged);
 
 router.get('/me', getMe);
 // Langue préférée : endpoint dédié (body JSON : { "language": "fr" | "en" }).

@@ -46,6 +46,15 @@ async function request(path, { method = 'GET', body, isForm = false } = {}) {
 
   const data = await response.json().catch(() => ({}))
   if (!response.ok) {
+    // Sécurité à la première connexion : le backend refuse toute API
+    // protégée tant que l'onboarding n'est pas validé (drapeau
+    // must_change_password) -> redirection vers la page de forçage.
+    if (response.status === 403 && data.code === 'must-change-password') {
+      if (!window.location.pathname.startsWith('/onboarding')) {
+        window.location.assign('/onboarding')
+      }
+      throw new Error(data.error || `Erreur serveur (${response.status})`)
+    }
     throw new Error(data.error || `Erreur serveur (${response.status})`)
   }
   return data
@@ -55,6 +64,10 @@ export const api = {
   // --- Auth ---
   login: (payload) => request('/auth/login', { method: 'POST', body: payload }),
   me: () => request('/auth/me'),
+  // Sécurité à la première connexion : onboarding forcé. Body :
+  // { currentPassword, newPassword, login? } -> { token, user }
+  // (nouveau JWT + profil mis à jour, drapeau remis à FALSE côté base).
+  onboarding: (payload) => request('/auth/onboarding', { method: 'POST', body: payload }),
 
   // --- Utilisateurs ---
   users: {
