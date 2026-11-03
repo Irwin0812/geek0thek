@@ -33,84 +33,86 @@ const {
 } = require('../utils/lastfmClient');
 
 // ------------------------------------------------------------
-// RECHERCHE PAR MOTS-CLÉS (EAN/UPC ou « artiste titre ») — CASCADE STRICTE
+// RECHERCHE PAR MOTS-CLÉS (EAN/UPC ou « artiste titre ») — CASCADE EXHAUSTIVE
 //   1. LAST.FM (prioritaire, notamment pour les visuels / jaquettes)
-//   2. DISCOGS (second recours)
-//   3. MUSICBRAINZ (troisième recours)
-// L'ordre d'INTERROGATION est celui de la priorisation métier : chaque maillon
-// n'est consulté que si les précédents n'ont trouvé AUCUNE fiche valide —
-// jamais d'appels en parallèle ici (contrairement au scan par code-barres, où
-// l'identité « artiste + album » doit passer par les bases indexées par EAN).
-// La fusion (mergeResults) conserve quand même la priorité Last.fm champ à
-// champ dès qu'une seconde source complète une fiche partielle.
+//   2. DISCOGS (complément : labels détaillés, image HD, id release + URL)
+//   3. MUSICBRAINZ (complément : MBID, tracklist fidèle à la release exacte)
+// Les trois sources configurées sont TOUJOURS INTERROGÉES (dans l'ordre strict
+// de la cascade, jamais en parallèle — contrairement au scan par code-barres,
+// où l'identité « artiste + album » doit passer par les bases indexées par
+// EAN) : une fiche partielle d'un maillon amont ne BLOQUE PLUS les maillons
+// aval. La fusion (mergeResults) combine ensuite les trois fiches avec la
+// priorité LAST.FM champ à champ — c'est ce qui garantit une fiche EXHAUSTIVE
+// (jaquette, tracklist, nombre de titres, style/genre, date de sortie) même
+// quand Last.fm seule est incomplète.
 // ------------------------------------------------------------
 
 /**
- * Résolution SÉQUENTIELLE des trois sources dans l'ORDRE STRICT de la cascade.
- * Chaque maillon n'est interrogé que si les précédents n'ont fourni AUCUNE
- * fiche (résultat vide OU panne : repli non bloquant). Les états 'unavailable'
- * remontent ensuite au client via providers + warnings quand une fiche existe,
- * ou en 429/502 final quand TOUTES les sources actives ont échoué.
+ * Résolution EXHAUSTIVE des trois sources dans l'ORDRE STRICT de la cascade.
+ * Chaque source CONFIGURÉE est interrogée — une fiche partielle d'un maillon
+ * amont ne BLOQUE PLUS les maillons aval (contrairement à l'ancienne cascade
+ * « premier trouvé ») : c'est ce qui permet à mergeResults de COMBINER les
+ * trois fiches et de livrer une fiche exhaustive (jaquette, tracklist, nombre
+ * de titres, style/genre, date de sortie). Les états 'unavailable' remontent
+ * ensuite au client via providers + warnings quand une fiche existe, ou en
+ * 429/502 final quand TOUTES les sources actives ont échoué.
  * @returns {Promise<{lastfm: PromiseSettledResult|null,
  *   discogs: PromiseSettledResult|null, musicbrainz: PromiseSettledResult|null,
  *   queried: { lastfm?: boolean, discogs?: boolean, musicbrainz?: boolean }}>}
  *   les résolus de la cascade + `queried` : les sources RÉELLEMENT INTERROGÉES
- *   (null / absent = non interrogée : non configurée, ou un maillon précédent a
- *   déjà fourni la fiche).
+ *   (null / absent = non interrogée : uniquement si non configurée).
  */
 async function runKeywordCascade(queryText) {
   const settled = { lastfm: null, discogs: null, musicbrainz: null };
   const queried = {};
-  let found = false;
 
   // 1. PRIORITÉ — LAST.FM : album.search&album=<chaîne libre> (+ artist= si la
   //    saisie porte un « Artiste - Album » explicite) puis résolution des fiches
   //    complètes (album.getInfo : tracklist, genres, label, date et JAQUETTE
   //    D'ALBUM — les fiches validées sont seules conservées). `[]` = inconnu de
-  //    Last.fm : la cascade ENCHAÎNE ; une panne d'infrastructure (429/502…)
-  //    porte 'unavailable' et enchaîne aussi sur les secours.
+  //    Last.fm ; une panne d'infrastructure (429/502…) porte 'unavailable'.
+  //    Dans les deux cas la cascade CONTINUE sur Discogs / MusicBrainz : une
+  //    fiche Last.fm partielle ne doit plus empêcher l'enrichissement aval.
   if (isLastfmConfigured()) {
     queried.lastfm = true;
     try {
       const hits = await searchAlbumsByQuery(queryText);
-      found = Array.isArray(hits) && hits.length > 0;
-      settled.lastfm = { status: 'fulfilled', value: found ? hits : [] };
+      settled.lastfm = { status: 'fulfilled', value: Array.isArray(hits) ? hits : [] };
     } catch (err) {
-      console.warn('[musicbrainz keywordLookup] Recherche Last.fm impossible, repli Discogs / MusicBrainz :', err.message);
+      console.warn('[musicbrainz keywordLookup] Recherche Last.fm impossible, enrichissement Discogs / MusicBrainz :', err.message);
       settled.lastfm = { status: 'rejected', reason: err };
     }
   }
 
-  // 2. SECONDE RECOURS — DISCOGS (si configuré ET si Last.fm n'a rien fourni) :
-  //    /database/search?q=<chaîne>&type=release, fiche complète du premier
-  //    résultat classé. Le client Discogs capture ses pannes internes (quota
-  //    429, jeton expiré, réseau) et renvoie null — la cascade enchaîne sur
-  //    MusicBrainz ; l'erreur portée par DISCOGS_ERROR_LAST alimente l'état
-  //    'unavailable' remonté au client.
-  if (!found && isDiscogsConfigured()) {
+  // 2. COMPLÉMENT — DISCOGS (si configuré) : /database/search?q=<chaîne>
+  //    &type=release, fiche complète du premier résultat classé (labels
+  //    détaillés, image HD, id release + URL). Interrogé QUEL QUE SOIT le
+  //    résultat Last.fm — la fusion combine les deux. Le client Discogs capture
+  //    ses pannes internes (quota 429, jeton expiré, réseau) et renvoie null ;
+  //    l'erreur portée par DISCOGS_ERROR_LAST alimente l'état 'unavailable'.
+  if (isDiscogsConfigured()) {
     queried.discogs = true;
     try {
       const hit = await searchDiscogsByQuery(queryText);
-      found = Boolean(hit);
       settled.discogs = { status: 'fulfilled', value: hit || null };
     } catch (err) {
-      // Inattendu (le client Discogs ne lève normalement pas d'exception) : la
-      // cascade enchaîne sur MusicBrainz ; l'erreur porte 'unavailable'.
-      console.warn('[musicbrainz keywordLookup] Recherche Discogs impossible, repli MusicBrainz :', err.message);
+      // Inattendu (le client Discogs ne lève normalement pas d'exception) :
+      // l'erreur porte 'unavailable'.
+      console.warn('[musicbrainz keywordLookup] Recherche Discogs impossible, enrichissement MusicBrainz :', err.message);
       settled.discogs = { status: 'rejected', reason: err };
     }
   }
 
-  // 3. DERNIER RECOURS — MUSICBRAINZ (si Last.fm ET Discogs n'ont rien fourni) :
-  //    Lucene artist:"…" AND release:"…", ou barcode:<EAN> quand la saisie est
-  //    un code-barres pur (MBID + jaquette Cover Art Archive). Dernier maillon
-  //    : ses erreurs NON BLOQUANTES n'ont plus de repli — elles remontent en
-  //    429/502 au client si aucune source n'a fourni la fiche.
-  if (!found) {
+  // 3. COMPLÉMENT — MUSICBRAINZ (si configuré) : Lucene artist:"…" AND
+  //    release:"…", ou barcode:<EAN> quand la saisie est un code-barres pur
+  //    (MBID + jaquette Cover Art Archive). Interrogé QUEL QUE SOIT le résultat
+  //    des maillons amont — la fusion combine les trois. Ses erreurs NON
+  //    BLOQUANTES remontent en 429/502 au client si aucune source n'a fourni
+  //    la fiche.
+  if (isConfigured()) {
     queried.musicbrainz = true;
     try {
       const hit = await searchMusicbrainzByQuery(queryText);
-      found = Boolean(hit);
       settled.musicbrainz = { status: 'fulfilled', value: hit || null };
     } catch (err) {
       console.warn('[musicbrainz keywordLookup] Recherche MusicBrainz impossible :', err.message);
@@ -571,31 +573,34 @@ async function searchRelease(req, res, next) {
 }
 
 // ------------------------------------------------------------
-// Import par MOTS-CLÉS (EAN/UPC ou « artiste titre ») — même cascade que le
-// scan code-barres : 1. Last.fm (prioritaire, jaquettes) -> 2. Discogs ->
-// 3. MusicBrainz. Sert la modale d'ajout de disque quand le scan échoue.
+// Import par MOTS-CLÉS (EAN/UPC ou « artiste titre ») — CASCADE EXHAUSTIVE :
+// 1. Last.fm (prioritaire, jaquettes) -> 2. Discogs -> 3. MusicBrainz. Les
+// trois sources configurées sont TOUJOURS interrogées et combinées par la
+// fusion (mergeResults, priorité Last.fm champ à champ) pour livrer une fiche
+// exhaustive. Sert la modale d'ajout de disque quand le scan échoue.
 // ------------------------------------------------------------
 
 /**
  * GET /api/musicbrainz/keyword?q=<mots-clés>
  *
  * Recherche TEXTUELLE d'un disque par MOTS-CLÉS : EAN/UPC (8-14 chiffres) ou
- * phrase libre « titre » / « artiste titre » — la même CASCADE PRIORITAIRE que
- * le scan par code-barres, appliquée en ordre SÉQUENTIEL STRICT :
+ * phrase libre « titre » / « artiste titre » — CASCADE EXHAUSTIVE appliquée en
+ * ordre SÉQUENTIEL STRICT :
  *   1. LAST.FM d'abord (prioritaire, notamment pour les VISUELS / jaquettes :
  *      album.search&album=<chaîne> puis album.getInfo — les fiches complète et
  *      validées priment champ par champ dans la fusion) ;
- *   2. DISCOGS en second recours ( seulement si Last.fm n'a rien fourni )
- *      — /database/search?q=<chaîne>&type=release : id de la release, URL, image HD ;
- *   3. MUSICBRAINZ en troisième et dernier recours (seulement si ni Last.fm ni
- *      Discogs n'a rien fourni) — Lucene + Cover Art Archive : MBID + tracklist
+ *   2. DISCOGS (complément) — /database/search?q=<chaîne>&type=release : id de
+ *      la release, URL, image HD, labels détaillés ;
+ *   3. MUSICBRAINZ (complément) — Lucene + Cover Art Archive : MBID + tracklist
  *      fidèle à la release.
- * Chaque maillon n'est interrogé que si le précédent n'a TROUVÉ AUCUNE fiche —
- * jamais d'appels en parallèle ici (l'ordre d'interrogation EST la règle de
- * priorité, et dès qu'un maillon trouve les suivants sont ignorés : économie de
- * quota Last.fm / Discogs). Une panne d'un maillon « en amont » n'est PAS un
- * motif de blocage : la cascade enchaîne ; si une fiche existe alors quand même
- * (fournie par un maillon aval), son incident est signalé dans "warnings".
+ * Les trois sources CONFIGURÉES sont TOUJOURS INTERROGÉES (jamais d'appels en
+ * parallèle ici — l'ordre d'interrogation EST la règle de priorité) : une fiche
+ * partielle d'un maillon amont ne BLOQUE PLUS les maillons aval, et la fusion
+ * (mergeResults, priorité Last.fm champ à champ) COMBINE les trois fiches pour
+ * livrer une fiche EXHAUSTIVE (jaquette, tracklist, nombre de titres,
+ * style/genre, date de sortie). Une panne d'un maillon n'est PAS un motif de
+ * blocage : la cascade enchaîne ; si une fiche existe alors quand même (fournie
+ * par un autre maillon), son incident est signalé dans "warnings".
  *
  * Réponse 200 : { success, data, providers: { lastfm, discogs, musicbrainz },
  * warnings? } — data : { barcode?, artist, title, label, genre, release_date,
@@ -615,17 +620,18 @@ async function searchKeyword(req, res) {
       return res.status(400).json({ error: 'Requête trop longue (300 caractères maximum).' });
     }
 
-    console.log(`[musicbrainz searchKeyword] GET /api/musicbrainz/keyword?q=${encodeURIComponent(rawQ)} (cascade stricte 1. Last.fm -> 2. Discogs -> 3. MusicBrainz)`);
+    console.log(`[musicbrainz searchKeyword] GET /api/musicbrainz/keyword?q=${encodeURIComponent(rawQ)} (cascade exhaustive 1. Last.fm -> 2. Discogs -> 3. MusicBrainz)`);
 
     const { lastfm: lf, discogs: dg, musicbrainz: mb, queried } = await runKeywordCascade(rawQ);
     const lastfmActive = isLastfmConfigured();
     const discogsActive = isDiscogsConfigured();
 
-    // Fiche du PREMIER maillon de la cascade ayant trouvé (les suivants ne sont
-    // pas interrogés — économie de quota Last.fm / Discogs) : Last.fm (première
-    // fiche validée de la liste, classée par pertinence) sinon Discogs, sinon
-    // MusicBrainz. mergeResults conserve la priorité LAST.FM champ par champ ;
-    // une source non interrogée (null) n'apporte rien à la fusion.
+    // FICHE EXHAUSTIVE : les trois sources configurées sont interrogées et
+    // COMBINÉES par mergeResults (priorité LAST.FM champ à champ) — une fiche
+    // partielle d'un maillon amont ne bloque plus les maillons aval. Last.fm
+    // (première fiche validée de la liste, classée par pertinence), Discogs et
+    // MusicBrainz apportent chacun leurs champs ; une source non interrogée
+    // (null) n'apporte rien à la fusion.
     const lfData = lf && lf.status === 'fulfilled' ? (Array.isArray(lf.value) ? lf.value[0] || null : lf.value) : null;
     const dgData = dg && dg.status === 'fulfilled' ? dg.value : null;
     const mbData = mb && mb.status === 'fulfilled' ? mb.value : null;
@@ -661,21 +667,22 @@ async function searchKeyword(req, res) {
     }
 
     // États des sources pour le client : 'found' / 'not-found' (absente de la
-    // fiche ou non interrogée car un maillon amont a trouvé — NON bloquant) /
-    // 'unavailable' (panne infrastructure) / 'not-configured'. Calculés SANS
-    // dépendre du dénouement : le 404 final / les warnings traitent les pannes.
+    // fiche) / 'unavailable' (panne infrastructure) / 'not-configured'. Chaque
+    // source CONFIGURÉE est interrogée (cascade exhaustive), donc `!queried.X`
+    // ne signifie plus que « non configurée ». Calculés SANS dépendre du
+    // dénouement : le 404 final / les warnings traitent les pannes.
     const providers = {
       lastfm: !queried.lastfm
-        ? (lastfmActive ? 'not-found' : 'not-configured')
+        ? 'not-configured'
         : sourceState(lf, LastfmError),
       discogs: !queried.discogs
-        ? (discogsActive ? 'not-found' : 'not-configured')
+        ? 'not-configured'
         : (sourceState(dg, DiscogsError) === 'not-found' && discogsLastSearchError()
           ? 'unavailable'
           : sourceState(dg, DiscogsError)),
       // MusicBrainz = toujours « configuré » côté serveur (User-Agent seul).
       musicbrainz: !queried.musicbrainz
-        ? (isConfigured() ? 'not-found' : 'not-configured')
+        ? 'not-configured'
         : sourceState(mb, MusicBrainzError),
     };
 

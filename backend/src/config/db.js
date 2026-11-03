@@ -415,10 +415,11 @@ const MIGRATIONS = [
     ],
   },
   // GENRE MUSICAL de l'ENTITÉ ARTISTE — quand un utilisateur définit / modifie
-  // le genre d'un disque, le genre est propagé à TOUS les disques existants de
-  // cet artiste (tous users) ET conservé sur l'entité Artiste pour servir de
-  // valeur par défaut aux futurs albums. Colonne VARCHAR(120) (même largeur que
-  // vinyls.genre), NULL si jamais défini. Idempotent : ADD COLUMN IF NOT EXISTS.
+  // le genre d'un disque, le genre est conservé sur l'entité Artiste pour servir
+  // de valeur par défaut aux FUTURS albums de cet artiste (SANS retoucher les
+  // disques déjà enregistrés : chacun garde son propre genre). Colonne
+  // VARCHAR(120) (même largeur que vinyls.genre), NULL si jamais défini.
+  // Idempotent : ADD COLUMN IF NOT EXISTS.
   {
     name: 'artists.genre',
     statements: [

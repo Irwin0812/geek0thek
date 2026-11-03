@@ -569,22 +569,23 @@ async function syncArtistEntity(artistName, artistImage = null) {
 }
 
 /**
- * Propage le GENRE MUSICAL d'un disque à TOUS les disques existants de cet
- * artiste (tous users) et le conserve sur l'ENTITÉ Artiste comme valeur par
- * défaut pour les futurs albums. Même périmètre que la photo d'artiste
- * (syncArtistEntity) : lignes rattachées à l'entité PAR ID + lignes legacy
- * sans entité, rattachées par nom strict (`artist_id IS NULL AND btrim(artist)`).
- *  - l'ENTITÉ Artiste (table `artists`) reçoit le genre (INSERT si première
- *    création de l'artiste, UPDATE sinon) — c'est LA source du pré-remplissage
- *    du champ « Genre » à la création d'un futur album de cet artiste ;
- *  - TOUS les disques déjà enregistrés sous ce nom adoptent le genre (tous
- *    users) : le disque courant, inséré / mis à jour AVANT cet appel, est
- *    couvert par le même UPDATE (réécriture idempotente).
+ * Conserve le GENRE MUSICAL d'un disque sur l'ENTITÉ Artiste (table `artists`)
+ * comme valeur par défaut pour les FUTURS albums de cet artiste — SANS jamais
+ * modifier ni écraser les disques déjà enregistrés en base.
+ *  - l'ENTITÉ Artiste reçoit le genre (INSERT si première création de
+ *    l'artiste, UPDATE sinon) : c'est LA source du pré-remplissage du champ
+ *    « Genre » à la création d'un futur album de cet artiste (cf.
+ *    defaultGenreOfArtist, appelé par createVinyl quand le formulaire n'en
+ *    fournit pas) ;
+ *  - les disques EXISTANTS ne sont JAMAIS retouchés : ni le disque courant
+ *    (inséré / mis à jour AVANT cet appel par l'INSERT / UPDATE principal), ni
+ *    aucun autre — chacun garde le genre qu'il porte déjà. Un artiste qui
+ *    adopte un nouveau genre ne réécrit donc pas l'historique de sa collection.
  * Non bloquant : toute panne (base non migrée « artists.genre »…) ne doit
  * JAMAIS empêcher la création / la modification du disque — le genre reste
  * écrit sur la ligne courante par l'INSERT / UPDATE principal.
  * @param {string} artistName nom d'affichage tel qu'enregistré sur le disque
- * @param {string|null} genre genre musical à propager — null : aucune écriture
+ * @param {string|null} genre genre musical à conserver sur l'entité — null : aucune écriture
  * @returns {Promise<number|null>} id de l'entité Artiste (null si inconnue).
  */
 async function syncArtistGenre(artistName, genre = null) {
@@ -592,23 +593,18 @@ async function syncArtistGenre(artistName, genre = null) {
   const g = String(genre || '').trim() || null;
   if (!name || !g) return null;
 
-  // 1) Entité Artiste : création (1er disque de l'artiste -> 1er genre) ou
-  //    mise à jour du genre par défaut sur l'entité.
+  // Entité Artiste : création (1er disque de l'artiste -> 1er genre) ou mise à
+  // jour du genre par défaut sur l'entité. C'est la SEULE écriture : les
+  // disques déjà enregistrés ne sont JAMAIS retouchés (ni le disque courant,
+  // ni aucun autre) — leur genre reste celui qu'ils portent déjà. Le
+  // pré-remplissage des FUTURS albums passe par defaultGenreOfArtist
+  // (createVinyl), qui lit cette valeur de l'entité.
   const ent = await ensureArtist(name, null);
   const targetId = ent.artistId;
   if (targetId == null) return null;
   await query(
     'UPDATE artists SET genre = $1, updated_at = now() WHERE id = $2',
     [g, targetId]
-  );
-
-  // 2) Propagation à TOUS les disques de cet artiste (tous users) :
-  //    - lignes rattachées à l'entité (`artist_id = targetId`) ;
-  //    - lignes legacy sans entité, rattachées par nom strict.
-  await query(
-    `UPDATE vinyls SET genre = $3
-     WHERE artist_id = $1 OR (artist_id IS NULL AND btrim(artist) = $2)`,
-    [targetId, name, g]
   );
 
   return targetId;
@@ -1072,11 +1068,12 @@ async function createVinyl(req, res, next) {
       ]
     );
     // --------------------------------------------------------------
-    // PROPAGATION DU GENRE MUSICAL : un genre défini sur ce disque devient le
-    // genre de TOUS les disques existants de cet artiste (tous users) et la
-    // valeur par défaut des futurs albums (entité Artiste). Non bloquant :
-    // toute panne ne doit jamais empêcher la création du disque — le genre
-    // reste écrit sur la ligne courante par l'INSERT ci-dessus.
+    // GENRE MUSICAL PAR DÉFAUT DE L'ARTISTE : un genre défini sur ce disque est
+    // conservé sur l'ENTITÉ Artiste (table `artists`) comme valeur par défaut
+    // des FUTURS albums de cet artiste — SANS retoucher les disques déjà
+    // enregistrés (ni celui-ci, ni aucun autre). Non bloquant : toute panne ne
+    // doit jamais empêcher la création du disque — le genre reste écrit sur la
+    // ligne courante par l'INSERT ci-dessus.
     // --------------------------------------------------------------
     if (values.genre) {
       try {
@@ -1542,12 +1539,12 @@ async function updateVinyl(req, res, next) {
     }
 
     // --------------------------------------------------------------
-    // PROPAGATION DU GENRE MUSICAL : un genre défini / modifié sur ce disque
-    // devient le genre de TOUS les disques existants de cet artiste (tous
-    // users) et la valeur par défaut des futurs albums (entité Artiste).
-    // Non bloquant : toute panne ne doit jamais empêcher la modification du
-    // disque — le genre reste écrit sur la ligne courante par l'UPDATE
-    // principal ci-dessus.
+    // GENRE MUSICAL PAR DÉFAUT DE L'ARTISTE : un genre défini / modifié sur ce
+    // disque est conservé sur l'ENTITÉ Artiste (table `artists`) comme valeur
+    // par défaut des FUTURS albums de cet artiste — SANS retoucher les disques
+    // déjà enregistrés (ni celui-ci, ni aucun autre). Non bloquant : toute
+    // panne ne doit jamais empêcher la modification du disque — le genre reste
+    // écrit sur la ligne courante par l'UPDATE principal ci-dessus.
     // --------------------------------------------------------------
     if (values.genre) {
       try {
