@@ -442,27 +442,29 @@ const MIGRATIONS = [
       'ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;',
     ],
   },
-  // RÉINITIALISATION DU COMPTE ADMIN DE TEST — le compte de test principal
-  // (identifié par son e-mail de seed stable « admin@geek0thek.local », quel
-  // que soit le login courant : « Admin » du seed initial, « admin » ou un
-  // pseudo personnalisé type « Admirwin ») est remis aux accès de test :
+  // RÉINITIALISATION DU COMPTE ADMIN DE TEST — le compte de test principal est
+  // remis aux accès de test :
   //   Login  : admin
   //   Mot de passe : admin  (bcrypt coût 12)
   //   must_change_password = FALSE (connexion directe, sans onboarding forcé).
+  // Identification par `role = 'admin'` : c'est le SEUL identifiant stable du
+  // compte principal — son login (seed « Admin », puis « admin » / « Admirwin »)
+  // ET son e-mail (seed « admin@geek0thek.local », puis modifié, ex.
+  // « webmaster@igerarts.be ») peuvent avoir changé, mais le rôle admin reste.
   // RÈGLE STRICTE RESPECTÉE : seul le triplet (login, password_hash,
-  // must_change_password) de la LIGNE users est modifié — aucune donnée,
-  // collection, historique ni réglage rattaché au compte n'est supprimé ni
-  // réinitialisé (les tables vinyls / comics / artists / series / avatars et
-  // les préférences du profil restent intactes). Idempotent : re-exécuter
-  // produit le même état ; la trace schema_migrations l'exécute une seule fois.
+  // must_change_password) de la LIGNE users est modifié — l'e-mail, les données,
+  // collections, historiques et réglages rattachés au compte ne sont JAMAIS
+  // supprimés ni réinitialisés (tables vinyls / comics / artists / series /
+  // avatars et préférences du profil intactes). Exécutée une seule fois (trace
+  // schema_migrations) ; idempotente.
   {
-    name: 'users.reset-test-admin',
+    name: 'users.reset-test-admin-v2',
     statements: [
       `UPDATE users
        SET login = 'admin',
            password_hash = '$2a$12$h547RjPf2TsG0je18jW.gOyhZFKEuxvCqe32Z9EgRPFEqARyz.2wC',
            must_change_password = FALSE
-       WHERE email = 'admin@geek0thek.local';`,
+       WHERE role = 'admin';`,
     ],
   },
 ];
