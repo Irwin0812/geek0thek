@@ -450,6 +450,52 @@ docker compose exec -T db pg_restore -U vinyl -d geek0thek --clean < backup.dump
 
 ---
 
+## 🔄 Mise à jour de l'application (indicateur automatique)
+
+L'application surveille **automatiquement** si une mise à jour est disponible sur le
+dépôt GitHub (`Irwin0812/geek0thek`) et le signale visuellement.
+
+- **Au chargement** de la webapp, le backend compare le **commit du code déployé**
+  (lu dans le dépôt git monté en lecture seule dans le conteneur backend) au
+  **dernier commit** de la branche par défaut du dépôt GitHub.
+- **Bouton « Mise à jour disponible »** : tant que les deux versions sont
+  **identiques**, aucun bouton n'apparaît. Dès qu'un nouveau commit est poussé sur
+  GitHub, un **bouton rectangulaire à bords arrondis** apparaît dans le **coin
+  supérieur droit** de l'interface (stylé comme le bouton « TOP », selon le thème).
+- **Infobulle au survol** : en passant la souris sur le bouton, une bulle indique la
+  marche à suivre pour effectuer la mise à jour :
+  `git pull && docker compose up -d --build`.
+- **Disparition automatique** : après avoir effectué la mise à jour (les deux
+  versions redeviennent égales), le bouton disparaît de lui-même — sans recharger
+  la page (re-vérification discrète toutes les 5 minutes).
+
+### Prérequis : jeton GitHub (`GITHUB_TOKEN`)
+
+Le dépôt étant **privé**, l'API GitHub exige un jeton pour lire le dernier commit.
+Sans jeton, l'indicateur reste **silencieux** (bouton masqué — jamais de faux
+positif). Pour l'activer :
+
+```bash
+# Sur la VM 172.16.2.75, ajouter au .env (jeton GitHub avec lecture du dépôt) :
+GITHUB_TOKEN=github_pat_...
+# Puis relancer le backend pour charger la variable :
+docker compose up -d backend
+```
+
+> Le jeton est stocké dans `.env`, **jamais exposé** par l'API ni loggé.
+
+### Effectuer la mise à jour
+
+```bash
+cd /opt/geek0thek
+git pull && docker compose down && docker compose up -d --build
+```
+
+Après ce `pull` + rebuild, le commit déployé rejoint la HEAD de GitHub : le bouton
+« Mise à jour disponible » disparaît automatiquement.
+
+---
+
 ## 🔒 Sécurité & bonnes pratiques
 
 - **JWT** signé (HS256) avec `JWT_SECRET` à longue valeur aléatoire ; expiration `7d`.
