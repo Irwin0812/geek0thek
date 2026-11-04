@@ -77,10 +77,12 @@ services:
     volumes:
       # Jaquettes : stockage local sur le disque de la VM hôte
       - ./uploads:/app/uploads
-      # Dépôt git DÉPLOYÉ (racine du repo sur la VM) en LECTURE SEULE :
-      # l'endpoint /api/version y lit le commit installé par `git pull` pour
-      # le comparer au HEAD GitHub (bouton « Mise à jour disponible »).
-      - ./:/repo:ro
+      # Dépôt git DÉPLOYÉ : seul le dossier .git (racine du repo sur la VM) est
+      # monté en LECTURE SEULE — l'endpoint /api/version y lit le commit installé
+      # par `git pull` pour le comparer au HEAD GitHub (bouton « Mise à jour
+      # disponible »). On ne monte QUE .git (et non tout le repo) : ni .env, ni
+      # node_modules, ni uploads ne sont exposés dans le conteneur backend.
+      - ./.git:/repo/.git:ro
     # API non exposée sur l'hôte : elle est servie par nginx (frontend)
     # via /api -> http://backend:8080 (voir frontend/nginx.conf)
     healthcheck:
