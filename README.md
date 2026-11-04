@@ -496,6 +496,74 @@ Après ce `pull` + rebuild, le commit déployé rejoint la HEAD de GitHub : le b
 
 ---
 
+## ✉️ Configuration des notifications E-mail (SMTP)
+
+L'application peut envoyer des **notifications par e-mail** automatiques dans deux cas :
+
+- **Création de compte par un admin** : le nouvel utilisateur reçoit un e-mail
+  confirmant la création de son compte avec ses accès (identifiant + mot de passe
+  provisoire).
+- **Partage de bibliothèque** : quand un utilisateur ouvre l'accès en consultation à
+  sa collection à un autre utilisateur, ce dernier reçoit un e-mail de notification.
+
+Ces envois sont pilotés **exclusivement par les variables d'environnement** du fichier
+`.env` (à la racine du projet). Chaque utilisateur configure ainsi **son propre serveur
+SMTP** — aucun code à modifier.
+
+### Renseigner vos paramètres SMTP
+
+Ajoutez (ou complétez) le bloc suivant dans `.env` :
+
+```env
+# Configuration SMTP pour les notifications par e-mail
+SMTP_HOST=smtp.votre-serveur.com
+SMTP_PORT=465 # ou 587 selon TLS/SSL
+SMTP_USER=votre-email@domaine.com
+SMTP_PASS=votre-mot-de-passe
+SMTP_FROM="Geek0thek <votre-email@domaine.com>"
+```
+
+| Variable | Description |
+|---|---|
+| `SMTP_HOST` | Hôte du serveur SMTP (ex. `smtp.gmail.com`, `mail.exemple.fr`) |
+| `SMTP_PORT` | Port : **465** (TLS/SSL implicite) ou **587** (STARTTLS) |
+| `SMTP_USER` | Identifiant de connexion SMTP (généralement votre adresse e-mail) |
+| `SMTP_PASS` | Mot de passe SMTP (ou « app password » si votre fournisseur l'exige, ex. Gmail) |
+| `SMTP_FROM` | Expéditeur affiché : `« Nom <adresse> »` (optionnel — repli sur `SMTP_USER`) |
+
+> **Port 465 vs 587** : le backend détecte automatiquement le mode de chiffrement à
+> partir du port (`465` → TLS implicite, `587` → STARTTLS). Une surcharge manuelle est
+> possible via `SMTP_SECURE=true|false`.
+
+### Variables vides = notifications désactivées (sans erreur)
+
+Si `SMTP_HOST`, `SMTP_USER` ou `SMTP_PASS` restent **vides**, l'application fonctionne
+**normalement** : les notifications e-mail sont simplement **désactivées** proprement
+(un avertissement est journalisé en console au démarrage, jamais de crash). L'envoi
+d'e-mails est **non bloquant** : un échec d'envoi (réseau, authentification, adresse
+invalide…) ne fait **jamais** échouer l'action qui l'a déclenché (création du compte,
+partage de la bibliothèque).
+
+### Appliquer la configuration
+
+Après avoir modifié `.env`, recréez le conteneur backend pour charger les nouvelles
+variables :
+
+```bash
+cd /opt/geek0thek
+docker compose up -d --force-recreate backend
+# ou un redémarrage complet :
+docker compose down && docker compose up -d --build
+```
+
+Vérification dans les journaux (l'avertissement « SMTP non configuré » doit disparaître) :
+
+```bash
+docker compose logs -f backend
+```
+
+---
+
 ## 🔒 Sécurité & bonnes pratiques
 
 - **JWT** signé (HS256) avec `JWT_SECRET` à longue valeur aléatoire ; expiration `7d`.
