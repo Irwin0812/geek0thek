@@ -569,18 +569,20 @@ async function syncArtistEntity(artistName, artistImage = null) {
 }
 
 /**
- * Conserve le GENRE MUSICAL d'un disque sur l'ENTITÉ Artiste (table `artists`)
- * comme valeur par défaut pour les FUTURS albums de cet artiste — SANS jamais
- * modifier ni écraser les disques déjà enregistrés en base.
+ * Conserve le GENRE DE RÉFÉRENCE d'un artiste sur l'ENTITÉ Artiste (table
+ * `artists`) — appelé UNIQUEMENT au CAS A (premier disque de l'artiste) par
+ * createVinyl / updateVinyl : le genre du tout premier disque devient la
+ * référence IMMUEBLE des futurs albums de cet artiste. SANS jamais modifier ni
+ * écraser les disques déjà enregistrés en base.
  *  - l'ENTITÉ Artiste reçoit le genre (INSERT si première création de
  *    l'artiste, UPDATE sinon) : c'est LA source du pré-remplissage du champ
  *    « Genre » à la création d'un futur album de cet artiste (cf.
- *    defaultGenreOfArtist, appelé par createVinyl quand le formulaire n'en
- *    fournit pas) ;
+ *    defaultGenreOfArtist, appelé par createVinyl / updateVinyl quand le
+ *    formulaire n'en fournit pas et qu'aucun disque de l'artiste n'existe
+ *    encore) ;
  *  - les disques EXISTANTS ne sont JAMAIS retouchés : ni le disque courant
  *    (inséré / mis à jour AVANT cet appel par l'INSERT / UPDATE principal), ni
- *    aucun autre — chacun garde le genre qu'il porte déjà. Un artiste qui
- *    adopte un nouveau genre ne réécrit donc pas l'historique de sa collection.
+ *    aucun autre — chacun garde le genre qu'il porte déjà.
  * Non bloquant : toute panne (base non migrée « artists.genre »…) ne doit
  * JAMAIS empêcher la création / la modification du disque — le genre reste
  * écrit sur la ligne courante par l'INSERT / UPDATE principal.
@@ -593,12 +595,13 @@ async function syncArtistGenre(artistName, genre = null) {
   const g = String(genre || '').trim() || null;
   if (!name || !g) return null;
 
-  // Entité Artiste : création (1er disque de l'artiste -> 1er genre) ou mise à
-  // jour du genre par défaut sur l'entité. C'est la SEULE écriture : les
-  // disques déjà enregistrés ne sont JAMAIS retouchés (ni le disque courant,
-  // ni aucun autre) — leur genre reste celui qu'ils portent déjà. Le
-  // pré-remplissage des FUTURS albums passe par defaultGenreOfArtist
-  // (createVinyl), qui lit cette valeur de l'entité.
+  // Entité Artiste : création (1er disque de l'artiste -> 1er genre, référence
+  // immuable) — jamais appelé au CAS B (disques suivants), où le genre du tout
+  // premier disque reste la référence. C'est la SEULE écriture : les disques
+  // déjà enregistrés ne sont JAMAIS retouchés (ni le disque courant, ni aucun
+  // autre) — leur genre reste celui qu'ils portent déjà. Le pré-remplissage
+  // des FUTURS albums passe par defaultGenreOfArtist (createVinyl /
+  // updateVinyl), qui lit cette valeur de l'entité.
   const ent = await ensureArtist(name, null);
   const targetId = ent.artistId;
   if (targetId == null) return null;
@@ -629,6 +632,40 @@ async function defaultGenreOfArtist(artistName) {
     return rows[0] && rows[0].genre ? String(rows[0].genre).trim() : null;
   } catch {
     // Base non migrée (colonne `artists.genre` absente) : aucun défaut.
+    return null;
+  }
+}
+
+/**
+ * Renvoie le GENRE DE RÉFÉRENCE d'un artiste : le genre du TOUT PREMIER disque
+ * de cet artiste déjà stocké en base — le plus ancien par ordre d'insertion
+ * (created_at, puis id). null si l'artiste n'a encore aucun disque, ou si son
+ * premier disque n'a pas de genre. Lecture seule, non bloquante : toute panne
+ * (base non migrée « artists »…) renvoie null — le contrôleur retombe alors sur
+ * le genre fourni par le formulaire (CAS A).
+ * Rattachement des disques à l'artiste : lignes rattachées à l'ENTITÉ
+ * (`artist_id`) + lignes legacy sans entité par nom strict — mêmes cibles que
+ * syncArtistEntity.
+ * @param {string} artistName nom d'affichage tel qu'enregistré sur le disque
+ * @returns {Promise<string|null>} genre du tout premier disque, ou null.
+ */
+async function firstDiscGenreOfArtist(artistName) {
+  const name = String(artistName || '').trim();
+  if (!name) return null;
+  try {
+    const artistId = await findArtistId(name);
+    const { rows } = await query(
+      `SELECT genre FROM vinyls
+       WHERE ((artist_id IS NOT NULL AND artist_id = $1)
+              OR (artist_id IS NULL AND btrim(artist) = $2))
+         AND genre IS NOT NULL AND btrim(genre) <> ''
+       ORDER BY created_at ASC, id ASC
+       LIMIT 1`,
+      [artistId, name]
+    );
+    return rows[0] && rows[0].genre ? String(rows[0].genre).trim() : null;
+  } catch {
+    // Base non migrée (table `artists` absente) : aucun genre de référence.
     return null;
   }
 }
@@ -875,13 +912,30 @@ async function createVinyl(req, res, next) {
       return res.status(400).json({ error });
     }
     // --------------------------------------------------------------
-    // GENRE MUSICAL PAR DÉFAUT : si le formulaire n'en fournit pas, le
-    // disque repart sur le genre porté par l'ENTITÉ Artiste (table
-    // `artists`) — valeur propagée lors de la dernière définition /
-    // modification du genre d'un disque de cet artiste. Lecture seule,
-    // non bloquante (base non migrée -> null : aucun pré-remplissage).
+    // PROPAGATION DU GENRE MUSICAL — règle définitive (vérification
+    // préalable EN BASE avant l'INSERT) :
+    //   CAS A — PREMIER DISQUE de l'artiste (aucun disque déjà enregistré
+    //   pour ce nom, tous users) : le genre importé par l'API et laissé tel
+    //   quel, ou saisi / modifié manuellement par l'utilisateur, est
+    //   enregistré tel quel. Il devient la RÉFÉRENCE IMMUEBLE de l'artiste.
+    //   CAS B — DISQUES SUIVANTS (l'artiste possède déjà au moins un disque)
+    //   : le genre renvoyé par l'API / le formulaire est IGNORÉ ; le nouveau
+    //   disque reçoit AUTOMATIQUEMENT le genre du TOUT PREMIER disque de cet
+    //   artiste déjà stocké en base (le plus ancien par created_at, puis id).
+    //   RÈGLE ABSOLUE : les genres des disques déjà présents dans la
+    //   collection ne sont JAMAIS mis à jour, modifiés ou écrasés — la
+    //   propagation s'applique uniquement EN CASCADE DESCENDANTE vers les
+    //   nouveaux ajouts (aucun UPDATE de genre sur les lignes existantes).
     // --------------------------------------------------------------
-    if (!values.genre) {
+    const existingGenre = await firstDiscGenreOfArtist(values.artist);
+    if (existingGenre) {
+      // CAS B : artiste déjà référencé -> le genre du formulaire / de l'API
+      // est ignoré, celui du tout premier disque est imposé au nouveau disque.
+      values.genre = existingGenre;
+    } else if (!values.genre) {
+      // CAS A (premier disque) sans genre fourni : repli sur le genre porté
+      // par l'ENTITÉ Artiste (table `artists`) — lecture seule, non bloquante
+      // (base non migrée -> null : aucun pré-remplissage).
       values.genre = await defaultGenreOfArtist(values.artist);
     }
     const coverUrl = await resolveCover(req);
@@ -1068,14 +1122,16 @@ async function createVinyl(req, res, next) {
       ]
     );
     // --------------------------------------------------------------
-    // GENRE MUSICAL PAR DÉFAUT DE L'ARTISTE : un genre défini sur ce disque est
-    // conservé sur l'ENTITÉ Artiste (table `artists`) comme valeur par défaut
-    // des FUTURS albums de cet artiste — SANS retoucher les disques déjà
+    // GENRE DE RÉFÉRENCE DE L'ARTISTE (table `artists`) : seul le CAS A —
+    // PREMIER DISQUE de l'artiste — écrit le genre sur l'ENTITÉ Artiste : il
+    // devient la référence immuable des futurs albums. CAS B : l'entité est
+    // JAMAIS retouchée (le genre du tout premier disque reste la référence —
+    // jamais mis à jour, modifié ou écrasé). SANS retoucher les disques déjà
     // enregistrés (ni celui-ci, ni aucun autre). Non bloquant : toute panne ne
     // doit jamais empêcher la création du disque — le genre reste écrit sur la
     // ligne courante par l'INSERT ci-dessus.
     // --------------------------------------------------------------
-    if (values.genre) {
+    if (!existingGenre && values.genre) {
       try {
         await syncArtistGenre(values.artist, values.genre);
       } catch (err) {
@@ -1179,6 +1235,35 @@ async function updateVinyl(req, res, next) {
 
     const { error, values } = cleanVinyl(req.body);
     if (error) return res.status(400).json({ error });
+
+    // --------------------------------------------------------------
+    // PROPAGATION DU GENRE MUSICAL — règle définitive (vérification
+    // préalable EN BASE avant l'UPDATE) :
+    //   CAS A — PREMIER DISQUE de l'artiste (aucun AUTRE disque déjà
+    //   enregistré pour ce nom, tous users) : le genre importé par l'API et
+    //   laissé tel quel, ou saisi / modifié manuellement par l'utilisateur,
+    //   est enregistré tel quel. Il devient la RÉFÉRENCE IMMUEBLE de
+    //   l'artiste.
+    //   CAS B — DISQUES SUIVANTS (l'artiste possède déjà au moins un AUTRE
+    //   disque) : le genre renvoyé par l'API / le formulaire est IGNORÉ ; le
+    //   disque reçoit AUTOMATIQUEMENT le genre du TOUT PREMIER disque de cet
+    //   artiste déjà stocké en base (le plus ancien par created_at, puis id).
+    //   RÈGLE ABSOLUE : les genres des disques déjà présents dans la
+    //   collection ne sont JAMAIS mis à jour, modifiés ou écrasés — la
+    //   propagation s'applique uniquement EN CASCADE DESCENDANTE vers les
+    //   nouveaux ajouts (aucun UPDATE de genre sur les lignes existantes).
+    // --------------------------------------------------------------
+    const existingGenre = await firstDiscGenreOfArtist(values.artist);
+    if (existingGenre) {
+      // CAS B : artiste déjà référencé -> le genre du formulaire / de l'API
+      // est ignoré, celui du tout premier disque est imposé au disque édité.
+      values.genre = existingGenre;
+    } else if (!values.genre) {
+      // CAS A (premier disque) sans genre fourni : repli sur le genre porté
+      // par l'ENTITÉ Artiste (table `artists`) — lecture seule, non bloquante
+      // (base non migrée -> null : aucun pré-remplissage).
+      values.genre = await defaultGenreOfArtist(values.artist);
+    }
 
     // ------------------------------------------------------------
     // SUPPRESSION EXPLICITE des images (bouton « Retirer le fichier » du
@@ -1539,14 +1624,16 @@ async function updateVinyl(req, res, next) {
     }
 
     // --------------------------------------------------------------
-    // GENRE MUSICAL PAR DÉFAUT DE L'ARTISTE : un genre défini / modifié sur ce
-    // disque est conservé sur l'ENTITÉ Artiste (table `artists`) comme valeur
-    // par défaut des FUTURS albums de cet artiste — SANS retoucher les disques
-    // déjà enregistrés (ni celui-ci, ni aucun autre). Non bloquant : toute
-    // panne ne doit jamais empêcher la modification du disque — le genre reste
-    // écrit sur la ligne courante par l'UPDATE principal ci-dessus.
+    // GENRE DE RÉFÉRENCE DE L'ARTISTE (table `artists`) : seul le CAS A —
+    // PREMIER DISQUE de l'artiste — écrit le genre sur l'ENTITÉ Artiste : il
+    // devient la référence immuable des futurs albums. CAS B : l'entité est
+    // JAMAIS retouchée (le genre du tout premier disque reste la référence —
+    // jamais mis à jour, modifié ou écrasé). SANS retoucher les disques déjà
+    // enregistrés (ni celui-ci, ni aucun autre). Non bloquant : toute panne ne
+    // doit jamais empêcher la modification du disque — le genre reste écrit sur
+    // la ligne courante par l'UPDATE principal ci-dessus.
     // --------------------------------------------------------------
-    if (values.genre) {
+    if (!existingGenre && values.genre) {
       try {
         await syncArtistGenre(values.artist, values.genre);
       } catch (err) {
