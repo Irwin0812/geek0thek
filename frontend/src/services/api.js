@@ -61,6 +61,14 @@ async function request(path, { method = 'GET', body, isForm = false } = {}) {
 }
 
 export const api = {
+  // --- Version / mise à jour (dépôt GitHub vs version déployée) ---
+  // Renvoie { status: 'ok' | 'unknown', updateAvailable, deployed?, github? } :
+  // le bouton « Mise à jour disponible » s'affiche UNIQUEMENT si
+  // updateAvailable est TRUE (les deux commits diffèrent). En cas de doute
+  // (API GitHub injoignable, quota atteint…), le backend renvoie
+  // updateAvailable: false — jamais de faux positif.
+  version: () => request('/version'),
+
   // --- Auth ---
   login: (payload) => request('/auth/login', { method: 'POST', body: payload }),
   me: () => request('/auth/me'),

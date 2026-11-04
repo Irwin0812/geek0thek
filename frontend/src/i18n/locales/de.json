@@ -24,6 +24,11 @@
     "showPassword": "Passwort anzeigen",
     "hidePassword": "Passwort verbergen"
   },
+  "update": {
+    "available": "Update verfügbar",
+    "tooltipTitle": "Wie aktualisiere ich?",
+    "tooltipSteps": "git pull + docker compose up -d --build ausführen, um zu aktualisieren:"
+  },
   "collection": {
     "searchPlaceholder": "In meiner Sammlung suchen…",
     "collectionBadge": "{{artists}} Künstler — {{vinyls}} Comic-Platten",

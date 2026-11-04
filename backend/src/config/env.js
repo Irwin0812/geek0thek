@@ -95,6 +95,20 @@ const env = {
     userAgent: process.env.DISCOGS_USER_AGENT || 'Geek0thek/1.0.0 (contact@example.com)',
     rateLimitPerMinute: toInt(process.env.DISCOGS_RATE_LIMIT_PER_MINUTE, 25),
   },
+
+  // GitHub — indicateur de mise à jour (dépôt vs version déployée).
+  // GITHUB_REPO : dépôt de référence (défaut Irwin0812/geek0thek).
+  // GITHUB_TOKEN : jeton personnel OPTIONNEL — sans lui, l'API publique est
+  // utilisée (60 req/h par IP, largement suffisant pour une vérification
+  // ponctuelle au chargement de l'app). LOCAL_REPO_DIR : répertoire du dépôt
+  // git déployé (monté en lecture seule dans le conteneur backend).
+  github: {
+    repo: process.env.GITHUB_REPO || 'Irwin0812/geek0thek',
+    token: process.env.GITHUB_TOKEN || '',
+    localRepoDir: process.env.LOCAL_REPO_DIR
+      ? path.resolve(process.env.LOCAL_REPO_DIR)
+      : path.join(__dirname, '..', '..', '..'),
+  },
 };
 
 module.exports = env;

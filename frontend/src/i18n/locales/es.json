@@ -24,6 +24,11 @@
     "showPassword": "Mostrar la contraseña",
     "hidePassword": "Ocultar la contraseña"
   },
+  "update": {
+    "available": "Actualización disponible",
+    "tooltipTitle": "¿Cómo actualizar?",
+    "tooltipSteps": "Ejecutar git pull + docker compose up -d --build para actualizar:"
+  },
   "collection": {
     "searchPlaceholder": "Buscar en mi colección…",
     "collectionBadge": "{{artists}} artistas — {{vinyls}} discos de cómic",

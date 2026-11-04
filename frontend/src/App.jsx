@@ -16,6 +16,7 @@ import { DisplayProvider } from './services/display.jsx'
 import { switchTheme } from './services/theme.js'
 import Footer from './components/Footer.jsx'
 import TopButton from './components/TopButton.jsx'
+import UpdateButton from './components/UpdateButton.jsx'
 
 const AuthContext = createContext(null)
 export const useAuth = () => useContext(AuthContext)

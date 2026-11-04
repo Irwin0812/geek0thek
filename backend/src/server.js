@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const env = require('./config/env');
 const { pool, migrate } = require('./config/db');
+const { getUpdateStatus } = require('./utils/githubClient');
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -118,6 +119,26 @@ app.get('/api/health', async (req, res) => {
   } catch (err) {
     console.error('[health] base indisponible :', err.message);
     return res.status(503).json({ status: 'degraded', database: 'error' });
+  }
+});
+
+// ------------------------------------------------------------
+// Indicateur de mise à jour : compare le commit du code DÉPLOYÉ (dépôt git
+// monté en lecture seule dans le conteneur, cf. docker-compose.yml) au dernier
+// commit de la branche par défaut du dépôt GitHub (Irwin0812/geek0thek).
+// Le frontend n'affiche son bouton « Mise à jour disponible » QUE si
+// updateAvailable est TRUE — il disparaît donc automatiquement après un
+// `git pull && docker compose up -d --build` (les deux SHA redeviennent
+// identiques). Jamais d'erreur renvoyée : en cas de doute (API GitHub
+// injoignable, quota atteint, dépôt local absent), updateAvailable = false.
+// ------------------------------------------------------------
+app.get('/api/version', async (req, res) => {
+  try {
+    const status = await getUpdateStatus();
+    return res.json(status);
+  } catch (err) {
+    console.error('[version] vérification GitHub impossible :', err.message);
+    return res.json({ status: 'unknown', updateAvailable: false, deployed: null, github: null });
   }
 });
 

@@ -24,6 +24,11 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password"
   },
+  "update": {
+    "available": "Update available",
+    "tooltipTitle": "How to update?",
+    "tooltipSteps": "Run git pull + docker compose up -d --build to update:"
+  },
   "collection": {
     "searchPlaceholder": "Search my collection…",
     "collectionBadge": "{{artists}} artists — {{vinyls}} comic record discs",

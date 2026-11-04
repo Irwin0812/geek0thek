@@ -24,6 +24,11 @@
     "showPassword": "Wachtwoord tonen",
     "hidePassword": "Wachtwoord verbergen"
   },
+  "update": {
+    "available": "Update beschikbaar",
+    "tooltipTitle": "Hoe te updaten?",
+    "tooltipSteps": "Voer git pull + docker compose up -d --build uit om te updaten:"
+  },
   "collection": {
     "searchPlaceholder": "Zoek in mijn collectie…",
     "collectionBadge": "{{artists}} artiesten — {{vinyls}} platen BD",

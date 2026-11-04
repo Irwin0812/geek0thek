@@ -67,9 +67,20 @@ services:
       DISCOGS_TOKEN: ${DISCOGS_TOKEN:-}
       DISCOGS_USER_AGENT: ${DISCOGS_USER_AGENT:-Geek0thek/1.0.0 (contact@example.com)}
       DISCOGS_RATE_LIMIT_PER_MINUTE: ${DISCOGS_RATE_LIMIT_PER_MINUTE:-25}
+      # Indicateur de mise à jour : dépôt GitHub de référence + jeton
+      # OPTIONNEL (sans jeton, l'API publique GitHub est utilisée — 60 req/h
+      # par IP, largement suffisant pour une vérification au chargement).
+      GITHUB_REPO: ${GITHUB_REPO:-Irwin0812/geek0thek}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      # Répertoire du dépôt git déployé (montage en lecture seule ci-dessous)
+      LOCAL_REPO_DIR: /repo
     volumes:
       # Jaquettes : stockage local sur le disque de la VM hôte
       - ./uploads:/app/uploads
+      # Dépôt git DÉPLOYÉ (racine du repo sur la VM) en LECTURE SEULE :
+      # l'endpoint /api/version y lit le commit installé par `git pull` pour
+      # le comparer au HEAD GitHub (bouton « Mise à jour disponible »).
+      - ./:/repo:ro
     # API non exposée sur l'hôte : elle est servie par nginx (frontend)
     # via /api -> http://backend:8080 (voir frontend/nginx.conf)
     healthcheck:

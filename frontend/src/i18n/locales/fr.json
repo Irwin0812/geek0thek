@@ -24,6 +24,11 @@
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe"
   },
+  "update": {
+    "available": "Mise à jour disponible",
+    "tooltipTitle": "Comment mettre à jour ?",
+    "tooltipSteps": "Faire un git pull + docker compose up -d --build pour mettre à jour :"
+  },
   "collection": {
     "searchPlaceholder": "Rechercher dans ma collection…",
     "collectionBadge": "{{artists}} artistes — {{vinyls}} disques",

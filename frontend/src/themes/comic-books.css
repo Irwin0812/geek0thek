@@ -365,6 +365,47 @@
   --tw-ring-color: #22d3ee;
 }
 
+/* ============================================================
+   BOUTON « MISE À JOUR DISPONIBLE » (coin supérieur droit) — BLEU FLASHY.
+   Même traitement que la pastille « TOP » ci-dessus : sous Comic Books
+   l'ambre se confond avec la photo jaune bg_comics.jpg, on le repasse en
+   BLEU VIF « comic » (bg cyan-400 → hover cyan-500), bordure noire épaisse +
+   ombre décalée « case de BD », texte ENCRE près-noir, halo/brillance
+   dynamiques recolorés cyan, anneau de focus assorti. Ciblage par l'ID
+   `#update-button` (posé par UpdateButton.jsx) — inutilisable ailleurs,
+   aucune collision possible avec un autre thème (bloc scellé sous
+   [data-theme='comic-books']). L'infobulle (tooltip) suit la charte « case » :
+   papier sombre + liseré encre + ombre décalée. */
+[data-theme='comic-books'] #update-button {
+  background: #22d3ee; /* bg-cyan-400 : bleu flashy « splash » */
+  color: #191105;
+  border: 3px solid #191105;
+  box-shadow:
+    4px 4px 0 0 #191105, /* ombre décalée « case de BD » */
+    0 0 0 2px rgba(165, 243, 252, 0.35) inset;
+}
+[data-theme='comic-books'] #update-button:hover {
+  background: #06b6d4; /* hover : cyan plus profond */
+  box-shadow:
+    4px 4px 0 0 #191105,
+    0 0 20px rgba(34, 211, 238, 0.65), /* halo flashy cyan (au lieu de l'ambre) */
+    0 4px 14px rgba(6, 182, 212, 0.45),
+    0 0 0 2px rgba(165, 243, 252, 0.55) inset;
+}
+/* Halo flou « brillance dynamique » (span bg-amber-400/60 du JSX) : cyan. */
+[data-theme='comic-books'] #update-button [class*='bg-amber-400'] {
+  background-color: rgba(34, 211, 238, 0.6);
+}
+/* Anneau de focus (ring-amber-300) : bouton cyan flashy. */
+[data-theme='comic-books'] #update-button:focus-visible {
+  --tw-ring-color: #22d3ee;
+}
+/* Infobulle (tooltip) : liseré encre + ombre décalée « case de BD ». */
+[data-theme='comic-books'] #update-button-wrap [role='tooltip'] {
+  border: 2px solid #191105;
+  box-shadow: 4px 4px 0 0 #191105;
+}
+
 /* ── LETTRAGE « CASE DE BD » DU LIEN « TOUT VOIR → » + SOUS-TITRES DE SECTION
    (correction lisibilité — spec 2).
    Le lien `viewAll` du Dashboard passe exactement au lettrage du titre

@@ -24,6 +24,11 @@
     "showPassword": "Mostra la password",
     "hidePassword": "Nascondi la password"
   },
+  "update": {
+    "available": "Aggiornamento disponibile",
+    "tooltipTitle": "Come aggiornare?",
+    "tooltipSteps": "Eseguire git pull + docker compose up -d --build per aggiornare:"
+  },
   "collection": {
     "searchPlaceholder": "Cerca nella mia collezione…",
     "collectionBadge": "{{artists}} artisti — {{vinyls}} dischi BD",
