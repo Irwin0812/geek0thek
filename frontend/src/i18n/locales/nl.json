@@ -351,6 +351,7 @@
     "otherCollectionsEmpty": "Nog geen andere collecties, binnenkort beschikbaar.",
     "myProfile": "Mijn profiel",
     "users": "Gebruikers",
+    "sharedLibraries": "Gedeelde bibliotheken",
     "language": "Taal",
     "languageMenu": "Taal wijzigen",
     "theme": "Ontwerp",
@@ -506,5 +507,29 @@
     "submit": "Bevestigen en doorgaan",
     "busy": "Bevestiging…",
     "backToLogin": "Afmelden"
+  },
+  "sharedLibraries": {
+    "title": "Gedeelde bibliotheken",
+    "subtitle": "Alleen-lezen-toegang tot uw collectie voor andere geregistreerde gebruikers verlenen of intrekken.",
+    "grantedTitle": "Toegangsrechten op mijn collectie",
+    "grantedHint": "Schakel aan om een gebruiker toegang te geven tot uw platen en strips; schakel uit om de toegang in te trekken.",
+    "colMember": "Lid",
+    "colLogin": "Gebruikersnaam",
+    "colVinyls": "Platen",
+    "colComics": "Strips",
+    "colAccess": "Alleen-lezen-toegang",
+    "accessGranted": "toegestaan",
+    "accessDenied": "niet toegestaan",
+    "toggleLabel": "Alleen-lezen-toegang verlenen",
+    "noOtherUsers": "Nog geen andere geregistreerde gebruikers.",
+    "receivedTitle": "Collecties gedeeld met mij",
+    "receivedHint": "Collecties van andere gebruikers waarvoor u alleen-lezen-toegang heeft gekregen.",
+    "noReceived": "U heeft nog geen alleen-lezen-toegang ontvangen.",
+    "scope_vinyls": "Platen",
+    "scope_comics": "Strips",
+    "scope_all": "Platen en strips",
+    "granted": "Toegang verleend aan {{name}} (er is een e-mail met bericht verzonden).",
+    "revoked": "Toegang ingetrokken voor {{name}}.",
+    "error": "Actie mislukt: {{message}}"
   }
 }

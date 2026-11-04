@@ -351,6 +351,7 @@
     "otherCollectionsEmpty": "Aucune autre collection pour le moment — à venir.",
     "myProfile": "Mon profil",
     "users": "Utilisateurs",
+    "sharedLibraries": "Bibliothèques partagées",
     "language": "Langue",
     "languageMenu": "Changer de langue",
     "theme": "Thème",
@@ -506,5 +507,29 @@
     "submit": "Valider et continuer",
     "busy": "Validation…",
     "backToLogin": "Se déconnecter"
+  },
+  "sharedLibraries": {
+    "title": "Bibliothèques partagées",
+    "subtitle": "Autorisez ou retirez l'accès en consultation (lecture seule) à votre collection pour les autres utilisateurs de l'application.",
+    "grantedTitle": "Accès accordés à ma collection",
+    "grantedHint": "Activez l'interrupteur pour autoriser un utilisateur à consulter vos disques et BD ; désactivez-le pour retirer l'accès.",
+    "colMember": "Membre",
+    "colLogin": "Login",
+    "colVinyls": "Disques",
+    "colComics": "BD",
+    "colAccess": "Accès en consultation",
+    "accessGranted": "autorisé",
+    "accessDenied": "non autorisé",
+    "toggleLabel": "Autoriser l'accès en consultation",
+    "noOtherUsers": "Aucun autre utilisateur enregistré pour le moment.",
+    "receivedTitle": "Collections partagées avec moi",
+    "receivedHint": "Collections d'autres utilisateurs auxquelles vous avez reçu l'accès en consultation.",
+    "noReceived": "Vous n'avez reçu aucun accès en consultation pour le moment.",
+    "scope_vinyls": "Disques",
+    "scope_comics": "BD",
+    "scope_all": "Disques et BD",
+    "granted": "Accès accordé à {{name}} (un e-mail de notification lui a été envoyé).",
+    "revoked": "Accès retiré pour {{name}}.",
+    "error": "Action impossible : {{message}}"
   }
 }

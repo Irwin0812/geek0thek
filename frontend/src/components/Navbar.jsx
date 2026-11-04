@@ -72,7 +72,10 @@ export default function Navbar() {
                          supportées (i18n.changeLanguage + PATCH du profil)
         - « Utilisateurs » → /admin/users, NE S'AFFICHE QUE si l'utilisateur
                            connecté est administrateur (isAdmin)
-        - « Déconnexion »  → tout en bas.
+         - « Bibliothèques partagées » → /partages : gestion des autorisations
+                            d'accès en consultation (lecture seule) à sa
+                            collection pour les autres utilisateurs
+         - « Déconnexion »  → tout en bas.
      Fermeture au clic extérieur / touche Échap via useDismiss — la ref est
      posée sur le conteneur englobant déclencheur + panneau (sous-menus
      inclus). */
@@ -557,6 +560,19 @@ export default function Navbar() {
                       </button>
                     </>
                   )}
+
+                  {/* « Bibliothèques partagées » : gestion des autorisations
+                      d'accès en consultation (lecture seule) à sa collection pour les
+                      autres utilisateurs — visible par TOUS les rôles, positionné entre
+                      « Utilisateurs » (admin) et « Déconnexion ». */}
+                  <div className="mx-2 my-1.5 border-t border-night-700/70" />
+                  <button
+                    type="button"
+                    onClick={() => navigate('/partages')}
+                    className={`w-full ${menuItemCls}`}
+                  >
+                    {t('navbar.sharedLibraries')}
+                  </button>
 
                   {/* « Déconnexion » : tout en bas du menu. */}
                   <div className="mx-2 my-1.5 border-t border-night-700/70" />

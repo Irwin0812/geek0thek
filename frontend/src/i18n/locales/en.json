@@ -351,6 +351,7 @@
     "otherCollectionsEmpty": "No other collections yet — coming soon.",
     "myProfile": "My Profile",
     "users": "Users",
+    "sharedLibraries": "Shared libraries",
     "language": "Language",
     "languageMenu": "Change language",
     "theme": "Theme",
@@ -506,5 +507,29 @@
     "submit": "Validate and continue",
     "busy": "Validating…",
     "backToLogin": "Sign out"
+  },
+  "sharedLibraries": {
+    "title": "Shared libraries",
+    "subtitle": "Grant or revoke read-only access to your collection for other registered users.",
+    "grantedTitle": "Access granted to my collection",
+    "grantedHint": "Toggle on to let a user browse your vinyls and comics; toggle off to revoke access.",
+    "colMember": "Member",
+    "colLogin": "Login",
+    "colVinyls": "Vinyls",
+    "colComics": "Comics",
+    "colAccess": "Read-only access",
+    "accessGranted": "granted",
+    "accessDenied": "not granted",
+    "toggleLabel": "Grant read-only access",
+    "noOtherUsers": "No other registered users yet.",
+    "receivedTitle": "Collections shared with me",
+    "receivedHint": "Other users' collections you have been granted read-only access to.",
+    "noReceived": "You have not received any read-only access yet.",
+    "scope_vinyls": "Vinyls",
+    "scope_comics": "Comics",
+    "scope_all": "Vinyls and comics",
+    "granted": "Access granted to {{name}} (a notification e-mail was sent).",
+    "revoked": "Access revoked for {{name}}.",
+    "error": "Action failed: {{message}}"
   }
 }

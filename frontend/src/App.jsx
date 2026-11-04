@@ -12,6 +12,7 @@ import AdminUsers from './pages/AdminUsers.jsx'
 import ComicCollection from './pages/ComicCollection.jsx'
 import AddComic from './pages/AddComic.jsx'
 import Profile from './pages/Profile.jsx'
+import SharedLibraries from './pages/SharedLibraries.jsx'
 import { DisplayProvider } from './services/display.jsx'
 import { switchTheme } from './services/theme.js'
 import Footer from './components/Footer.jsx'
@@ -155,6 +156,10 @@ export default function App() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/collection" element={<Collection />} />
                 <Route path="/profil" element={<Profile />} />
+                {/* Bibliothèques partagées : gestion des autorisations d'accès
+                    en consultation (lecture seule) à sa collection pour les
+                    autres utilisateurs enregistrés. */}
+                <Route path="/partages" element={<SharedLibraries />} />
                 <Route path="/comics" element={<ComicCollection />} />
                 <Route path="/comics/nouveau" element={<AddComic />} />
                 <Route path="/comics/:id" element={<AddComic />} />

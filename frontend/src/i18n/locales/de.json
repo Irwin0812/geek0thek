@@ -351,6 +351,7 @@
     "otherCollectionsEmpty": "Gibt es noch keine weiteren Sammlungen – bald verfügbar.",
     "myProfile": "Mein Profil",
     "users": "Benutzer",
+    "sharedLibraries": "Geteilte Bibliotheken",
     "language": "Sprache",
     "languageMenu": "Sprache ändern",
     "theme": "Design",
@@ -506,5 +507,29 @@
     "submit": "Bestätigen und fortfahren",
     "busy": "Wird bestätigt…",
     "backToLogin": "Abmelden"
+  },
+  "sharedLibraries": {
+    "title": "Geteilte Bibliotheken",
+    "subtitle": "Berechtigungen für den nur-lesenden Zugriff auf Ihre Sammlung für andere registrierte Benutzer erteilen oder entziehen.",
+    "grantedTitle": "Zugriff auf meine Sammlung",
+    "grantedHint": "Schalter aktivieren, damit ein Benutzer Ihre Platten und Comics ansehen kann; deaktivieren, um den Zugriff zu entziehen.",
+    "colMember": "Mitglied",
+    "colLogin": "Login",
+    "colVinyls": "Platten",
+    "colComics": "Comics",
+    "colAccess": "Nur-Lese-Zugriff",
+    "accessGranted": "zugelassen",
+    "accessDenied": "nicht zugelassen",
+    "toggleLabel": "Nur-Lese-Zugriff erteilen",
+    "noOtherUsers": "Noch keine anderen registrierten Benutzer.",
+    "receivedTitle": "Mit mir geteilte Sammlungen",
+    "receivedHint": "Sammlungen anderer Benutzer, auf die Sie nur-lesenden Zugriff erhalten haben.",
+    "noReceived": "Sie haben noch keinen nur-lesenden Zugriff erhalten.",
+    "scope_vinyls": "Platten",
+    "scope_comics": "Comics",
+    "scope_all": "Platten und Comics",
+    "granted": "Zugriff für {{name}} erteilt (eine Benachrichtigungs-E-Mail wurde gesendet).",
+    "revoked": "Zugriff für {{name}} entzogen.",
+    "error": "Aktion fehlgeschlagen: {{message}}"
   }
 }

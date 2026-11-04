@@ -1,6 +1,7 @@
 const express = require('express');
 const {
   listUsers,
+  listAllUsers,
   listPublicUsers,
   getMe,
   createUser,
@@ -28,6 +29,11 @@ router.use(authenticate);
 router.use(requirePasswordChanged);
 
 router.get('/me', getMe);
+// Membres de l'application (tout utilisateur authentifié, pas besoin d'être
+// admin) : liste les comptes actifs avec leurs compteurs de collection.
+// Déclaré AVANT toute route paramétrée /:id — alimente la page
+// « Bibliothèques partagées » (choix des destinataires des partages).
+router.get('/all', listAllUsers);
 // Langue préférée : endpoint dédié (body JSON : { "language": "fr" | "en" }).
 // Doit être déclaré AVANT toute route paramétrée du style /:id.
 router.patch('/profile/language', updateProfileLanguage);

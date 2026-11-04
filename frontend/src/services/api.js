@@ -80,6 +80,10 @@ export const api = {
   // --- Utilisateurs ---
   users: {
     list: () => request('/users'),
+    // Membres (tout utilisateur authentifié, pas besoin d'être admin) :
+    // comptes actifs + compteurs de collection — alimente la page
+    // « Bibliothèques partagées » (choix des destinataires des partages).
+    all: () => request('/users/all'),
     me: () => request('/users/me'),
     publicList: () => request('/users/public'),
     // body : objet JSON ou FormData (multipart, avatar en fichier)
@@ -93,6 +97,18 @@ export const api = {
     // ('pastel', ex-« Pastel », accepté et résolu vers 'neon' — cf. backend)
     patchTheme: (theme) => request('/users/profile/theme', { method: 'PATCH', body: { theme } }),
     remove: (id) => request(`/users/${id}`, { method: 'DELETE' }),
+  },
+
+  // --- Partage de bibliothèque (accès en consultation, lecture seule) ---
+  // GET  -> { sharedWith: [...], sharedWithMe: [...] } : partages donnés par
+  //          le compte courant + partages reçus (collections d'autrui).
+  // POST -> body { userId, scope: 'vinyls' | 'comics' | 'all' } : ouverture de
+  //          l'accès à SA collection pour un autre utilisateur (e-mail n°2).
+  // DELETE /:id — retrait de l'accès (propriétaire ou admin uniquement).
+  libraryShares: {
+    list: () => request('/users/library-shares'),
+    create: (payload) => request('/users/library-shares', { method: 'POST', body: payload }),
+    remove: (id) => request(`/users/library-shares/${id}`, { method: 'DELETE' }),
   },
 
   // --- Disques ---

@@ -700,6 +700,41 @@ async function listPublicUsers(req, res, next) {
   }
 }
 
+/**
+ * GET /api/users/all — liste des MEMBRES pour tout utilisateur authentifié
+ * (pas besoin d'être admin). Utilisée par la page « Bibliothèques partagées » :
+ * chaque membre doit pouvoir voir les AUTRES utilisateurs de l'application
+ * pour leur ouvrir (ou retirer) l'accès en consultation à sa collection.
+ * Données limitées aux infos d'identification + compteurs de collection —
+ * jamais téléphone / adresse / date de naissance / rôle.
+ */
+async function listAllUsers(req, res, next) {
+  try {
+    const { rows } = await query(
+      `SELECT u.id, u.login, u.first_name, u.last_name, u.email, u.avatar_url,
+              (SELECT COUNT(*) FROM vinyls v WHERE v.user_id = u.id)::int AS vinyl_count,
+              (SELECT COUNT(*) FROM comics c WHERE c.user_id = u.id)::int AS comic_count
+       FROM users u
+       WHERE u.is_active = TRUE
+       ORDER BY u.last_name ASC, u.first_name ASC`
+    );
+    return res.json({
+      users: rows.map((r) => ({
+        id: r.id,
+        login: r.login,
+        firstName: r.first_name,
+        lastName: r.last_name,
+        email: r.email,
+        avatarUrl: r.avatar_url || null,
+        vinylCount: Number(r.vinyl_count),
+        comicCount: Number(r.comic_count),
+      })),
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 // ------------------------------------------------------------
 // PARTAGE DE BIBLIOTHÈQUE (accès en consultation)
 //   Un utilisateur (ou un admin) ouvre l'accès EN CONSULTATION à sa
@@ -866,6 +901,7 @@ async function deleteLibraryShare(req, res, next) {
 
 module.exports = {
   listUsers,
+  listAllUsers,
   listPublicUsers,
   getMe,
   createUser,

@@ -351,6 +351,7 @@
     "otherCollectionsEmpty": "Sin otras colecciones por ahora, próximamente.",
     "myProfile": "Mi perfil",
     "users": "Usuarios",
+    "sharedLibraries": "Bibliotecas compartidas",
     "language": "Idioma",
     "languageMenu": "Cambiar idioma",
     "theme": "Tema",
@@ -506,5 +507,29 @@
     "submit": "Validar y continuar",
     "busy": "Validando…",
     "backToLogin": "Cerrar sesión"
+  },
+  "sharedLibraries": {
+    "title": "Bibliotecas compartidas",
+    "subtitle": "Autorice o retire el acceso de solo lectura a su colección para otros usuarios registrados.",
+    "grantedTitle": "Acceso concedido a mi colección",
+    "grantedHint": "Active el interruptor para autorizar a un usuario a consultar sus discos y cómics; desactívelo para retirar el acceso.",
+    "colMember": "Miembro",
+    "colLogin": "Usuario",
+    "colVinyls": "Discos",
+    "colComics": "Cómics",
+    "colAccess": "Acceso de solo lectura",
+    "accessGranted": "autorizado",
+    "accessDenied": "no autorizado",
+    "toggleLabel": "Autorizar acceso de solo lectura",
+    "noOtherUsers": "Aún no hay otros usuarios registrados.",
+    "receivedTitle": "Colecciones compartidas conmigo",
+    "receivedHint": "Colecciones de otros usuarios a las que le han concedido acceso de solo lectura.",
+    "noReceived": "No ha recibido ningún acceso de solo lectura todavía.",
+    "scope_vinyls": "Discos",
+    "scope_comics": "Cómics",
+    "scope_all": "Discos y cómics",
+    "granted": "Acceso concedido a {{name}} (se envió un correo de notificación).",
+    "revoked": "Acceso retirado para {{name}}.",
+    "error": "Acción no posible: {{message}}"
   }
 }

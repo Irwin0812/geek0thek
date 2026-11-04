@@ -351,6 +351,7 @@
     "otherCollectionsEmpty": "Nessun'altra collezione per ora — in arrivo.",
     "myProfile": "Il mio profilo",
     "users": "Utenti",
+    "sharedLibraries": "Biblioteche condivise",
     "language": "Lingua",
     "languageMenu": "Cambia lingua",
     "theme": "Tema",
@@ -506,5 +507,29 @@
     "submit": "Conferma e continua",
     "busy": "Conferma in corso…",
     "backToLogin": "Esci"
+  },
+  "sharedLibraries": {
+    "title": "Biblioteche condivise",
+    "subtitle": "Autorizza o revoca l'accesso in sola lettura alla tua collezione per gli altri utenti registrati.",
+    "grantedTitle": "Accessi concessi alla mia collezione",
+    "grantedHint": "Attiva l'interruttore per autorizzare un utente a consultare i tuoi dischi e fumetti; disattivalo per revocare l'accesso.",
+    "colMember": "Membro",
+    "colLogin": "Login",
+    "colVinyls": "Dischi",
+    "colComics": "Fumetti",
+    "colAccess": "Accesso in sola lettura",
+    "accessGranted": "autorizzato",
+    "accessDenied": "non autorizzato",
+    "toggleLabel": "Autorizza accesso in sola lettura",
+    "noOtherUsers": "Nessun altro utente registrato per il momento.",
+    "receivedTitle": "Collezioni condivise con me",
+    "receivedHint": "Collezioni di altri utenti alle quali hai ricevuto l'accesso in sola lettura.",
+    "noReceived": "Non hai ancora ricevuto alcun accesso in sola lettura.",
+    "scope_vinyls": "Dischi",
+    "scope_comics": "Fumetti",
+    "scope_all": "Dischi e fumetti",
+    "granted": "Accesso concesso a {{name}} (è stata inviata un'e-mail di notifica).",
+    "revoked": "Accesso revocato per {{name}}.",
+    "error": "Azione non riuscita: {{message}}"
   }
 }
