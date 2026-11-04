@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 
 /**
- * Badge compteur de collection (« X artistes — Y disques BD » / « X séries BD — Y albums BD ») :
+ * Badge compteur de collection (« X artistes — Y disques » / « X séries BD — Y albums BD ») :
  * positionné à GAUCHE de la barre de recherche, sur une seule ligne (shrink-0),
  * hauteur harmonisée h-12 comme le reste de la barre d'actions.
  *
