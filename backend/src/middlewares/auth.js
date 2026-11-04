@@ -76,4 +76,31 @@ function canEditItem(user, ownerId) {
   return user.role === 'admin' || String(user.id) === String(ownerId);
 }
 
-module.exports = { authenticate, requireAdmin, requirePasswordChanged, canEditItem };
+/**
+ * Accès EN CONSULTATION à la collection d'un autre utilisateur (lecture seule).
+ * Renvoie true si l'utilisateur courant est :
+ *   - l'ADMIN (accès global), OU
+ *   - le PROPRIÉTAIRE de la collection, OU
+ *   - un DESTINATAIRE d'un partage de bibliothèque (table `library_shares`)
+ *     portant sur le scope demandé.
+ * @param {object} user      utilisateur courant (req.user)
+ * @param {number} ownerId   id du propriétaire de la collection consultée
+ * @param {string} [scope]   « vinyls » | « comics » | « all » (défaut « all »)
+ */
+async function canConsult(user, ownerId, scope = 'all') {
+  if (user.role === 'admin' || String(user.id) === String(ownerId)) return true;
+  try {
+    const { rows } = await query(
+      `SELECT 1 FROM library_shares
+       WHERE owner_id = $1 AND granted_to_id = $2 AND scope IN ($3, 'all')
+       LIMIT 1`,
+      [ownerId, user.id, scope]
+    );
+    return rows.length > 0;
+  } catch {
+    // Table absente (base non migrée) : on retombe sur propriétaire/admin.
+    return false;
+  }
+}
+
+module.exports = { authenticate, requireAdmin, requirePasswordChanged, canEditItem, canConsult };

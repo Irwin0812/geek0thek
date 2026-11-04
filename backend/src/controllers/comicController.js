@@ -15,7 +15,7 @@ const {
   autoFetchSeriesImage,
   removeSeriesImageGlobally,
 } = require('../utils/seriesService');
-const { canEditItem } = require('../middlewares/auth');
+const { canEditItem, canConsult } = require('../middlewares/auth');
 
 // Garde l'arborescence des uploads en place (volume monté de la VM hôte) :
 // le sous-dossier « series/ » peut aussi bien être créé que par multer.
@@ -564,8 +564,10 @@ async function listMyComics(req, res, next) {
 async function listComicsByUser(req, res, next) {
   try {
     const userId = Number(req.params.userId);
-    if (!canEditItem(req.user, userId)) {
-      return res.status(403).json({ error: 'Accès réservé au propriétaire ou à un administrateur.' });
+    // Accès : propriétaire / admin (canEditItem) OU destinataire d'un partage
+    // de bibliothèque « comics » (accès en consultation, cf. library_shares).
+    if (!canEditItem(req.user, userId) && !(await canConsult(req.user, userId, 'comics'))) {
+      return res.status(403).json({ error: 'Accès réservé au propriétaire, à un administrateur ou à un utilisateur autorisé en consultation.' });
     }
     const q = String(req.query.q || '').trim();
     let sql = 'SELECT * FROM comics WHERE user_id = $1';
@@ -645,15 +647,18 @@ async function listPublicComicsByUser(req, res, next) {
 async function getComic(req, res, next) {
   try {
     const id = Number(req.params.id);
-    let sql = 'SELECT * FROM comics WHERE id = $1';
-    const params = [id];
-    if (req.user.role !== 'admin') {
-      sql += ' AND user_id = $2';
-      params.push(req.user.id);
-    }
-    const { rows } = await query(sql, params);
+    // Récupération par id d'abord (sans filtre propriétaire) : le contrôle
+    // d'accès est ensuite explicite — un DESTINATAIRE d'un partage « comics »
+    // doit pouvoir ouvrir la BD d'un autre utilisateur (accès en consultation).
+    const { rows } = await query('SELECT * FROM comics WHERE id = $1', [id]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'BD introuvable.' });
+    }
+    // Lecture : propriétaire / admin OU destinataire d'un partage « comics »
+    // (accès en consultation). L'écriture (PUT/DELETE) reste réservée au
+    // propriétaire / admin (canEditItem).
+    if (!canEditItem(req.user, rows[0].user_id) && !(await canConsult(req.user, rows[0].user_id, 'comics'))) {
+      return res.status(403).json({ error: 'Seul le propriétaire, un administrateur ou un utilisateur autorisé en consultation peut consulter cette BD.' });
     }
     return res.json({ comic: toComicDto(rows[0]) });
   } catch (err) {

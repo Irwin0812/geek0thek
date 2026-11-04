@@ -470,6 +470,36 @@ const MIGRATIONS = [
        WHERE role = 'admin';`,
     ],
   },
+  // PARTAGE DE BIBLIOTHÈQUE (accès en consultation) — table `library_shares` :
+  // un utilisateur (owner_id) ouvre l'accès EN CONSULTATION à sa collection à
+  // un autre utilisateur (granted_to_id). C'est le déclencheur de la
+  // notification e-mail « partage de bibliothèque » (cf. utils/emailService.js
+  // -> notifyLibraryShared). Colonnes :
+  //   owner_id      — propriétaire de la collection qui ouvre l'accès
+  //   granted_to_id — utilisateur destinataire qui reçoit l'accès en consultation
+  //   scope         — « vinyls » | « comics » | « all » (toutes les collections)
+  //   created_by    — id de l'utilisateur ayant créé le partage (owner ou admin)
+  //   created_at    — horodatage
+  // Contraintes : pas d'auto-partage (owner <> granted_to), unicité du couple
+  // (owner, granted_to, scope) pour éviter les doublons.
+  {
+    name: 'library-shares.table',
+    statements: [
+      `CREATE TABLE IF NOT EXISTS library_shares (
+         id BIGSERIAL PRIMARY KEY,
+         owner_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+         granted_to_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+         scope VARCHAR(20) NOT NULL DEFAULT 'all',
+         created_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+         CONSTRAINT library_shares_no_self CHECK (owner_id <> granted_to_id),
+         CONSTRAINT library_shares_scope_check CHECK (scope IN ('vinyls', 'comics', 'all')),
+         CONSTRAINT library_shares_unique UNIQUE (owner_id, granted_to_id, scope)
+       );`,
+      'CREATE INDEX IF NOT EXISTS idx_library_shares_owner ON library_shares(owner_id);',
+      'CREATE INDEX IF NOT EXISTS idx_library_shares_granted_to ON library_shares(granted_to_id);',
+    ],
+  },
 ];
 
 /**

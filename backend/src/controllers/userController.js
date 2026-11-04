@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const env = require('../config/env');
 const { query } = require('../config/db');
 const { validatePassword } = require('../utils/password');
+const emailService = require('../utils/emailService');
 
 // ------------------------------------------------------------
 // Helpers
@@ -373,6 +374,18 @@ async function createUser(req, res, next) {
           country ? String(country).trim() : null,
         ]
       );
+      // Déclencheur e-mail n°1 — CRÉATION DE COMPTE PAR UN ADMIN :
+      // confirmation de la création + accès (identifiant / mot de passe
+      // provisoire) envoyés au NOUVEL UTILISATEUR. Envoi NON bloquant : un
+      // échec d'envoi (SMTP non configuré, réseau…) ne fait JAMAIS échouer la
+      // création du compte (cf. utils/emailService.js).
+      emailService.notifyAccountCreated({
+        to: String(email).trim(),
+        firstName: String(firstName).trim(),
+        lastName: String(lastName).trim(),
+        login: String(login).trim(),
+        password: String(password),
+      }).catch(() => {});
       return res.status(201).json({ user: mapUser(rows[0]) });
     } catch (dbErr) {
       if (dbErr.code === '23505') {
@@ -687,6 +700,170 @@ async function listPublicUsers(req, res, next) {
   }
 }
 
+// ------------------------------------------------------------
+// PARTAGE DE BIBLIOTHÈQUE (accès en consultation)
+//   Un utilisateur (ou un admin) ouvre l'accès EN CONSULTATION à sa
+//   collection à un autre utilisateur. C'est cette action qui déclenche la
+//   notification e-mail n°2 (cf. utils/emailService.js -> notifyLibraryShared).
+//   Les partages sont persistés dans la table `library_shares` (migration
+//   « library-shares.table ») et honorés par les routes de lecture des
+//   collections (cf. canConsult de middlewares/auth.js).
+// ------------------------------------------------------------
+
+const SHARE_SCOPES = ['vinyls', 'comics', 'all'];
+const SCOPE_LABELS = { vinyls: 'disques', comics: 'BD', all: 'disques et BD' };
+
+/** Construit le DTO d'un partage à partir d'une ligne jointe (ls.* + u.*). */
+function shareDto(row) {
+  return {
+    id: row.id,
+    scope: row.scope,
+    createdAt: row.created_at,
+    user: {
+      id: row.uid,
+      login: row.login,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      email: row.email,
+    },
+  };
+}
+
+/**
+ * GET /api/users/library-shares — partages de bibliothèque du compte courant.
+ * Renvoie :
+ *   sharedWith   — collections auxquelles JE donne l'accès en consultation
+ *   sharedWithMe — collections d'autrui auxquelles J'ai reçu l'accès
+ */
+async function listLibraryShares(req, res, next) {
+  try {
+    const me = req.user.id;
+    const { rows: shared } = await query(
+      `SELECT ls.id, ls.scope, ls.created_at, u.id AS uid, u.login, u.first_name, u.last_name, u.email
+       FROM library_shares ls JOIN users u ON u.id = ls.granted_to_id
+       WHERE ls.owner_id = $1 ORDER BY ls.created_at DESC`,
+      [me]
+    );
+    const { rows: received } = await query(
+      `SELECT ls.id, ls.scope, ls.created_at, u.id AS uid, u.login, u.first_name, u.last_name, u.email
+       FROM library_shares ls JOIN users u ON u.id = ls.owner_id
+       WHERE ls.granted_to_id = $1 ORDER BY ls.created_at DESC`,
+      [me]
+    );
+    return res.json({ sharedWith: shared.map(shareDto), sharedWithMe: received.map(shareDto) });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * POST /api/users/library-shares — ouverture de l'accès en consultation.
+ * Body : { userId, scope, [ownerId] }
+ *   - userId  : utilisateur DESTINATAIRE qui reçoit l'accès (requis)
+ *   - scope   : « vinyls » | « comics » | « all » (défaut « all »)
+ *   - ownerId : propriétaire de la collection (admin uniquement ; défaut = soi)
+ * Déclenche l'e-mail n°2 au DESTINATAIRE.
+ */
+async function createLibraryShare(req, res, next) {
+  try {
+    const body = req.body || {};
+    const recipientId = Number(body.userId);
+    const scope = String(body.scope || 'all').trim().toLowerCase();
+    if (!recipientId || Number.isNaN(recipientId)) {
+      return res.status(400).json({ error: 'Champ requis : userId (utilisateur destinataire).' });
+    }
+    if (!SHARE_SCOPES.includes(scope)) {
+      return res.status(400).json({ error: `Scope invalide (attendu : ${SHARE_SCOPES.join(', ')}).` });
+    }
+
+    // Le propriétaire de la collection : par défaut le compte courant ; un
+    // ADMIN peut ouvrir l'accès à la collection d'un autre utilisateur.
+    const ownerId = req.user.role === 'admin' && body.ownerId
+      ? Number(body.ownerId)
+      : req.user.id;
+    if (ownerId === recipientId) {
+      return res.status(400).json({ error: 'Impossible de partager une collection avec soi-même.' });
+    }
+    // Un non-admin ne peut partager QUE sa propre collection.
+    if (req.user.role !== 'admin' && ownerId !== req.user.id) {
+      return res.status(403).json({ error: 'Vous ne pouvez partager que votre propre collection.' });
+    }
+
+    const { rows: ownerRows } = await query('SELECT * FROM users WHERE id = $1', [ownerId]);
+    const owner = ownerRows[0];
+    if (!owner) return res.status(404).json({ error: 'Propriétaire de la collection introuvable.' });
+    const { rows: recipientRows } = await query('SELECT * FROM users WHERE id = $1', [recipientId]);
+    const recipient = recipientRows[0];
+    if (!recipient) return res.status(404).json({ error: 'Utilisateur destinataire introuvable.' });
+
+    let share;
+    try {
+      // Idempotent : re-partager le même (owner, destinataire, scope) met à
+      // jour l'horodatage au lieu de créer un doublon (contrainte unique).
+      const { rows } = await query(
+        `INSERT INTO library_shares (owner_id, granted_to_id, scope, created_by)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (owner_id, granted_to_id, scope) DO UPDATE SET created_at = now()
+         RETURNING *`,
+        [ownerId, recipientId, scope, req.user.id]
+      );
+      share = rows[0];
+    } catch (dbErr) {
+      if (dbErr.code === '23503') {
+        return res.status(400).json({ error: 'Référence utilisateur invalide.' });
+      }
+      throw dbErr;
+    }
+
+    // Déclencheur e-mail n°2 — PARTAGE DE BIBLIOTHÈQUE : notification au
+    // DESTINATAIRE qu'un autre utilisateur lui a ouvert l'accès en
+    // consultation à sa collection. Envoi NON bloquant (cf. emailService).
+    emailService.notifyLibraryShared({
+      to: recipient.email,
+      recipientName: recipient.first_name,
+      ownerName: `${owner.first_name} ${owner.last_name}`.trim(),
+      scope: SCOPE_LABELS[scope],
+    }).catch(() => {});
+
+    return res.status(201).json({
+      share: {
+        id: share.id,
+        scope: share.scope,
+        createdAt: share.created_at,
+        user: {
+          id: recipient.id,
+          login: recipient.login,
+          firstName: recipient.first_name,
+          lastName: recipient.last_name,
+          email: recipient.email,
+        },
+      },
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * DELETE /api/users/library-shares/:id — retrait de l'accès en consultation.
+ * Seul le PROPRIÉTAIRE de la collection (ou un admin) peut retirer l'accès.
+ */
+async function deleteLibraryShare(req, res, next) {
+  try {
+    const id = Number(req.params.id);
+    const { rows } = await query('SELECT * FROM library_shares WHERE id = $1', [id]);
+    const share = rows[0];
+    if (!share) return res.status(404).json({ error: 'Partage introuvable.' });
+    if (req.user.role !== 'admin' && Number(share.owner_id) !== req.user.id) {
+      return res.status(403).json({ error: 'Seul le propriétaire ou un administrateur peut retirer cet accès.' });
+    }
+    await query('DELETE FROM library_shares WHERE id = $1', [id]);
+    return res.status(204).send();
+  } catch (err) {
+    return next(err);
+  }
+}
+
 module.exports = {
   listUsers,
   listPublicUsers,
@@ -697,4 +874,7 @@ module.exports = {
   updateProfileLanguage,
   updateProfileTheme,
   deleteUser,
+  listLibraryShares,
+  createLibraryShare,
+  deleteLibraryShare,
 };

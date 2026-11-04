@@ -20,7 +20,7 @@ const {
   searchArtist: searchArtistDiscogs,
   isConfigured: isDiscogsConfigured,
 } = require('../utils/discogsClient');
-const { canEditItem } = require('../middlewares/auth');
+const { canEditItem, canConsult } = require('../middlewares/auth');
 const { findArtistId, ensureArtist, removeArtistImageGlobally } = require('../utils/artistService');
 
 function toVinylDto(row) {
@@ -817,8 +817,10 @@ async function listMyVinyls(req, res, next) {
 async function listVinylsByUser(req, res, next) {
   try {
     const userId = Number(req.params.userId);
-    if (!canEditItem(req.user, userId)) {
-      return res.status(403).json({ error: 'Accès réservé au propriétaire ou à un administrateur.' });
+    // Accès : propriétaire / admin (canEditItem) OU destinataire d'un partage
+    // de bibliothèque « vinyls » (accès en consultation, cf. library_shares).
+    if (!canEditItem(req.user, userId) && !(await canConsult(req.user, userId, 'vinyls'))) {
+      return res.status(403).json({ error: 'Accès réservé au propriétaire, à un administrateur ou à un utilisateur autorisé en consultation.' });
     }
     const q = String(req.query.q || '').trim();
     let sql = 'SELECT * FROM vinyls WHERE user_id = $1';
@@ -1682,8 +1684,11 @@ async function getVinyl(req, res, next) {
     const { rows } = await query('SELECT * FROM vinyls WHERE id = $1', [id]);
     const vinyl = rows[0];
     if (!vinyl) return res.status(404).json({ error: 'Disque introuvable.' });
-    if (!canEditItem(req.user, vinyl.user_id)) {
-      return res.status(403).json({ error: 'Seul le propriétaire ou un administrateur peut consulter ce disque.' });
+    // Lecture : propriétaire / admin OU destinataire d'un partage « vinyls »
+    // (accès en consultation). L'écriture (PUT/DELETE) reste réservée au
+    // propriétaire / admin (canEditItem).
+    if (!canEditItem(req.user, vinyl.user_id) && !(await canConsult(req.user, vinyl.user_id, 'vinyls'))) {
+      return res.status(403).json({ error: 'Seul le propriétaire, un administrateur ou un utilisateur autorisé en consultation peut consulter ce disque.' });
     }
     return res.json({ vinyl: toVinylDto(vinyl) });
   } catch (err) {

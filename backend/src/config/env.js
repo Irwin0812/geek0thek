@@ -41,6 +41,34 @@ const env = {
     .map((origin) => origin.trim())
     .filter(Boolean),
 
+  // URL publique de l'application (liens cliquables des e-mails de
+  // notification). Défaut : origine du CORS (reverse proxy / VM cible).
+  appUrl: process.env.APP_URL || 'http://172.16.2.75',
+
+  // ------------------------------------------------------------
+  // SMTP — service d'envoi d'e-mails (Nodemailer, cf. utils/emailService.js).
+  // Chaque utilisateur configure SON serveur SMTP via le .env local :
+  //   SMTP_HOST  : hôte du serveur SMTP (ex. mail.igerarts.be)
+  //   SMTP_PORT  : port (465 = TLS implicite, 587 = STARTTLS) — défaut 465
+  //   SMTP_USER  : identifiant de connexion SMTP
+  //   SMTP_PASS  : mot de passe / app password SMTP
+  //   SMTP_FROM  : expéditeur « Nom <adresse> » (optionnel, repli SMTP_USER)
+  // Si SMTP_HOST / SMTP_USER / SMTP_PASS sont absents, l'envoi d'e-mails est
+  // DÉSACTIVÉ proprement (avertissement en console, jamais de crash).
+  // ------------------------------------------------------------
+  smtp: {
+    host: process.env.SMTP_HOST || '',
+    port: toInt(process.env.SMTP_PORT, 465),
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.SMTP_FROM || '',
+    // Force explicite du mode TLS (true = 465 implicite, false = STARTTLS).
+    // null = déduit automatiquement à partir du port (défaut).
+    secure: process.env.SMTP_SECURE === undefined
+      ? null
+      : process.env.SMTP_SECURE === 'true',
+  },
+
   // Stockage local des jaquettes (volume Docker ./uploads -> /app/uploads)
   uploadDir: process.env.UPLOAD_DIR
     ? path.resolve(process.env.UPLOAD_DIR)

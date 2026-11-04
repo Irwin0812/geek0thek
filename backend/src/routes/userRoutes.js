@@ -9,6 +9,9 @@ const {
   updateProfileLanguage,
   updateProfileTheme,
   deleteUser,
+  listLibraryShares,
+  createLibraryShare,
+  deleteLibraryShare,
 } = require('../controllers/userController');
 const { authenticate, requireAdmin, requirePasswordChanged } = require('../middlewares/auth');
 const { uploadAvatar } = require('../middlewares/upload');
@@ -34,6 +37,15 @@ router.patch('/profile/theme', updateProfileTheme);
 // Multipart : champ "avatar" facultatif (image de profil) — le corps
 // JSON reste accepté tel quel (multer passe les requêtes sans fichier).
 router.put('/me', uploadAvatar.single('avatar'), updateMe);
+
+// ------------------------------------------------------------
+// PARTAGE DE BIBLIOTHÈQUE (accès en consultation) — déclaré AVANT toute
+// route paramétrée /:id. POST déclenche la notification e-mail au
+// destinataire (cf. controllers/userController.js -> createLibraryShare).
+// ------------------------------------------------------------
+router.get('/library-shares', listLibraryShares);
+router.post('/library-shares', createLibraryShare);
+router.delete('/library-shares/:id', deleteLibraryShare);
 
 router.get('/', requireAdmin, listUsers);
 router.post('/', requireAdmin, uploadAvatar.single('avatar'), createUser);
