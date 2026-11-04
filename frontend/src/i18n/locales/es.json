@@ -530,6 +530,16 @@
     "scope_all": "Discos y cómics",
     "granted": "Acceso concedido a {{name}} (se envió un correo de notificación).",
     "revoked": "Acceso retirado para {{name}}.",
-    "error": "Acción no posible: {{message}}"
+    "error": "Acción no posible: {{message}}",
+    "openShared": "Ver la colección de {{name}}"
+  },
+  "sharedCollection": {
+    "title": "Colección de {{name}}",
+    "subtitle": "Biblioteca compartida en consulta (solo lectura).",
+    "readOnly": "Solo lectura",
+    "noAccessTitle": "Sin acceso a esta colección",
+    "noAccessSubtitle": "No se le ha concedido acceso de consulta a esta biblioteca, o el acceso fue retirado.",
+    "emptyTitle": "Colección vacía",
+    "emptySubtitle": "Esta colección aún no contiene ningún elemento."
   }
 }

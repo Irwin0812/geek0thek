@@ -530,6 +530,16 @@
     "scope_all": "Dischi e fumetti",
     "granted": "Accesso concesso a {{name}} (è stata inviata un'e-mail di notifica).",
     "revoked": "Accesso revocato per {{name}}.",
-    "error": "Azione non riuscita: {{message}}"
+    "error": "Azione non riuscita: {{message}}",
+    "openShared": "Sfoglia la collezione di {{name}}"
+  },
+  "sharedCollection": {
+    "title": "Collezione di {{name}}",
+    "subtitle": "Biblioteca condivisa in consultazione (sola lettura).",
+    "readOnly": "Sola lettura",
+    "noAccessTitle": "Nessun accesso a questa collezione",
+    "noAccessSubtitle": "Non ti è stato concesso l'accesso in consultazione a questa biblioteca, oppure l'accesso è stato revocato.",
+    "emptyTitle": "Collezione vuota",
+    "emptySubtitle": "Questa collezione non contiene ancora alcun elemento."
   }
 }

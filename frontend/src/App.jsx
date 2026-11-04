@@ -13,6 +13,7 @@ import ComicCollection from './pages/ComicCollection.jsx'
 import AddComic from './pages/AddComic.jsx'
 import Profile from './pages/Profile.jsx'
 import SharedLibraries from './pages/SharedLibraries.jsx'
+import SharedCollection from './pages/SharedCollection.jsx'
 import { DisplayProvider } from './services/display.jsx'
 import { switchTheme } from './services/theme.js'
 import Footer from './components/Footer.jsx'
@@ -160,6 +161,12 @@ export default function App() {
                     en consultation (lecture seule) à sa collection pour les
                     autres utilisateurs enregistrés. */}
                 <Route path="/partages" element={<SharedLibraries />} />
+                {/* Collection partagée d'UN AUTRE utilisateur (lecture seule) :
+                    /shared/:ownerUserId — cible du lien envoyé par e-mail lors
+                    d'un partage de bibliothèque. Le destinataire y accède sous
+                    SA PROPRE identité ; si non connecté, ProtectedRoute le
+                    redirige vers /login puis revient ici après identification. */}
+                <Route path="/shared/:ownerUserId" element={<SharedCollection />} />
                 <Route path="/comics" element={<ComicCollection />} />
                 <Route path="/comics/nouveau" element={<AddComic />} />
                 <Route path="/comics/:id" element={<AddComic />} />

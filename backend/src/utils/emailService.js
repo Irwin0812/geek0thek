@@ -121,8 +121,13 @@ function escapeHtml(value) {
 }
 
 /** Lien cliquable vers l'application (origine du frontend, cf. env.appUrl). */
-function appLink(label) {
-  return `<a href="${escapeHtml(env.appUrl)}" style="color:#38bdf8;text-decoration:none;font-weight:bold;">${escapeHtml(label)}</a>`;
+function appLink(label, url) {
+  return `<a href="${escapeHtml(url || env.appUrl)}" style="color:#38bdf8;text-decoration:none;font-weight:bold;">${escapeHtml(label)}</a>`;
+}
+
+/** Origine du frontend sans barre oblique finale (pour composer des chemins). */
+function appBaseUrl() {
+  return String(env.appUrl || '').replace(/\/+$/, '');
 }
 
 // ------------------------------------------------------------
@@ -181,15 +186,23 @@ function notifyAccountCreated({ to, firstName, lastName, login, password }) {
  * @param {string} p.to              adresse e-mail du destinataire
  * @param {string} [p.recipientName] nom du destinataire (pour la salutation)
  * @param {string} p.ownerName       nom du propriétaire qui ouvre l'accès
+ * @param {number} p.ownerId         id du propriétaire de la collection partagée
  * @param {string} p.scope           « disques » | « BD » | « disques et BD »
  */
-function notifyLibraryShared({ to, recipientName, ownerName, scope }) {
+function notifyLibraryShared({ to, recipientName, ownerName, ownerId, scope }) {
   const prenom = escapeHtml(recipientName || '');
   const salutation = prenom ? `Bonjour ${prenom}` : 'Bonjour';
+  // SÉCURITÉ — ISOLATION DES SESSIONS : le lien envoyé au DESTINATAIRE est une
+  // URL GÉNÉRIQUE de la collection partagée (chemin /shared/:ownerUserId). Il
+  // ne contient AUCUN jeton de session, mot de passe ou identifiant de
+  // connexion de l'émetteur : le destinataire doit s'identifier avec SES
+  // PROPRES identifiants (page /login) pour accéder à la vue partagée, où il
+  // reste sous SA PROPRE identité (lecture seule).
+  const sharedUrl = `${appBaseUrl()}/shared/${Number(ownerId) || ''}`;
   const body = `
     <p>${salutation},</p>
     <p><strong>${escapeHtml(ownerName)}</strong> vous a ouvert l'accès en consultation à sa collection de <strong>${escapeHtml(scope)}</strong>.</p>
-    <p>Vous pouvez désormais consulter cette bibliothèque sur ${appLink('Geek0thek')}.</p>`;
+    <p>Vous pouvez désormais consulter cette bibliothèque sur ${appLink('Geek0thek', sharedUrl)}.</p>`;
   return sendMail({
     to,
     subject: `Accès en consultation à la bibliothèque de ${ownerName}`,
@@ -197,7 +210,7 @@ function notifyLibraryShared({ to, recipientName, ownerName, scope }) {
     text:
       `${salutation},\n\n` +
       `${ownerName} vous a ouvert l'accès en consultation à sa collection de ${scope}.\n` +
-      `Vous pouvez désormais consulter cette bibliothèque sur ${env.appUrl}.\n`,
+      `Vous pouvez désormais consulter cette bibliothèque sur ${sharedUrl}.\n`,
   });
 }
 

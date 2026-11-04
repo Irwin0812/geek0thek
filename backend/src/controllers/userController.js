@@ -857,6 +857,9 @@ async function createLibraryShare(req, res, next) {
       to: recipient.email,
       recipientName: recipient.first_name,
       ownerName: `${owner.first_name} ${owner.last_name}`.trim(),
+      // Lien GÉNÉRIQUE de la collection partagée (/shared/:ownerUserId) :
+      // aucun jeton / identifiant de l'émetteur n'est transmis au destinataire.
+      ownerId: owner.id,
       scope: SCOPE_LABELS[scope],
     }).catch(() => {});
 

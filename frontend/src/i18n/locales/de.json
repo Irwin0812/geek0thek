@@ -530,6 +530,16 @@
     "scope_all": "Platten und Comics",
     "granted": "Zugriff für {{name}} erteilt (eine Benachrichtigungs-E-Mail wurde gesendet).",
     "revoked": "Zugriff für {{name}} entzogen.",
-    "error": "Aktion fehlgeschlagen: {{message}}"
+    "error": "Aktion fehlgeschlagen: {{message}}",
+    "openShared": "Sammlung von {{name}} ansehen"
+  },
+  "sharedCollection": {
+    "title": "Sammlung von {{name}}",
+    "subtitle": "Geteilte Bibliothek zur Einsicht (nur Lesezugriff).",
+    "readOnly": "Nur Lesezugriff",
+    "noAccessTitle": "Kein Zugriff auf diese Sammlung",
+    "noAccessSubtitle": "Ihnen wurde kein Lesezugriff auf diese Bibliothek erteilt, oder der Zugriff wurde entzogen.",
+    "emptyTitle": "Leere Sammlung",
+    "emptySubtitle": "Diese Sammlung enthält noch keine Einträge."
   }
 }

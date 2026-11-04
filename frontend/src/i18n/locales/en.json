@@ -530,6 +530,16 @@
     "scope_all": "Vinyls and comics",
     "granted": "Access granted to {{name}} (a notification e-mail was sent).",
     "revoked": "Access revoked for {{name}}.",
-    "error": "Action failed: {{message}}"
+    "error": "Action failed: {{message}}",
+    "openShared": "Browse {{name}}'s collection"
+  },
+  "sharedCollection": {
+    "title": "{{name}}'s collection",
+    "subtitle": "Library shared for consultation (read-only).",
+    "readOnly": "Read-only",
+    "noAccessTitle": "No access to this collection",
+    "noAccessSubtitle": "You have not been granted read-only access to this library, or the access was revoked.",
+    "emptyTitle": "Empty collection",
+    "emptySubtitle": "This collection does not contain any item yet."
   }
 }

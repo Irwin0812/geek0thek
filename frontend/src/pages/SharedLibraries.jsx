@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
 import { useAuth } from '../App.jsx'
@@ -199,18 +200,45 @@ export default function SharedLibraries() {
           <ul className="mt-3 divide-y divide-night-700/50">
             {(shares.sharedWithMe || []).map((share) => {
               const owner = share.user || {}
+              // LECTURE SEULE : la carte de l'émetteur ET les badges de scope
+              // (« Disques et BD » / « Disques » / « BD ») sont CLIQUABLES —
+              // ils redirigent vers la vue partagée de la collection de
+              // l'émetteur (/shared/:ownerUserId), consultée sous l'identité
+              // de l'utilisateur connecté (jamais celle de l'émetteur).
+              const scopeTabs =
+                share.scope === 'all' ? ['vinyls', 'comics'] : [share.scope]
               return (
-                <li key={share.id} className="flex items-center gap-3 py-2.5">
-                  <Avatar user={owner} size={32} />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-slate-100">
-                      {owner.firstName} {owner.lastName}
+                <li key={share.id} className="py-2.5">
+                  <div className="flex items-center gap-3">
+                    {/* Carte de l'émetteur cliquable (avatar + nom). */}
+                    <Link
+                      to={`/shared/${owner.id}`}
+                      className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-1 -mx-2 transition-colors hover:bg-night-700/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-400/70"
+                      title={t('sharedLibraries.openShared', { name: `${owner.firstName} ${owner.lastName}`.trim() })}
+                    >
+                      <Avatar user={owner} size={32} />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-semibold text-slate-100 hover:text-gold-200">
+                          {owner.firstName} {owner.lastName}
+                        </div>
+                        <div className="text-xs text-slate-500">{owner.login}</div>
+                      </div>
+                    </Link>
+                    {/* Badges de scope cliquables : chaque badge ouvre la vue
+                        partagée du média correspondant (disques / BD). */}
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {scopeTabs.map((scope) => (
+                        <Link
+                          key={scope}
+                          to={`/shared/${owner.id}`}
+                          className="badge bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 transition-colors hover:bg-emerald-500/25 hover:border-emerald-400/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-400/70"
+                          title={t('sharedLibraries.openShared', { name: `${owner.firstName} ${owner.lastName}`.trim() })}
+                        >
+                          {t(`sharedLibraries.scope_${scope}`)}
+                        </Link>
+                      ))}
                     </div>
-                    <div className="text-xs text-slate-500">{owner.login}</div>
                   </div>
-                  <span className="badge bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                    {t(`sharedLibraries.scope_${share.scope}`)}
-                  </span>
                 </li>
               )
             })}

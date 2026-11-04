@@ -530,6 +530,16 @@
     "scope_all": "Platen en strips",
     "granted": "Toegang verleend aan {{name}} (er is een e-mail met bericht verzonden).",
     "revoked": "Toegang ingetrokken voor {{name}}.",
-    "error": "Actie mislukt: {{message}}"
+    "error": "Actie mislukt: {{message}}",
+    "openShared": "Bekijk de collectie van {{name}}"
+  },
+  "sharedCollection": {
+    "title": "Collectie van {{name}}",
+    "subtitle": "Gedeelde bibliotheek ter inzage (alleen lezen).",
+    "readOnly": "Alleen lezen",
+    "noAccessTitle": "Geen toegang tot deze collectie",
+    "noAccessSubtitle": "U heeft geen leestoegang tot deze bibliotheek gekregen, of de toegang is ingetrokken.",
+    "emptyTitle": "Lege collectie",
+    "emptySubtitle": "Deze collectie bevat nog geen items."
   }
 }

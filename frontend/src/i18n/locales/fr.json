@@ -530,6 +530,16 @@
     "scope_all": "Disques et BD",
     "granted": "Accès accordé à {{name}} (un e-mail de notification lui a été envoyé).",
     "revoked": "Accès retiré pour {{name}}.",
-    "error": "Action impossible : {{message}}"
+    "error": "Action impossible : {{message}}",
+    "openShared": "Consulter la collection de {{name}}"
+  },
+  "sharedCollection": {
+    "title": "Collection de {{name}}",
+    "subtitle": "Bibliothèque partagée en consultation (lecture seule).",
+    "readOnly": "Lecture seule",
+    "noAccessTitle": "Aucun accès à cette collection",
+    "noAccessSubtitle": "Vous n'avez pas reçu d'accès en consultation à cette bibliothèque, ou l'accès a été retiré.",
+    "emptyTitle": "Collection vide",
+    "emptySubtitle": "Cette collection ne contient encore aucun élément."
   }
 }
