@@ -60,8 +60,13 @@ export default function CollectionSearch({ value, onChange, placeholder }) {
       />
 
       {/* Texte défilant (remplace le placeholder natif pendant l'animation) :
-          même positionnement / même largeur disponible que le texte du champ. */}
-      {marquee && (
+          même positionnement / même largeur disponible que le texte du champ.
+          ⚠️ AFFICHÉ UNIQUEMENT QUAND LE CHAMP EST VIDE (`!value`) : avec un
+          placeholder natif actif, le span défilant se superposait au texte saisi
+          (les deux étaient peints en même temps). Dès le premier caractère,
+          `value` n'est plus vide → le span disparaît et seul le texte saisi
+          reste visible ; si le champ est vidé, le placeholder réapparaît. */}
+      {marquee && !value && (
         <span aria-hidden="true" className="pointer-events-none absolute left-10 right-10 top-0 z-10 flex h-full items-center overflow-hidden">
           <span className="animate-marquee block w-max whitespace-nowrap text-sm text-slate-500" style={style}>
             {effectivePlaceholder}
@@ -70,11 +75,16 @@ export default function CollectionSearch({ value, onChange, placeholder }) {
       )}
 
       {/* h-12 (48px) : même hauteur que la toolbar et que le bouton d'action,
-          quelle que soit la largeur disponible. */}
+          quelle que soit la largeur disponible. Placeholder NATIF : l'attribut
+          `placeholder` est actif dès que le span défilant n'est pas affiché —
+          le navigateur efface le texte indicatif dès le premier caractère saisi
+          et le réaffiche si le champ est vidé. Pendant l'animation marquee
+          (survol, champ vide), c'est le span qui porte le texte : on vide alors
+          l'attribut natif pour éviter un DOUBLE texte superposé. */}
       <input
         tabIndex={marquee ? -1 : undefined}
         className="input h-12 !px-10 !rounded-xl"
-        placeholder={marquee ? '' : effectivePlaceholder}
+        placeholder={marquee && !value ? '' : effectivePlaceholder}
         value={value}
         onChange={onChange}
       />

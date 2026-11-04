@@ -138,7 +138,11 @@ export default function ViewToolbar({ forceGrid = false }) {
           </button>
 
           {optionsOpen && (
-            <div className="absolute right-0 z-30 mt-2 w-72 card p-1.5 shadow-2xl shadow-black/50">
+            /* z-50 : le panneau doit FLOTER AU-DESSUS des tuiles de la grille de
+               collection — à z-30 il était peint DERRIÈRE les cartes (les .card /
+               tuiles créant leurs propres strates). z-50 = même strate que les
+               menus ItemList et le modal de suppression, qui ne coexistent jamais. */
+            <div className="absolute right-0 z-50 mt-2 w-72 card p-1.5 shadow-2xl shadow-black/50">
               <div className="flex items-center justify-between px-3 pb-1.5 pt-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   {t('settings.options')}

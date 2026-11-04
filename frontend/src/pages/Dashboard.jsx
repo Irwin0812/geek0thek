@@ -11,23 +11,27 @@ import { useDisplay } from '../services/display.jsx'
 // Thème « Comic Books » : les titres de page (accueil + « Derniers ajouts »)
 // passent en typographie BANGERS / Impact + halo « case de BD » (white stroke,
 // ombre dure). Aucune autre section du dashboard n'est modifiée ici.
-import { getAppliedTheme } from '../services/theme.js'
 import VinylCard, { EmptyState } from '../components/VinylCard.jsx'
 import ComicCard from '../components/ComicCard.jsx'
 import ItemDetailModal from '../components/ItemDetailModal.jsx'
 import { addedDateValue } from '../components/cards.js'
-import { useDismiss, useHoverClose } from '../components/hooks.js'
+import { useAppliedTheme, useDismiss, useHoverClose } from '../components/hooks.js'
 
 export default function Dashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { settings } = useDisplay()
-  // Thème appliqué actuellement (service thème) — sert UNIQUEMENT à habiller les
-  // TITRES du dashboard sous le thème « Comic Books » (typo Bangers / Impact +
-  // halo « case de BD », cf. .font-comic-title dans src/themes/comic-books.css).
+  // Thème appliqué actuellement — sert UNIQUEMENT à habiller les TITRES du
+  // dashboard sous le thème « Comic Books » (typo Bangers / Impact + halo
+  // « case de BD », cf. .font-comic-title dans src/themes/comic-books.css).
   // La structure, les tuiles et le reste de la page ne sont pas modifiés ici.
-  const comicTheme = getAppliedTheme() === 'comic-books'
+  // ⚠️ RÉACTIF (useAppliedTheme) : une lecture statique getAppliedTheme() figeait
+  // la valeur au premier rendu — le message de bienvenue (« Bonjour, xxx »)
+  // conservait alors son ancienne police après un changement de thème et ne se
+  // corrigeait qu'au F5. L'observer suit data-theme sur <html> → re-rendu
+  // instantané dès la bascule (Navbar.handleThemeChange / App.switchTheme).
+  const comicTheme = useAppliedTheme() === 'comic-books'
   const [vinyls, setVinyls] = useState([])
   const [comics, setComics] = useState([])
   const [detailVinyl, setDetailVinyl] = useState(null)
@@ -500,9 +504,9 @@ function SoonCard({ icon: Icon, label, bgImage }) {
  * boutons et liens principaux sont des FRÈRES au DOM, pas imbriqués.
  */
 function QuickAction({ to, tone = 'neutral', children }) {
-  // Idem AddMediaDropdown : lecture locale du thème (la variable de scope de
-  // Dashboard() n'était pas accessible ici — ancien ReferenceError).
-  const comicTheme = getAppliedTheme() === 'comic-books'
+  // Idem AddMediaDropdown : lecture locale RÉACTIVE du thème (la variable de
+  // scope de Dashboard() n'est pas accessible ici — ancien ReferenceError).
+  const comicTheme = useAppliedTheme() === 'comic-books'
   /* Surcharges inline : sous le thème « Comic Books » (photo jaune bg_comics.jpg),
      les pills translucides d'origine (bg-*-500/15 + texte clair) disparaissent sur la
      photo. Elles reprennent donc la charte UNIQUE des boutons d'action : JAUNE vif /
@@ -564,7 +568,9 @@ function AddMediaDropdown() {
   // a fait « disparaître » le bouton AJOUTER UN MÉDIA + les tuiles au dernier
   // correctif. On lit ici directement l'état réel du thème (attribut data-theme,
   // source de vérité — services/theme.js), même pattern que Dashboard().
-  const comicTheme = getAppliedTheme() === 'comic-books'
+  // Lecture RÉACTIVE (useAppliedTheme) : le lettrage du menu suit la bascule
+  // de thème sans F5 (idem message de bienvenue).
+  const comicTheme = useAppliedTheme() === 'comic-books'
 
   const options = [
     { to: '/vinyles/nouveau', label: t('dashboard.addMedia.vinyl'), enabled: true },

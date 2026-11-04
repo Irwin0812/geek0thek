@@ -1,4 +1,29 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { getAppliedTheme } from '../services/theme.js'
+
+/**
+ * Thème appliqué RÉACTIF : suit l'attribut data-theme de <html> via un
+ * MutationObserver — le composant se re-rend INSTANTANÉMENT à chaque
+ * changement de thème (sans attendre un F5 ni une navigation).
+ * Remplace les lectures statiques `getAppliedTheme()` qui figent la valeur
+ * au premier rendu et ne se mettent à jour qu'au prochain montage.
+ */
+export function useAppliedTheme() {
+  const [theme, setTheme] = useState(() => getAppliedTheme())
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setTheme(getAppliedTheme())
+    })
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    })
+    return () => observer.disconnect()
+  }, [])
+
+  return theme
+}
 
 /**
  * Ferme au clic à l'extérieur / touche Échap.
