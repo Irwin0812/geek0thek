@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import QRCode from 'qrcode'
 import { api } from '../services/api.js'
 import { useAuth } from '../App.jsx'
 import Avatar, { AvatarCropModal, revokePreviewUrl } from '../components/Avatar.jsx'
@@ -89,6 +90,8 @@ export default function Profile() {
         const initialAvatar = { url: user.avatarUrl || null }
         setForm(initialForm)
         setAvatar(initialAvatar)
+        // État 2FA (users.totp_enabled) : référentiel de la section « Sécurité ».
+        setTotpEnabled(Boolean(user.totpEnabled))
         initialSnapshot.current = { form: initialForm, avatarValue: initialAvatar }
       })
       .catch((err) => setError(err.message))
@@ -114,6 +117,82 @@ export default function Profile() {
   const flash = (msg) => {
     setToast(msg)
     setTimeout(() => setToast(''), 3500)
+  }
+
+  // ------------------------------------------------------------
+  // 2FA (Google Authenticator / TOTP) — optionnelle, gérée ici.
+  //   - totpEnabled : état courant (users.totp_enabled, via le profil).
+  //   - totpSetup   : { secret, otpauthUri, qr } — clé en cours de
+  //     configuration (QR généré côté client depuis l'URI otpauth://).
+  //   - totpCode    : code à 6 chiffres saisi pour activer la 2FA.
+  //   - totpError / totpBusy : erreurs / état d'envoi de la section.
+  // ------------------------------------------------------------
+  const [totpEnabled, setTotpEnabled] = useState(Boolean(user && user.totpEnabled))
+  const [totpSetup, setTotpSetup] = useState(null) // { secret, otpauthUri, qr }
+  const [totpCode, setTotpCode] = useState('')
+  const [totpError, setTotpError] = useState('')
+  const [totpBusy, setTotpBusy] = useState(false)
+
+  // QR code (data URL) généré côté client depuis l'URI otpauth:// — aucune
+  // dépendance serveur, rendu immédiant dans la section 2FA du profil.
+  useEffect(() => {
+    if (!totpSetup || !totpSetup.otpauthUri) return
+    let cancelled = false
+    QRCode.toDataURL(totpSetup.otpauthUri, { width: 180, margin: 1, errorCorrectionLevel: 'M' })
+      .then((dataUrl) => {
+        if (!cancelled) setTotpSetup((s) => (s ? { ...s, qr: dataUrl } : s))
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [totpSetup && totpSetup.otpauthUri])
+
+  const startTotpSetup = async () => {
+    setTotpError('')
+    setTotpBusy(true)
+    try {
+      const { secret, otpauthUri } = await api.totp.setup()
+      setTotpSetup({ secret, otpauthUri, qr: null })
+    } catch (err) {
+      setTotpError(err.message)
+    } finally {
+      setTotpBusy(false)
+    }
+  }
+
+  const enableTotp = async () => {
+    setTotpError('')
+    if (!totpCode || totpCode.length !== 6) {
+      setTotpError(t('profile.totpCodeRequired'))
+      return
+    }
+    setTotpBusy(true)
+    try {
+      await api.totp.enable(totpCode)
+      setTotpEnabled(true)
+      setTotpSetup(null)
+      setTotpCode('')
+      flash(t('profile.totpEnabledToast'))
+    } catch (err) {
+      setTotpError(err.message)
+    } finally {
+      setTotpBusy(false)
+    }
+  }
+
+  const disableTotp = async () => {
+    setTotpError('')
+    setTotpBusy(true)
+    try {
+      await api.totp.disable()
+      setTotpEnabled(false)
+      setTotpSetup(null)
+      setTotpCode('')
+      flash(t('profile.totpDisabledToast'))
+    } catch (err) {
+      setTotpError(err.message)
+    } finally {
+      setTotpBusy(false)
+    }
   }
 
   // « Annuler » du formulaire : revient aux valeurs initiales (chargées du
@@ -490,6 +569,83 @@ export default function Profile() {
             />
           </Field>
         </div>
+
+        {/* --- 2FA (Google Authenticator / TOTP) — optionnelle --- */}
+        <h2 className="font-bold text-white pt-2">{t('profile.totpTitle')}</h2>
+        <p className="text-xs text-slate-400 -mt-2">{t('profile.totpSubtitle')}</p>
+
+        {totpError && (
+          <p className="text-sm text-rose-600 bg-rose-500/10 border border-rose-500/30 rounded-lg px-3 py-2">
+            {totpError}
+          </p>
+        )}
+
+        {!totpEnabled && !totpSetup && (
+          <div className="flex items-center justify-between gap-3">
+            <span className="badge bg-night-700 text-slate-400">{t('profile.totpInactive')}</span>
+            <button type="button" className="btn-primary" onClick={startTotpSetup} disabled={totpBusy || saving}>
+              {t('profile.totpActivate')}
+            </button>
+          </div>
+        )}
+
+        {!totpEnabled && totpSetup && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-start">
+              {/* QR code (data URL) — à scanner avec Google Authenticator. */}
+              {totpSetup.qr ? (
+                <img
+                  src={totpSetup.qr}
+                  alt={t('profile.totpQrAlt')}
+                  className="w-[180px] h-[180px] rounded-lg bg-white p-2"
+                />
+              ) : (
+                <div className="w-[180px] h-[180px] rounded-lg bg-night-800 grid place-items-center text-xs text-slate-500">
+                  {t('profile.totpQrLoading')}
+                </div>
+              )}
+              <div className="flex-1 space-y-3">
+                <p className="text-xs text-slate-400">{t('profile.totpScanHint')}</p>
+                {/* Clé secrète en clair (saisie manuelle possible). */}
+                <div>
+                  <span className="label">{t('profile.totpSecret')}</span>
+                  <code className="block mt-1 text-[13px] font-mono break-all text-gold-300 bg-night-800/60 border border-night-600/50 rounded-lg px-3 py-2">
+                    {totpSetup.secret}
+                  </code>
+                </div>
+                <div>
+                  <label className="label">{t('profile.totpCode')}</label>
+                  <input
+                    className="input text-center tracking-[0.4em] font-mono text-lg"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="000000"
+                    maxLength={6}
+                    value={totpCode}
+                    onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" className="btn-primary" onClick={enableTotp} disabled={totpBusy || saving || totpCode.length !== 6}>
+                {t('profile.totpConfirmEnable')}
+              </button>
+              <button type="button" className="btn-ghost" onClick={() => { setTotpSetup(null); setTotpCode(''); setTotpError('') }} disabled={totpBusy || saving}>
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {totpEnabled && (
+          <div className="flex items-center justify-between gap-3">
+            <span className="badge bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">{t('profile.totpActive')}</span>
+            <button type="button" className="btn-danger" onClick={disableTotp} disabled={totpBusy || saving}>
+              {t('profile.totpDeactivate')}
+            </button>
+          </div>
+        )}
 
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" className="btn-ghost" onClick={resetForm} disabled={saving}>{t('common.cancel')}</button>

@@ -5,6 +5,8 @@ import Navbar from './components/Navbar.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Login from './pages/Login.jsx'
 import Onboarding from './pages/Onboarding.jsx'
+import ForgotPassword from './pages/ForgotPassword.jsx'
+import ResetPassword from './pages/ResetPassword.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Collection from './pages/Collection.jsx'
 import AddVinyl from './pages/AddVinyl.jsx'
@@ -89,6 +91,15 @@ export default function App() {
         setUser(logged)
         return logged
       },
+      // 2FA (Google Authenticator / TOTP) : la page de connexion appelle
+      // elle-même api.login / api.verifyTotp (deux étapes) puis finalise la
+      // session ICI avec le JWT obtenu — même logique que login() ci-dessus.
+      completeLogin: (token, logged) => {
+        switchTheme(logged.theme)
+        saveSession({ token, user: logged })
+        setUser(logged)
+        return logged
+      },
       // Onboarding validé : la session est renouvelée avec le NOUVEAU jeton
       // renvoyé par l'API (le drapeau must_change_password est remis à FALSE
       // côté base) et le profil mis à jour (nouveau login éventuel).
@@ -152,6 +163,12 @@ export default function App() {
               {/* Route défensive : l'onboarding est déjà rendu ci-dessus dès
                   que user.mustChangePassword est TRUE (avant le layout). */}
               <Route path="/onboarding" element={<Onboarding />} />
+              {/* « Mot de passe ou identifiant oublié ? » — pages PUBLIQUES
+                  (sans session) : demande d'e-mail de réinitialisation, puis
+                  définition du nouveau mot de passe via le lien reçu
+                  (/reset-password/:token — jeton à usage unique, 1 h). */}
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
 
               <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<Dashboard />} />

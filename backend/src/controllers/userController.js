@@ -5,6 +5,7 @@ const env = require('../config/env');
 const { query } = require('../config/db');
 const { validatePassword } = require('../utils/password');
 const emailService = require('../utils/emailService');
+const totp = require('../utils/totp');
 
 // ------------------------------------------------------------
 // Helpers
@@ -28,6 +29,9 @@ function mapUser(row) {
     // Sécurité à la première connexion : TRUE tant que le compte n'a pas
     // changé ses identifiants de première installation (onboarding forcé).
     mustChangePassword: row.must_change_password === true,
+    // 2FA (Google Authenticator / TOTP) : TRUE si l'authentification à deux
+    // facteurs est activée sur le compte (colonne users.totp_enabled).
+    totpEnabled: row.totp_enabled === true,
     // Langue préférée (code ISO 639-1) : « fr » en dépit de toute valeur NULL
     // résiduelle (la colonne est NOT NULL DEFAULT 'fr' depuis la migration).
     language: row.language || 'fr',
@@ -50,7 +54,7 @@ function mapUser(row) {
 const BASE_SELECT = `
   SELECT u.id, u.login, u.role, u.first_name, u.last_name, u.email, u.phone,
          u.bio, u.is_public, u.share_vinyls, u.share_comics, u.is_active,
-         u.must_change_password,
+         u.must_change_password, u.totp_enabled,
          u.avatar_url, u.language, u.theme, u.gender, u.birth_date, u.address, u.country,
          u.created_at,
          (SELECT COUNT(*) FROM vinyls v WHERE v.user_id = u.id)::int AS vinyl_count,
@@ -310,12 +314,23 @@ async function createUser(req, res, next) {
   try {
     const {
       lastName, firstName, email, login, password, role,
+      emailConfirm, passwordConfirm,
       phone, bio, isPublic, avatar, language, gender, birthDate, address, country,
     } = req.body || {};
     if (!lastName || !firstName || !email || !login || !password) {
       return res
         .status(400)
         .json({ error: 'Champs requis : Nom, Prénom, Email, Identifiant, Mot de passe.' });
+    }
+    // SÉCURITÉ — DOUBLE SAISIE OBLIGATOIRE (e-mail ET mot de passe) : le
+    // formulaire d'administration impose la confirmation des deux champs ;
+    // le backend REFUSE la création si une paire ne correspond pas (jamais
+    // d'insertion sur un e-mail ou un mot de passe saisi par erreur).
+    if (!emailConfirm || String(emailConfirm).trim() !== String(email).trim()) {
+      return res.status(400).json({ error: "L'adresse e-mail et sa confirmation ne correspondent pas." });
+    }
+    if (!passwordConfirm || String(passwordConfirm) !== String(password)) {
+      return res.status(400).json({ error: 'Le mot de passe et sa confirmation ne correspondent pas.' });
     }
     if (!EMAIL_RE.test(String(email).trim())) {
       return res.status(400).json({ error: "Adresse e-mail invalide." });
@@ -902,6 +917,96 @@ async function deleteLibraryShare(req, res, next) {
   }
 }
 
+// ------------------------------------------------------------
+// AUTHENTIFICATION À DEUX FACTEURS (Google Authenticator / TOTP)
+//   Optionnelle (« possibilité conseillée ») : chaque utilisateur active la
+//   2FA depuis SA PAGE PROFIL. La clé secrète (Base32, cf. utils/totp.js —
+//   implémentation RFC 6238 sans dépendance externe) est stockée dans
+//   users.totp_secret ; le drapeau users.totp_enabled n'est passé à TRUE
+//   qu'APRÈS confirmation d'un code valide (l'utilisateur a donc bien
+//   enregistré la clé dans son application).
+//     POST /api/users/totp/setup   -> { secret, otpauthUri } (clé stockée,
+//                                      2FA pas encore activée)
+//     POST /api/users/totp/enable  -> body { code } : vérifie le code saisi,
+//                                      active la 2FA (totp_enabled = TRUE)
+//     POST /api/users/totp/disable -> désactive la 2FA et efface la clé
+//   Quand totp_enabled = TRUE, la connexion exige un code TOTP à 6 chiffres
+//   en deuxième étape (cf. authController.js -> login / verifyTotpCode).
+// ------------------------------------------------------------
+
+/**
+ * POST /api/users/totp/setup — démarre la configuration de la 2FA.
+ * Génère une clé secrète aléatoire (Base32), la stocke dans users.totp_secret
+ * (sans activer la 2FA : totp_enabled reste FALSE tant que l'utilisateur ne
+ * confirme pas un code valide) et renvoie la clé + l'URI otpauth:// à
+ * encoder en QR code (Google Authenticator, Aegis, …).
+ */
+async function setupTotp(req, res, next) {
+  try {
+    const { rows } = await query('SELECT totp_enabled FROM users WHERE id = $1', [req.user.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Compte introuvable.' });
+    // La 2FA est déjà ACTIVE : on refuse de générer une nouvelle clé (cela
+    // remplacerait la clé en cours et risquerait un verrouillage du compte —
+    // il faudrait d'abord désactiver la 2FA avec le code en cours).
+    if (rows[0].totp_enabled === true) {
+      return res.status(409).json({ error: 'La 2FA est déjà activée. Désactivez-la d\'abord pour configurer une nouvelle clé.' });
+    }
+    const secret = totp.generateSecret();
+    const accountName = `${req.user.login || req.user.id}`;
+    const otpauthUri = totp.buildOtpauthUri({ secret, accountName });
+    await query('UPDATE users SET totp_secret = $1 WHERE id = $2', [secret, req.user.id]);
+    return res.json({ secret, otpauthUri });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * POST /api/users/totp/enable — active la 2FA après confirmation.
+ * Body : { code } — le code à 6 chiffres affiché par l'application
+ * d'authentification (Google Authenticator). Vérifié contre la clé stockée
+ * par /setup (tolérance ±1 fenêtre de 30 s, cf. utils/totp.js). Succès :
+ * users.totp_enabled = TRUE — la connexion exigera désormais ce code.
+ */
+async function enableTotp(req, res, next) {
+  try {
+    const { code } = req.body || {};
+    if (!code) {
+      return res.status(400).json({ error: 'Champ requis : code (code à 6 chiffres de votre application d\'authentification).' });
+    }
+    const { rows } = await query('SELECT totp_secret, totp_enabled FROM users WHERE id = $1', [req.user.id]);
+    const user = rows[0];
+    if (!user) return res.status(404).json({ error: 'Compte introuvable.' });
+    if (user.totp_enabled === true) {
+      // Déjà activée : rien à faire (idempotent, ex. double soumission).
+      return res.json({ totpEnabled: true });
+    }
+    if (!user.totp_secret) {
+      return res.status(400).json({ error: 'Aucune clé en cours de configuration. Lancez d\'abord la configuration (bouton « Activer »).' });
+    }
+    if (!totp.verifyTotp(user.totp_secret, String(code))) {
+      return res.status(401).json({ error: 'Code incorrect. Vérifiez l\'heure de votre appareil et ressaisissez le code affiché.' });
+    }
+    await query('UPDATE users SET totp_enabled = TRUE WHERE id = $1', [req.user.id]);
+    return res.json({ totpEnabled: true });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * POST /api/users/totp/disable — désactive la 2FA et efface la clé secrète.
+ * (Idempotent : un compte sans 2FA active reçoit simplement totpEnabled: false.)
+ */
+async function disableTotp(req, res, next) {
+  try {
+    await query('UPDATE users SET totp_enabled = FALSE, totp_secret = NULL WHERE id = $1', [req.user.id]);
+    return res.json({ totpEnabled: false });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 module.exports = {
   listUsers,
   listAllUsers,
@@ -916,4 +1021,7 @@ module.exports = {
   listLibraryShares,
   createLibraryShare,
   deleteLibraryShare,
+  setupTotp,
+  enableTotp,
+  disableTotp,
 };

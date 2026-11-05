@@ -13,6 +13,9 @@ const {
   listLibraryShares,
   createLibraryShare,
   deleteLibraryShare,
+  setupTotp,
+  enableTotp,
+  disableTotp,
 } = require('../controllers/userController');
 const { authenticate, requireAdmin, requirePasswordChanged } = require('../middlewares/auth');
 const { uploadAvatar } = require('../middlewares/upload');
@@ -52,6 +55,17 @@ router.put('/me', uploadAvatar.single('avatar'), updateMe);
 router.get('/library-shares', listLibraryShares);
 router.post('/library-shares', createLibraryShare);
 router.delete('/library-shares/:id', deleteLibraryShare);
+
+// ------------------------------------------------------------
+// 2FA (Google Authenticator / TOTP) — optionnelle, gérée depuis la page
+// profil. Déclaré AVANT toute route paramétrée /:id.
+//   setup   : génère la clé secrète + URI otpauth:// (QR code)
+//   enable  : active la 2FA après confirmation d'un code valide
+//   disable : désactive la 2FA et efface la clé
+// ------------------------------------------------------------
+router.post('/totp/setup', setupTotp);
+router.post('/totp/enable', enableTotp);
+router.post('/totp/disable', disableTotp);
 
 router.get('/', requireAdmin, listUsers);
 router.post('/', requireAdmin, uploadAvatar.single('avatar'), createUser);

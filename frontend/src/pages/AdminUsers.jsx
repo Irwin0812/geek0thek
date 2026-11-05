@@ -37,8 +37,10 @@ const EMPTY = {
   lastName: '',
   firstName: '',
   email: '',
+  emailConfirm: '',
   login: '',
   password: '',
+  passwordConfirm: '',
   role: 'user',
   phone: '',
   bio: '',
@@ -104,14 +106,27 @@ export default function AdminUsers() {
   const submitCreate = async (e) => {
     e.preventDefault()
     setError('')
+    // SÉCURITÉ — DOUBLE SAISIE OBLIGATOIRE : l'e-mail ET le mot de passe
+    // doivent être confirmés (vérification client immédiate ; le backend
+    // REFUSE aussi la création si une paire ne correspond pas).
+    if (form.email.trim() !== form.emailConfirm.trim()) {
+      setError(t('adminUsers.emailMismatch'))
+      return
+    }
+    if (form.password !== form.passwordConfirm) {
+      setError(t('adminUsers.passwordMismatch'))
+      return
+    }
     setSaving(true)
     try {
       const { user: created } = await api.users.create({
         lastName: form.lastName.trim(),
         firstName: form.firstName.trim(),
         email: form.email.trim(),
+        emailConfirm: form.emailConfirm.trim(),
         login: form.login.trim(),
         password: form.password,
+        passwordConfirm: form.passwordConfirm,
         role: form.role,
         language: form.language || 'fr',
         phone: form.phone.trim() || null,
@@ -378,13 +393,23 @@ export default function AdminUsers() {
         <form onSubmit={submitCreate} className="card p-6 space-y-4">
           <h2 className="font-bold text-white">{t('adminUsers.createTitle')}</h2>
           {error && <p className="text-sm text-rose-400">{error}</p>}
+          {/* SÉCURITÉ — DOUBLE SAISIE : l'e-mail ET le mot de passe sont
+              confirmés (champs *Confirm) ; le backend refuse la création si
+              une paire ne correspond pas (jamais d'insertion sur une erreur
+              de frappe). */}
           <div className="grid sm:grid-cols-2 gap-4">
             <Field label={t('profile.lastName')}><input className="input" value={form.lastName} onChange={set('lastName')} required /></Field>
             <Field label={t('profile.firstName')}><input className="input" value={form.firstName} onChange={set('firstName')} required /></Field>
             <Field label={t('profile.email')}><input className="input" type="email" value={form.email} onChange={set('email')} required /></Field>
+            <Field label={t('adminUsers.emailConfirm')}>
+              <input className="input" type="email" value={form.emailConfirm} onChange={set('emailConfirm')} required placeholder={t('adminUsers.confirmPlaceholder')} />
+            </Field>
             <Field label={t('adminUsers.loginField')}><input className="input" value={form.login} onChange={set('login')} required /></Field>
             <Field label={t('adminUsers.passwordField')}>
               <PasswordInput value={form.password} onChange={set('password')} minLength="8" required placeholder={t('profile.minChars')} />
+            </Field>
+            <Field label={t('adminUsers.passwordConfirm')}>
+              <PasswordInput value={form.passwordConfirm} onChange={set('passwordConfirm')} minLength="8" required placeholder={t('adminUsers.confirmPlaceholder')} />
             </Field>
             <Field label={t('adminUsers.role')}>
               <select className="input" value={form.role} onChange={set('role')}>

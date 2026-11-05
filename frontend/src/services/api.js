@@ -70,12 +70,37 @@ export const api = {
   version: () => request('/version'),
 
   // --- Auth ---
+  // login renvoie :
+  //   - sans 2FA : { token, user } (session complète) ;
+  //   - avec 2FA activée : { needsTotp: true, tempToken } — il faut alors
+  //     appeler verifyTotp({ tempToken, code }) pour obtenir le JWT.
   login: (payload) => request('/auth/login', { method: 'POST', body: payload }),
   me: () => request('/auth/me'),
   // Sécurité à la première connexion : onboarding forcé. Body :
   // { currentPassword, newPassword, login? } -> { token, user }
   // (nouveau JWT + profil mis à jour, drapeau remis à FALSE côté base).
   onboarding: (payload) => request('/auth/onboarding', { method: 'POST', body: payload }),
+  // 2FA (Google Authenticator / TOTP) : deuxième étape de la connexion.
+  // Body { tempToken, code } -> { token, user }.
+  verifyTotp: (payload) => request('/auth/verify-totp', { method: 'POST', body: payload }),
+  // « Mot de passe ou identifiant oublié ? » — body { identifier } (login OU
+  // e-mail). Réponse GÉNÉRIQUE dans tous les cas (aucune énumération) :
+  // si un compte correspond, un e-mail contient l'identifiant + un lien de
+  // réinitialisation temporaire (jeton à usage unique, validité 1 h).
+  forgotPassword: (identifier) => request('/auth/forgot-password', { method: 'POST', body: { identifier } }),
+  // Réinitialisation via le lien de l'e-mail — body { token, newPassword }.
+  resetPassword: (payload) => request('/auth/reset-password', { method: 'POST', body: payload }),
+
+  // --- 2FA (Google Authenticator / TOTP) — configuration depuis le profil ---
+  totp: {
+    // Démarre la configuration : -> { secret, otpauthUri } (clé stockée,
+    // 2FA pas encore activée ; l'URI sert à générer le QR code).
+    setup: () => request('/users/totp/setup', { method: 'POST' }),
+    // Active la 2FA après confirmation d'un code valide : body { code }.
+    enable: (code) => request('/users/totp/enable', { method: 'POST', body: { code } }),
+    // Désactive la 2FA et efface la clé.
+    disable: () => request('/users/totp/disable', { method: 'POST' }),
+  },
 
   // --- Utilisateurs ---
   users: {

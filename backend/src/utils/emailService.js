@@ -214,9 +214,57 @@ function notifyLibraryShared({ to, recipientName, ownerName, ownerId, scope }) {
   });
 }
 
+// ------------------------------------------------------------
+// Déclencheur n°3 — Réinitialisation du mot de passe (« identifiant /
+// mot de passe oublié »). Envoie au PROPRIÉTAIRE DU COMPTE :
+//   - son IDENTIFIANT (login) — utile s'il a oublié lequel des deux il
+//     avait saisi dans le formulaire ;
+//   - un LIEN DE RÉINITIALISATION TEMPORAIRE (jeton à usage unique,
+//     validité 1 h) : ${APP_URL}/reset-password/<jeton>.
+// SÉCURITÉ : le lien contient UNIQUEMENT le jeton aléatoire (48 octets) —
+// jamais d'identifiant de connexion ni de mot de passe. Seul le HACHAGE
+// SHA-256 du jeton est stocké en base (table password_resets).
+// ------------------------------------------------------------
+/**
+ * @param {object} p
+ * @param {string} p.to         adresse e-mail du propriétaire du compte
+ * @param {string} [p.firstName]
+ * @param {string} p.login      identifiant de connexion du compte
+ * @param {string} p.resetUrl   lien complet de réinitialisation (jeton inclus)
+ */
+function notifyPasswordReset({ to, firstName, login, resetUrl }) {
+  const prenom = escapeHtml(firstName || '');
+  const salutation = prenom ? `Bonjour ${prenom}` : 'Bonjour';
+  const body = `
+    <p>${salutation},</p>
+    <p>Nous avons bien reçu votre demande de réinitialisation du mot de passe sur <strong>Geek0thek</strong>.</p>
+    <p>Votre identifiant de connexion est : <strong>${escapeHtml(login)}</strong></p>
+    <p>Pour définir un nouveau mot de passe, cliquez sur le lien ci-dessous (valable <strong>1 heure</strong>, à usage unique) :</p>
+    <p style="margin:20px 0;">
+      <a href="${escapeHtml(resetUrl)}"
+         style="display:inline-block;background:#38bdf8;color:#0f172a;font-weight:bold;text-decoration:none;padding:10px 18px;border-radius:8px;">
+        Réinitialiser mon mot de passe
+      </a>
+    </p>
+    <p style="color:#94a3b8;font-size:13px;">Si vous n'êtes pas à l'origine de cette demande, ignorez ce message : votre mot de passe actuel reste inchangé.</p>`;
+  return sendMail({
+    to,
+    subject: 'Réinitialisation de votre mot de passe Geek0thek',
+    html: layout('Réinitialisation du mot de passe', body),
+    text:
+      `${salutation},\n\n` +
+      `Nous avons bien reçu votre demande de réinitialisation du mot de passe sur Geek0thek.\n` +
+      `Votre identifiant de connexion est : ${login}\n\n` +
+      `Pour définir un nouveau mot de passe, cliquez sur le lien ci-dessous (valable 1 heure, à usage unique) :\n` +
+      `${resetUrl}\n\n` +
+      `Si vous n'êtes pas à l'origine de cette demande, ignorez ce message : votre mot de passe actuel reste inchangé.\n`,
+  });
+}
+
 module.exports = {
   isConfigured,
   sendMail,
   notifyAccountCreated,
   notifyLibraryShared,
+  notifyPasswordReset,
 };

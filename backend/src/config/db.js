@@ -500,6 +500,38 @@ const MIGRATIONS = [
       'CREATE INDEX IF NOT EXISTS idx_library_shares_granted_to ON library_shares(granted_to_id);',
     ],
   },
+  // AUTHENTIFICATION À DEUX FACTEURS (Google Authenticator / TOTP) — colonnes
+  // users.totp_secret et users.totp_enabled. La clé secrète (Base32) n'est
+  // stockée QUE lorsque l'utilisateur démarre la configuration de la 2FA ; le
+  // drapeau totp_enabled n'est passé à TRUE qu'après confirmation d'un code
+  // valide (POST /api/users/totp/enable). NOT NULL DEFAULT FALSE : les comptes
+  // existants ne sont JAMAIS affectés. Idempotent : ADD COLUMN IF NOT EXISTS.
+  {
+    name: 'users.two-factor',
+    statements: [
+      'ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret TEXT;',
+      'ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled BOOLEAN NOT NULL DEFAULT FALSE;',
+    ],
+  },
+  // RÉINITIALISATION DU MOT DE PASSE — table `password_resets` : jetons à
+  // usage unique générés par POST /api/auth/forgot-password. Seul le HACHAGE
+  // SHA-256 du jeton est stocké (le jeton brut n'est jamais persisté, il est
+  // transmis une seule fois, dans l'e-mail). expires_at : expiration (1 h) ;
+  // used_at : horodatage de la consommation du lien (jeton à usage unique).
+  {
+    name: 'password-resets.table',
+    statements: [
+      `CREATE TABLE IF NOT EXISTS password_resets (
+         id BIGSERIAL PRIMARY KEY,
+         user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+         token_hash VARCHAR(64) NOT NULL UNIQUE,
+         expires_at TIMESTAMPTZ NOT NULL,
+         used_at TIMESTAMPTZ,
+         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+       );`,
+      'CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id);',
+    ],
+  },
 ];
 
 /**
