@@ -1,9 +1,14 @@
 /* ============================================================
    Geek0thek — Thème « Médiathèque » (lumineux)
-   Design épuré et lumineux : photo de fond public/img/bg-library.jpg
-   sous un voile semi-transparent (--bg-app + calque blanc),
-   cartes immaculées à ombres douces, texte en ardoise profonde,
-   accent ambre/brun doré conservant la signature de la marque.
+   Charte « médiathèque chaleureuse » : photo de fond globale
+   public/img/bg-library.jpg, typographie FUTURA (Jost, repli
+   géométrique) pour l'en-tête de bienvenue et Garamond (EB
+   Garamond) pour les barres de navigation. Palette restreinte
+   aux tons chauds : orange #FF6B35, brun, noir ombré blanc,
+   bordeaux #E63946, corail, moutarde #E6A100 et cyan #00A8E8.
+   La charte est déclinée sur les barres de navigation (haut et
+   bas), les boutons et les modales — SANS toucher aux autres
+   thèmes (toutes les règles sont scellées sous [data-theme='library']).
    Le mapping des variables reprend exactement la même logique
    que le thème sombre (cf. index couleurs de theme.js).
    ============================================================ */
@@ -14,60 +19,80 @@
      servi sous /img par nginx / le build Vite / Vite dev). Déclaré dans
      :root pour rester utilisable avant l'initialisation JS du thème. */
   --theme-bg-image: url('/img/bg-library.jpg');
+
+  /* ---- Charte « Médiathèque » : tons chauds autorisés ----
+     orange #FF6B35 · brun #7A4A21 · noir ombré blanc #1E1410 ·
+     bordeaux #E63946 · corail #FF7F66 · moutarde #E6A100 · cyan #00A8E8. */
+  --lib-orange: #ff6b35;
+  --lib-brun: #7a4a21;
+  --lib-noir: #1e1410;
+  --lib-bordeaux: #e63946;
+  --lib-coral: #ff7f66;
+  --lib-moutarde: #e6a100;
+  --lib-cyan: #00a8e8;
+  /* Typographies du thème : FUTURA (Jost — repli géométrique de Futura,
+     Google Fonts) pour l'en-tête de bienvenue, Garamond (EB Garamond)
+     pour les barres de navigation. */
+  --lib-font-futura: 'Futura', 'Jost', 'Century Gothic', 'Trebuchet MS', ui-sans-serif, sans-serif;
+  --lib-font-garamond: 'EB Garamond', 'Garamond', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
 }
 
 [data-theme='library'] {
-  /* Fond / surfaces — correspondance night-* de la palette
-     sombre : 950 = page, 900 = panneaux, 800 = cartes/champs,
-     700 = éléments surélevés, 600 = survol, 500 = bordures. */
-  --bg-app: #eef2f7;
-  --bg-surface: #e2e8f1;
+  /* Fond / surfaces — voile clair sur la photo : les surfaces restent
+     lumineuses pour la lisibilité, la photo domine l'arrière-plan. */
+  --bg-app: #f4efe7;
+  --bg-surface: #ece3d5;
   --bg-elevated: #ffffff;
-  --bg-raised: #f1f5f9;
-  --bg-hover: #dbe2ec;
-  --border-subtle: #dbe2ec;
-  --border-default: #c3cdda;
-  /* Texte — les teintes "claires" (slate-100/200/300) sont
-     volontairement assombries sur fond clair. */
-  --text-primary: #1e293b;
-  --text-secondary: #334155;
-  --text-muted: #475569;
-  --text-subtle: #64748b;
-  --text-faint: #8494a8;
-  /* Accent (signature or) — assombri pour le contraste
-     exigé sur fond clair. */
-  --accent-soft: #92400e;
-  --accent: #78350f;
-  --accent-strong: #92400e;
-  --accent-deep: #78350f;
-  --accent-dark: #451a03;
+  --bg-raised: #f6f1e9;
+  --bg-hover: #f0e6d8;
+  --border-subtle: #e4d9c8;
+  --border-default: #cdbfa8;
+  /* Texte — brun chaud profond (jamais de gris froid) sur fond clair. */
+  --text-primary: #2b1d12;
+  --text-secondary: #4a3524;
+  --text-muted: #6b5238;
+  --text-subtle: #8a6f52;
+  --text-faint: #a08a6c;
+  /* Accent (signature orange) — boutons d'action + liens. */
+  --accent-soft: #e63946;
+  --accent: #ff6b35;
+  --accent-strong: #ff6b35;
+  --accent-deep: #e0552a;
+  --accent-dark: #7a4a21;
   --accent-contrast: #ffffff;
-  --ring: rgba(180, 87, 17, 0.25);
-  --shadow-color: rgba(15, 23, 42, 0.12);
+  --ring: rgba(255, 107, 53, 0.3);
+  --shadow-color: rgba(30, 20, 16, 0.14);
   --card-radius: 1rem;
+  /* Corps de l'application : Inter conservé (la charte ne change que l'en-tête
+     de bienvenue → Futura et les barres de navigation → Garamond). */
   --app-font: 'Inter', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
   --body-font-weight: 400;
-  --body-letter-spacing: 0;
+  --body-letter-spacing: 0.01em;
   --input-bg: #ffffff;
-  --input-border: #c3cdda;
-  --input-focus-border: rgba(146, 64, 14, 0.55);
-  --scrollbar-thumb: rgba(148, 163, 184, 0.6);
-  --scrollbar-thumb-hover: #94a3b8;
-  --ghost-bg: rgba(241, 245, 249, 0.7);
-  --ghost-hover: #f1f5f9;
-  --ghost-border: #c3cdda;
-  --ghost-text: #334155;
-  --selection-bg: rgba(146, 64, 14, 0.22);
-  --selection-text: #1e293b;
-  --danger: rgba(190, 18, 60, 0.92);
-  --danger-hover: #e11d48;
+  --input-border: #cdbfa8;
+  --input-focus-border: rgba(255, 107, 53, 0.6);
+  --scrollbar-thumb: rgba(122, 74, 33, 0.5);
+  --scrollbar-thumb-hover: #7a4a21;
+  --ghost-bg: rgba(246, 241, 233, 0.8);
+  --ghost-hover: #f0e6d8;
+  --ghost-border: #cdbfa8;
+  --ghost-text: #4a3524;
+  --selection-bg: rgba(255, 107, 53, 0.28);
+  --selection-text: #2b1d12;
+  /* Actions destructives : bordeaux de la charte (au lieu du rose froid). */
+  --danger: rgba(230, 57, 70, 0.94);
+  --danger-hover: #c92f3a;
   --menu-pop-bg: #ffffff;
-  --menu-pop-shadow: rgba(15, 23, 42, 0.25);
+  --menu-pop-shadow: rgba(30, 20, 16, 0.28);
   --card-bg: #ffffff;
-  --card-border: rgba(195, 205, 218, 0.7);
+  --card-border: rgba(205, 191, 168, 0.7);
   --card-blur: 0px;
   /* Ombre douce plutôt que flou (look épuré). */
-  --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --card-shadow: 0 1px 2px rgba(30, 20, 16, 0.05), 0 8px 24px rgba(30, 20, 16, 0.08);
+}
+
+[data-theme='library'] {
+  color-scheme: light;
 }
 
 [data-theme='library'] body {
@@ -75,15 +100,15 @@
   font-family: var(--app-font);
   font-weight: var(--body-font-weight);
   letter-spacing: var(--body-letter-spacing);
-  /* Photo de fond en « semi-transparence » : la pile se lit du bas vers
-     le haut — (1) voile blanc --bg-app à ~92 % qui assomplit l'image et
-     garantit la lisibilité, puis (2) les deux halos ambiants d'origine.
-     La photo n'apparaît donc qu'à ~8 %, comme un fond brumeux. */
+  /* Photo de fond GLOBALE (bg-library.jpg) : pile lue du bas vers le haut —
+     (1) voile clair --bg-app à ~88 % qui garantit la lisibilité des textes,
+     puis (2) les deux halos ambiants chauds d'origine. La photo reste bien
+     visible (~12 %) comme fond brumeux chaleureux. */
   background-color: var(--bg-app);
   background-image:
-    radial-gradient(1100px 560px at 85% -10%, rgba(146, 64, 14, 0.06), transparent 60%),
-    radial-gradient(900px 520px at -10% 110%, rgba(71, 85, 105, 0.07), transparent 60%),
-    linear-gradient(rgba(238, 242, 247, 0.92), rgba(238, 242, 247, 0.92)),
+    radial-gradient(1100px 560px at 85% -10%, rgba(255, 107, 53, 0.08), transparent 60%),
+    radial-gradient(900px 520px at -10% 110%, rgba(230, 161, 0, 0.08), transparent 60%),
+    linear-gradient(rgba(244, 239, 231, 0.88), rgba(244, 239, 231, 0.88)),
     var(--theme-bg-image);
   background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
   /* cover + center = équivalent « bg-cover bg-center » ; fixed = la photo
@@ -101,6 +126,214 @@
   color: var(--selection-text);
 }
 
+/* ============================================================
+   TYPOGRAPHIE — EN-TÊTE DE BIENVENUE (« Bonjour, xxx ») : FUTURA.
+   Le h1 du Dashboard porte la classe .comic-greeting (inerte ailleurs) ;
+   ici il passe en Jost/Futura, majuscules espacées, brun profond avec un
+   OMBRAGE BLANC doux (halo clair) pour se détacher de la photo.
+   ============================================================ */
+[data-theme='library'] .comic-greeting {
+  font-family: var(--lib-font-futura);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--lib-noir);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85),
+    0 2px 6px rgba(255, 255, 255, 0.7);
+}
+
+/* Titres de pages (Mes Disques / Mes BD / Utilisateurs / Mon profil…) :
+   même lettrage FUTURA que l'en-tête de bienvenue — cohérence globale. */
+[data-theme='library'] .cb-page-title,
+[data-theme='library'] .comic-page-title {
+  font-family: var(--lib-font-futura);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--lib-noir);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8),
+    0 2px 6px rgba(255, 255, 255, 0.6);
+}
+
+/* ============================================================
+   BARRE DE NAVIGATION HAUTE (.cb-navbar) — Garamond + tons chauds.
+   Le header porte les classes night-* (fond sombre) en JSX ; elles sont
+   écrasées ici pour un fond brun profond translucide, lettrage Garamond
+   et liens dans la palette autorisée (corail / moutarde / cyan).
+   ============================================================ */
+[data-theme='library'] .cb-navbar {
+  background: rgba(30, 20, 16, 0.82);
+  border-bottom: 2px solid var(--lib-moutarde);
+}
+
+/* Lettrage Garamond de la barre (liens + logo + libellés). */
+[data-theme='library'] .cb-navbar {
+  font-family: var(--lib-font-garamond);
+}
+[data-theme='library'] .cb-navbar .cb-logo {
+  font-family: var(--lib-font-garamond);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+/* Le « 0THEK » du logo passe au moutarde (au lieu de l'or froid). */
+[data-theme='library'] .cb-navbar .cb-logo [class*='text-gold-400'] {
+  color: var(--lib-moutarde);
+}
+
+/* Liens de navigation : corail au repos, moutarde au survol, cyan actif. */
+[data-theme='library'] .cb-nav-link {
+  font-family: var(--lib-font-garamond);
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  color: var(--lib-coral);
+}
+[data-theme='library'] .cb-nav-link:hover {
+  background: rgba(255, 127, 102, 0.16);
+  color: var(--lib-moutarde);
+}
+/* État ACTIF (le NavLink actif porte .bg-night-700 en classe) : tampon
+   moutarde + texte noir ombré — repère net dans la palette autorisée. */
+[data-theme='library'] .cb-nav-link.bg-night-700 {
+  background: var(--lib-moutarde);
+  color: var(--lib-noir);
+  box-shadow: 0 2px 8px rgba(30, 20, 16, 0.35);
+}
+
+/* Nom + rôle de l'utilisateur (déclencheur du menu) : blanc ombré. */
+[data-theme='library'] .cb-navbar button[class*='hover:bg-night-800'] {
+  color: #ffffff;
+}
+[data-theme='library'] .cb-navbar button[class*='hover:bg-night-800']:hover {
+  background: rgba(255, 127, 102, 0.14);
+}
+
+/* Menu déroulant de l'utilisateur (carte flottante) : papier clair + encre
+   brun chaud ; les valeurs courantes (thème / langue) passent au cyan. */
+[data-theme='library'] .cb-navbar .card a,
+[data-theme='library'] .cb-navbar .card button,
+[data-theme='library'] .cb-navbar .card p {
+  color: var(--text-secondary);
+}
+[data-theme='library'] .cb-navbar .card a:hover,
+[data-theme='library'] .cb-navbar .card button:hover {
+  background: rgba(255, 107, 53, 0.12);
+}
+/* Rangées de bascule (Thème / Langue) : valeur courante en cyan de la charte. */
+[data-theme='library'] .cb-navbar .card span[class*='text-cyan-300'] {
+  color: var(--lib-cyan);
+}
+/* Élément ACTIF du sous-menu (thème / langue) : moutarde + encre noire. */
+[data-theme='library'] .cb-navbar .card button.bg-gold-400 {
+  background: var(--lib-moutarde);
+  color: var(--lib-noir);
+}
+
+/* Menu mobile (sous la barre) : même fond brun que la barre haute. */
+[data-theme='library'] .cb-navbar nav.md\:hidden {
+  background: rgba(30, 20, 16, 0.92);
+  border-top-color: var(--lib-moutarde);
+}
+
+/* ============================================================
+   BARRE BASSE (.cb-footer) — Garamond + tons chauds (miroir de la nav).
+   ============================================================ */
+[data-theme='library'] .cb-footer {
+  background: rgba(30, 20, 16, 0.85);
+  border-top: 2px solid var(--lib-moutarde);
+}
+[data-theme='library'] .cb-footer div {
+  font-family: var(--lib-font-garamond);
+  color: #f3e9dc;
+}
+[data-theme='library'] .cb-footer a {
+  color: var(--lib-moutarde);
+}
+
+/* ============================================================
+   BOUTONS — charte « Médiathèque » (orange / bordeaux / moutarde).
+   ============================================================ */
+[data-theme='library'] .btn {
+  --tw-ring-offset: transparent;
+}
+
+/* Bouton principal : ORANGE de la charte, texte blanc ombré. */
+[data-theme='library'] .btn-primary {
+  background: var(--accent-strong);
+  color: #ffffff;
+  box-shadow: 0 8px 16px -8px var(--ring);
+}
+[data-theme='library'] .btn-primary:hover {
+  background: var(--accent-deep);
+}
+
+/* Bouton fantôme : fond crème translucide, encre brun, liseré moutarde. */
+[data-theme='library'] .btn-ghost {
+  background: var(--ghost-bg);
+  color: var(--ghost-text);
+  border-color: var(--lib-moutarde);
+}
+[data-theme='library'] .btn-ghost:hover {
+  background: var(--ghost-hover);
+  color: var(--lib-noir);
+}
+
+/* Bouton destructif : BORDEAUX de la charte. */
+[data-theme='library'] .btn-danger {
+  background: var(--danger);
+}
+[data-theme='library'] .btn-danger:hover {
+  background: var(--danger-hover);
+}
+
+/* Boutons d'action rapides des tuiles (pills) : harmonisés à la charte. */
+[data-theme='library'] .cb-actions a[class*='rounded-full'] {
+  border-color: rgba(255, 107, 53, 0.5);
+  background: rgba(255, 107, 53, 0.14);
+  color: var(--lib-orange);
+}
+[data-theme='library'] .cb-actions a[class*='rounded-full']:hover {
+  background: rgba(255, 107, 53, 0.24);
+  color: var(--lib-noir);
+}
+
+/* ============================================================
+   MODALES — voile chaud + carte papier clair (lisibilité sur la photo).
+   Les modales partagent la classe « fixed inset-0 z-50 … backdrop-blur-sm » ;
+   on cible ce motif pour assombrir le fond en brun chaud (au lieu du noir
+   froid) et garder la carte blanche lisible.
+   ============================================================ */
+[data-theme='library'] .fixed.inset-0.z-50 {
+  background: rgba(30, 20, 16, 0.72);
+}
+
+/* Carte des modales : papier blanc franc + liseré moutarde doux. */
+[data-theme='library'] .card {
+  background: var(--card-bg);
+  border-color: rgba(230, 161, 0, 0.45);
+  border-radius: var(--card-radius);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  /* Légère transparence sur la photo : l'image se devine sous les cartes
+     sans affaiblir le contraste du texte (équivalent bg-white/94). */
+  background-color: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--card-shadow);
+}
+
+/* En-tête des modales : liseré moutarde + titre brun. */
+[data-theme='library'] .card h2 {
+  color: var(--lib-brun);
+}
+[data-theme='library'] .card [class*='border-b'] {
+  border-bottom-color: rgba(230, 161, 0, 0.4);
+}
+
+/* ============================================================
+   CHAMPS / BADGES / ICÔNES — cohérence des tons chauds.
+   ============================================================ */
 [data-theme='library'] .input {
   background: var(--input-bg);
   border-color: var(--input-border);
@@ -120,53 +353,9 @@
   color: var(--text-muted);
 }
 
-[data-theme='library'] .btn {
-  --tw-ring-offset: transparent;
-}
-
-[data-theme='library'] .btn-primary {
-  background: var(--accent-strong);
-  color: var(--accent-contrast);
-  box-shadow: 0 8px 16px -8px var(--ring);
-}
-
-[data-theme='library'] .btn-primary:hover {
-  background: var(--accent-deep);
-}
-
-[data-theme='library'] .btn-ghost {
-  background: var(--ghost-bg);
-  color: var(--ghost-text);
-  border-color: var(--ghost-border);
-}
-
-[data-theme='library'] .btn-ghost:hover {
-  background: var(--ghost-hover);
-}
-
-[data-theme='library'] .btn-danger {
-  background: var(--danger);
-}
-
-[data-theme='library'] .btn-danger:hover {
-  background: var(--danger-hover);
-}
-
-[data-theme='library'] .card {
-  background: var(--card-bg);
-  border-color: var(--card-border);
-  border-radius: var(--card-radius);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  /* Légère transparence sur la photo : l'image se devine sous les cartes
-     sans affaiblir le contraste du texte (équivalent bg-white/92). */
-  background-color: rgba(255, 255, 255, 0.92);
-  box-shadow: var(--card-shadow);
-}
-
 [data-theme='library'] .badge {
   background: var(--bg-raised);
-  color: var(--text-muted);
+  color: var(--lib-brun);
 }
 
 [data-theme='library'] .icon-btn {
@@ -175,9 +364,20 @@
 
 [data-theme='library'] .icon-btn:hover {
   background: var(--bg-hover);
-  color: var(--text-primary);
+  color: var(--lib-noir);
 }
 
+/* Liens « Tout voir » et accents or d'origine → moutarde de la charte. */
+[data-theme='library'] a[class*='text-gold-400'],
+[data-theme='library'] a[class*='text-gold-300'] {
+  color: var(--lib-moutarde);
+}
+[data-theme='library'] a[class*='text-gold-400']:hover,
+[data-theme='library'] a[class*='text-gold-300']:hover {
+  color: var(--lib-orange);
+}
+
+/* Barre de défilement : brun chaud. */
 [data-theme='library'] ::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
 }
