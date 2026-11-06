@@ -385,3 +385,93 @@
 [data-theme='library'] ::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
 }
+
+/* ============================================================
+    TUILES DU DASHBOARD — HARMONISATION « MÉDIATHÈQUE » (spec tuiles).
+    Principe : les tuiles CONSERVENT leur STRUCTURE et leur FOND d'origine —
+    seule la COULEUR DU TEXTE est ré-ancrée à l'encre chaude du thème pour une
+    lisibilité parfaite sur ces fonds. Les textes codés en dur pour l'ancien
+    fond sombre (text-white / text-slate-400 → spécificité 0,1,0) sont donc
+    ré-ancrés par les règles ci-dessous (spécificité multi-classe 0,2,x >
+    utilitaire .text-* : elles gagnent). Aucune autre page n'est touchée : le
+    bloc est scellé sous [data-theme='library'] ET ancré sur la classe .lib-dash
+    posée sur la racine du Dashboard (Dashboard.jsx) — inerte ailleurs.
+
+    TUILES SUPÉRIEURES : les bannières Disques / Bandes dessinées ET les 3
+    tuiles « À venir » CONSERVENT leur fond d'origine (photo dédiée + voile
+    sombre / verre sombre) : le texte clair d'origine y reste parfaitement
+    lisible → AUCUNE modification de couleur. Les 4 CARTES SECONDAIRES
+    (Artistes / Genres / Auteurs / Séries), posées sur un VERRE DÉPOLI devenu
+    CLAIR, sont ré-ancrées à l'encre chaude par une condition JSX dans
+    Dashboard.jsx (composant local au Dashboard → fiable). Les icônes des chips
+    ne sont PAS du texte : elles conservent leur accent d'origine.
+    ============================================================ */
+
+/* ── B) TUILES « DERNIERS AJOUTS » — fond + texte harmonisés à l'ambiance du
+   thème. Le fond des tuiles est le PAPIER CLAIR du thème (rgba(255,255,255,.94),
+   cf. .card ci-dessus) : les textes codés en dur pour l'ancien fond sombre
+   (text-white / text-slate-400 / text-gold-*) y seraient invisibles — ils sont
+   ré-ancrés à l'encre chaude du thème, sur le même modèle que les règles .card
+   de la charte :
+     * TITRES <h3> (titre disque / BD) → ENCRE PRIMAIRE #2b1d12 ;
+     * MÉTADONNÉES <p> (artiste / auteurs / série / « Sorti le … ») → ENCRE
+       SECONDAIRE #4a3524 ;
+     * SÉRIE BD (text-gold-400/90 d'origine, accent volontaire) → MOUTARDE
+       soutenu #b57e00 : lisible sur le papier (ratio ~4:1) tout en gardant
+       son rôle d'accent de la charte ;
+     * BADGES du PIED de carte (genre / label / éditeur) → PAPIER CHAUD
+       --bg-raised + ENCRE SECONDAIRE + liseré moutarde doux (au lieu des
+       fonds or translucides pensés pour le fond sombre) — les badges SUPERPOSÉS à la jaquette/couverture (propriétaire, « Édition spéciale », « Livre dédicacé ») vivent sur le fond ENCRE de la vignette et CONSERVENT leur identité or/orange (exclus du ciblage ci-dessous).
+   Ciblage : les cartes « Derniers ajouts » sont les UNIQUES .card du Dashboard
+   portant l'attribut data-card (les états vides et la modale de détail n'en
+   portent pas) → aucune régression sur les autres surfaces. Le corps de carte est le <div> enfant direct SANS « gradient » (le cadre de vignette porte bg-gradient-to-br) : `> div:not([class*='gradient'])` isole donc le pied de carte et épargne les badges superposés à la vignette. */
+[data-theme='library'] .lib-dash .card[data-card] h3 {
+  color: var(--text-primary);
+}
+[data-theme='library'] .lib-dash .card[data-card] p {
+  color: var(--text-secondary);
+}
+[data-theme='library'] .lib-dash .card[data-card] p[class*='text-gold-400'] {
+  color: #b57e00; /* moutarde soutenu — accent série lisible sur papier */
+}
+[data-theme='library'] .lib-dash .card[data-card] > div:not([class*='gradient']) .badge {
+  background: var(--bg-raised);
+  color: var(--text-secondary);
+  border-color: rgba(230, 161, 0, 0.45);
+}
+
+/* EXCEPTION : bandeau « carte à jouer » (mode jukebox) — son fond est un
+   DÉGRADÉ SOMBRE conservé d'origine (from-night-950/95) : le texte y reste
+   CLAIR (titre blanc, métadonnées crème chaud), comme sous les autres thèmes.
+   Ciblage [class*='gradient'] = le bandeau bas de jaquette/couverture ; la
+   règle gagne sur celles ci-dessus (spécificité multi-classe supérieure). */
+[data-theme='library'] .lib-dash .card[data-card] [class*='gradient'] h3 {
+  color: #ffffff;
+}
+[data-theme='library'] .lib-dash .card[data-card] [class*='gradient'] p {
+  color: #f0e6d8; /* crème chaud — métadonnées du bandeau sombre */
+}
+
+/* ── B2) ÉTAT VIDE « Derniers ajouts » (EmptyState) : c'est une .card SANS
+   data-card → papier clair du thème ; son texte d'origine (text-white /
+   text-slate-400, pensé pour le fond sombre) y serait illisible. Ré-ancrage à
+   l'encre chaude du thème (même logique que les tuiles ci-dessus). L'icône
+   (disque emoji sur pastille sombre) n'est pas du texte : conservée. */
+[data-theme='library'] .lib-dash .card.col-span-full h3 {
+  color: var(--text-primary);
+}
+[data-theme='library'] .lib-dash .card.col-span-full p {
+  color: var(--text-secondary);
+}
+
+/* ── C) TITRES DE LA SECTION « DERNIERS AJOUTS » — lettrage FUTURA de la
+   charte (classe .cb-page-title posée dans Dashboard.jsx sous ce thème) :
+   brun profond + ombrage blanc doux, cohérent avec l'en-tête de bienvenue.
+   Le lien « Tout voir » suit déjà la charte (règle a[class*='text-gold-400']
+   ci-dessus → moutarde). */
+
+/* ── D) MESSAGE D'ERREUR DE CHARGEMENT : bordeaux de la charte (au lieu du
+   rose froid d'origine, illisible sur le voile clair). */
+[data-theme='library'] .lib-dash p[class*='text-rose-400'] {
+  color: var(--lib-bordeaux);
+}

@@ -32,6 +32,13 @@ export default function Dashboard() {
   // corrigeait qu'au F5. L'observer suit data-theme sur <html> → re-rendu
   // instantané dès la bascule (Navbar.handleThemeChange / App.switchTheme).
   const comicTheme = useAppliedTheme() === 'comic-books'
+  // Thème « Médiathèque » (lumineux) : les tuiles du dashboard conservent leur
+  // STRUCTURE et leur FOND d'origine (photos + voiles sombres / verre dépoli) —
+  // seule la COULEUR DU TEXTE est ré-ancrée à l'encre chaude du thème pour une
+  // lisibilité parfaite sur ces fonds (cf. bloc « TUILES DU DASHBOARD » de
+  // src/themes/library.css). Le lettrage des titres suit la charte du thème
+  // (Futura, cf. .comic-greeting / .cb-page-title) — inerte ailleurs.
+  const libraryTheme = useAppliedTheme() === 'library'
   const [vinyls, setVinyls] = useState([])
   const [comics, setComics] = useState([])
   const [detailVinyl, setDetailVinyl] = useState(null)
@@ -90,7 +97,10 @@ export default function Dashboard() {
     // colonnes de la grille s'étirent à la même hauteur et TOUT l'espace libre est
     // absorbé par les enfants flex-1 de chaque colonne → ZÉRO trou. Section basse :
     // les 4 cartes secondaires en grid sm:grid-cols-2 lg:grid-cols-4 pleine largeur.
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
+    // `lib-dash` : ancre CSS du thème « Médiathèque » (src/themes/library.css,
+    // bloc « TUILES DU DASHBOARD ») — ré-ancrage des couleurs de texte des tuiles
+    // à l'encre chaude du thème. Inerte sous les autres thèmes.
+    <div className="lib-dash max-w-7xl mx-auto p-6 space-y-6">
       {/* Modale de détail (clic sur carte) */}
       <ItemDetailModal type="vinyl" item={detailVinyl} onClose={() => setDetailVinyl(null)} onEdit={(v) => { setDetailVinyl(null); navigate(`/vinyles/${v.id}`) }} />
       <ItemDetailModal type="comic" item={detailComic} onClose={() => setDetailComic(null)} onEdit={(c) => { setDetailComic(null); navigate(`/comics/${c.id}`) }} />
@@ -245,11 +255,22 @@ export default function Dashboard() {
       {/* ============ DERNIERS AJOUTS (thème Comic Books : titres en lettrage « case BD ») ============
           Tuiles : les cartes passent automatiquement en PAPIER BLANC FRANC
           (src/themes/comic-books.css : --card-bg / --bg-elevated = #ffffff, fond de
-          vignette encre) — structure identique, fond + texte adaptés à bg_comics.jpg. */}
+          vignette encre) — structure identique, fond + texte adaptés à bg_comics.jpg.
+          Thème « Médiathèque » : fond des tuiles CONSERVÉ (papier clair du thème),
+          textes ré-ancrés à l'encre chaude par library.css (bloc « TUILES DU DASHBOARD »). */}
       <section>
         {/* Titre de section : lettrage Bangers blanc + liseré/ombre noire
-            (cf. .font-comic-title du thème Comic Books) ; d'origine ailleurs. */}
-        <h2 className={comicTheme ? 'font-comic-title mb-6 text-3xl tracking-wide md:text-4xl' : 'text-lg font-bold uppercase tracking-wider text-white mb-4'}>
+            (cf. .font-comic-title du thème Comic Books) ; sous « Médiathèque »,
+            lettrage FUTURA de la charte (cf. .cb-page-title de library.css —
+            brun profond + ombrage blanc doux, comme l'en-tête de bienvenue) ;
+            d'origine ailleurs. */}
+        <h2 className={
+          comicTheme
+            ? 'font-comic-title mb-6 text-3xl tracking-wide md:text-4xl'
+            : libraryTheme
+              ? 'cb-page-title mb-4 text-lg font-bold uppercase tracking-wider'
+              : 'text-lg font-bold uppercase tracking-wider text-white mb-4'
+        }>
           {t('dashboard.latestAdds')}
         </h2>
         {loadError ? (
@@ -260,11 +281,15 @@ export default function Dashboard() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 {/* Sous-titre « Disques » : encre du thème (noir chaud) + halo blanc
-                    discret — jamais de gris slate qui se fondrait dans la photo. */}
+                    discret — jamais de gris slate qui se fondrait dans la photo.
+                    Sous « Médiathèque », lettrage FUTURA de la charte (cf.
+                    .cb-page-title de library.css). */}
                 <h3 className={
                   comicTheme
                     ? 'font-bold uppercase tracking-wide text-xl [color:var(--text-primary)]'
-                    : 'font-bold text-slate-200'
+                    : libraryTheme
+                      ? 'cb-page-title font-bold text-xl'
+                      : 'font-bold text-slate-200'
                 }>
                   {t('dashboard.vinylsSection')}
                 </h3>
@@ -307,7 +332,9 @@ export default function Dashboard() {
                 <h3 className={
                   comicTheme
                     ? 'font-bold uppercase tracking-wide text-xl [color:var(--text-primary)]'
-                    : 'font-bold text-slate-200'
+                    : libraryTheme
+                      ? 'cb-page-title font-bold text-xl'
+                      : 'font-bold text-slate-200'
                 }>
                   {t('dashboard.comicsSection')}
                 </h3>
@@ -431,6 +458,13 @@ function PrimaryStatCard({ to, icon, label, value, bgImage, glow, frame, chip, n
  * étroit (sm:flex) pour préserver la lisibilité de la grille 4 colonnes.
  */
 function SecondaryStatCard({ to, icon, label, value, theme = { card: '', glow: '', chip: '', arrow: 'text-slate-300' }, className = '' }) {
+  // Thème « Médiathèque » : structure + fond d'origine CONSERVÉS (verre dépoli
+  // translucide) — seule la COULEUR DU TEXTE change pour une lisibilité parfaite
+  // sur le fond clair du thème. Le label / chiffre d'origine (text-slate-200 /
+  // text-white, pensés pour un fond sombre) seraient illisibles sur le verre
+  // clair : ils passent à l'encre chaude du thème (cf. bloc « TUILES DU DASHBOARD »
+  // de library.css). Composant local au Dashboard → condition JSX fiable.
+  const libraryTheme = useAppliedTheme() === 'library'
   return (
     <div className={`group relative h-full rounded-2xl transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50 ${className}`}>
       {/* Halo lumineux du thème (blur-2xl déporté hors du cadre). */}
@@ -444,8 +478,10 @@ function SecondaryStatCard({ to, icon, label, value, theme = { card: '', glow: '
           {icon}
         </span>
         <span className="relative min-w-0">
-          <span className="block truncate text-[11px] font-semibold uppercase tracking-wider text-slate-200">{label}</span>
-          <span className="mt-0.5 block text-3xl font-extrabold leading-none text-white">{value}</span>
+          {/* Label + chiffre : blanc d'origine (fond sombre) ; sous « Médiathèque »,
+              encre chaude du thème (ré-ancrage CSS, cf. library.css). */}
+          <span className={`block truncate text-[11px] font-semibold uppercase tracking-wider ${libraryTheme ? '' : 'text-slate-200'}`}>{label}</span>
+          <span className={`mt-0.5 block text-3xl font-extrabold leading-none ${libraryTheme ? '' : 'text-white'}`}>{value}</span>
         </span>
         {/* Flèche « accès direct » du thème : apparaissant au survol (glisse à gauche). */}
         <span className="relative ml-auto hidden shrink-0 sm:flex">
