@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "CLA Assistant Check"
-        uses: contributor-assistant/github-action@v2
+        uses: contributor-assistant/github-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
