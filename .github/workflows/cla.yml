@@ -1,0 +1,29 @@
+name: "CLA Assistant"
+on:
+  issue_comment:
+    types: [created]
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+  statuses: write
+
+jobs:
+  CLAAssistant:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "CLA Assistant Check"
+        uses: contributor-assistant/github-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          path-to-signatures: 'signatures/version1/cla.json'
+          path-to-document: 'https://github.com/Irwin0812/geek0thek/new/main/CLA.md'
+          branch: 'main'
+          # --- Personnalisation des messages ---
+          custom-pr-comment: 'Merci pour votre contribution ! Veuillez signer notre Contrat de Licence de Contribution (CLA) en écrivant un commentaire : "J ai lu et j accepte le CLA".'
+          signed-check-comment: 'Merci @$s, votre signature a bien été prise en compte !'
+  
