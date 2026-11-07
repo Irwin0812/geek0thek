@@ -5,7 +5,6 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License.
  */
-const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const env = require('../config/env');
@@ -14,6 +13,9 @@ const { validatePassword } = require('../utils/password');
 const emailService = require('../utils/emailService');
 const totp = require('../utils/totp');
 const { convertFileToWebP } = require('../utils/imageProcessor');
+// Service GÉNÉRIQUE de nettoyage des fichiers d'image uploadés (suppression
+// physique + garde avatar) — partagé par toutes les entités.
+const { deleteAvatarFile } = require('../utils/imageCleanupService');
 
 // ------------------------------------------------------------
 // Helpers
@@ -144,19 +146,13 @@ function cleanTheme(raw) {
 
 /**
  * Conduit à la suppression du fichier d'avatar local (le cas échéant).
+ * Délégation au service GÉNÉRIQUE de nettoyage (imageCleanupService.
+ * deleteAvatarFile) : garde stricte « /uploads/avatars/<fichier> » (jamais de
+ * chemin imbriqué — protection contre toute traversée de répertoire).
  * Retourne true si un fichier a été supprimé.
  */
 function removeAvatarFile(avatarUrl) {
-  if (!avatarUrl || typeof avatarUrl !== 'string') return false;
-  if (!avatarUrl.startsWith('/uploads/avatars/') || /[/\\]/.test(avatarUrl.slice(1).split('/').pop() || '')) {
-    return false; // jamais de chemin hors du dossier des avatars
-  }
-  try {
-    fs.unlinkSync(path.join(env.uploadDir, 'avatars', path.basename(avatarUrl)));
-    return true;
-  } catch {
-    return false;
-  }
+  return deleteAvatarFile(avatarUrl);
 }
 
 /**

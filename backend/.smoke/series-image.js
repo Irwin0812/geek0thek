@@ -5,12 +5,15 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License.
  */
-// Smoke test LOCAL (sans SSH / sans base) du rapatriement de l'image de SÉRIE.
+// Smoke test LOCAL (sans SSH / sans base) du visuel GLOBAL d'une SÉRIE.
 // - mocke uniquement la couche db et fetch global ;
 // - UPLOAD_DIR redirigé vers un dossier temporaire ;
-// - vérifie : cascade Open Library (série) -> Google Books -> Open Library,
-//   repli FORCÉ img/no_title.jpg, réutilisation de l'image existante
-//   (y compris le repli déjà attribué -> aucun re-appel API).
+// - vérifie : cascade Open Library (série) -> Google Books -> Open Library
+//   (autoFetchSeriesImage, encore exposée), réutilisation de l'image existante
+//   (y compris le repli déjà attribué -> aucun re-appel API) et ABSENCE de
+//   recherche automatique forcée par le résolveur contrôleur : sans visuel
+//   existant, la colonne series_image reste VIDE (null) — l'affichage retombe
+//   sur l'emblème par défaut img/no_title.jpg.
 process.env.NODE_ENV = 'development';
 
 const path = require('path');
@@ -158,25 +161,28 @@ function check(name, cond, extra) {
   check('image = /img/no_title.jpg conservée', r.image === '/img/no_title.jpg', r.image);
   check('aucun appel fetch', calls.length === 0, JSON.stringify(calls));
 
-  console.log('\n[6] Résolveur contrôleur — série inconnue + APIs OK -> recherche auto (logo OL prioritaire)');
+  console.log('\n[6] Résolveur contrôleur — série inconnue + APIs OK -> AUCUNE recherche auto forcée');
   calls.length = 0; seriesStore = [];
   r = await autoResolveComicSeriesImage('Blake et Mortimer');
-  check("from='auto'", r.from === 'auto', JSON.stringify(r));
-  check('nouveau chemin local /uploads/series/…', typeof r.image === 'string' && r.image.startsWith('/uploads/series/'), r.image);
+  check("from='none' (plus de recherche automatique à la création)", r.from === 'none', JSON.stringify(r));
+  check('image null (colonne laissée VIDE — repli img/no_title.jpg à l\'affichage)', r.image === null, JSON.stringify(r));
+  check('aucun appel fetch (jamais de re-recherche à chaque tome)', calls.length === 0, JSON.stringify(calls));
 
-  // L'appelant (createComic) attache ensuite le VISUEL à l'entité Série :
-  const ent = await seriesService.ensureSeries('Blake et Mortimer', r.image);
-  check("entité Série créée avec l'image (future comics.series_image)", Number.isFinite(ent.seriesId) && ent.image === r.image, JSON.stringify(ent));
-  // Et un 2e tome de la même série réutilise exactement la même image :
+  // L'appelant (createComic) ne crée l'entité SÉRIE que sans image ; un 2e
+  // tome de la même série retombe sur « aucun visuel » tant qu'aucun visuel
+  // n'a été fourni par l'utilisateur :
+  const ent = await seriesService.ensureSeries('Blake et Mortimer', null);
+  check("entité Série créée SANS image (comics.series_image restera NULL)", Number.isFinite(ent.seriesId) && ent.image === null, JSON.stringify(ent));
   const r2 = await autoResolveComicSeriesImage('blake et mortimer');
-  check('2e tome : même image (entité trouvée par nom normalisé)', r2.from === 'existing' && r2.image === ent.image, JSON.stringify(r2));
+  check('2e tome : toujours aucun visuel (entité sans image)', r2.from === 'none' && r2.image === null, JSON.stringify(r2));
 
-  console.log('\n[7] Résolveur contrôleur — série inconnue + APIs HS -> repli FORCE /img/no_title.jpg');
+  console.log('\n[7] Résolveur contrôleur — série inconnue + APIs HS -> colonne VIDE (null)');
   calls.length = 0; seriesStore = []; failAll = true; try {
     r = await autoResolveComicSeriesImage('Série fantôme');
-    // Le service absorbe les pannes API (jamais d'exception) et retourne le
-    // repli ; « from » reste 'auto', la GARANTIE c'est l'image : jamais null.
-    check('image == /img/no_title.jpg (jamais null/vide), réseau coupé', r.image === '/img/no_title.jpg', JSON.stringify(r));
+    // Plus AUCUNE recherche automatique : le résolveur ne fait jamais d'appel
+    // réseau, la GARANTIE c'est l'image — null (l'affichage retombe sur
+    // img/no_title.jpg), jamais une couverture de tome.
+    check("from='none' et image null, réseau coupé", r.from === 'none' && r.image === null, JSON.stringify(r));
   } finally { failAll = false; }
 
   console.log('\n================ RESULTAT ================');

@@ -324,8 +324,10 @@ async function main() {
     // ================================================================
     // Scénario 5 — PUT /comics/6 : contamination LEGACY en base
     //   (series_image = couverture du TOME) + aucun changement d'image demandé
-    //   -> recalcul auto ; la jaquette est REJETEE (repli propre no_title.jpg,
-    //   propagé à la série) — jamais recopiée dans series_image.
+    //   -> AUCUNE recherche automatique forcée : la jaquette est REJETÉE comme
+    //   image de série (jamais recopiée), la ligne courante est purgée à NULL
+    //   (repli propre img/no_title.jpg à l'affichage) — jamais propagée aux
+    //   autres tomes, qui seront réparés à leur propre enregistrement.
     // ================================================================
     const c6 = { ...comic, id: 6, cover_url: '/uploads/comics/c6.jpg', series_image: '/uploads/comics/c6.jpg', series_id: 9 };
     state.comics = { 6: c6, 7: { ...comic, id: 7, series: 'Astérix', series_id: 9, series_image: '/uploads/comics/c6.jpg', cover_url: '/uploads/comics/c7.jpg' } };
@@ -336,10 +338,10 @@ async function main() {
       body: { title: 'T6', authors: 'A', publisher: 'P', series: 'Astérix', coverRemoteUrl: '/uploads/comics/c6.jpg' },
     };
     await cc.updateComic(req5, makeRes(), (e) => { throw e; });
-    assert.strictEqual(c6.series_image, '/img/no_title.jpg', `contamination corrigée -> no_title (got ${c6.series_image})`);
-    assert.strictEqual(state.comics[7].series_image, '/img/no_title.jpg', 'autre tome de la série -> no_title (propagation)');
+    assert.strictEqual(c6.series_image, null, `contamination purgée à NULL sur la ligne courante (got ${c6.series_image})`);
+    assert.strictEqual(state.comics[7].series_image, '/uploads/comics/c6.jpg', 'autre tome inchangé (réparé à son propre enregistrement — jamais de propagation forcée)');
     assert.strictEqual(c6.cover_url, '/uploads/comics/c6.jpg', 'couverture du TOME inchangée (jamais touchée)');
-    console.log('S5 OK : contamination legacy série=tome corrigée au save (repli propre, couverture préservée)');
+    console.log('S5 OK : contamination legacy série=tome purgée à NULL au save (jamais recopiée, couverture préservée)');
 
     // ================================================================
     // Scénario 6 — PUT /comics/8 : remove_series_image SEUL (série encore

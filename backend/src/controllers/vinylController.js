@@ -30,6 +30,10 @@ const {
 const { canEditItem, canConsult } = require('../middlewares/auth');
 const { findArtistId, ensureArtist, removeArtistImageGlobally } = require('../utils/artistService');
 const { convertFileToWebP } = require('../utils/imageProcessor');
+// Service GÉNÉRIQUE de nettoyage des fichiers d'image uploadés (suppression
+// physique + orphan check) — partagé par toutes les entités (BD, vinyle,
+// artiste, avatar, futures collections).
+const { deleteLocalUploadFile, deleteOrphanedUpload } = require('../utils/imageCleanupService');
 
 function toVinylDto(row) {
   return {
@@ -230,20 +234,6 @@ function localArtistFilePath(file) {
   return rel && !rel.startsWith('..')
     ? `/uploads/${rel}`
     : `/uploads/artists/${path.basename(file.path)}`;
-}
-
-/**
- * Supprime un fichier local du volume de uploads décrit par son chemin
- * d'accès (« /uploads/… »). Ignoré silencieusement si absent ou distant.
- */
-function deleteLocalArtistFile(storedPath) {
-  const raw = String(storedPath || '').trim();
-  if (!raw.startsWith('/uploads/')) return;
-  const rel = raw.slice('/uploads/'.length).split(/[\/\\]/).filter(Boolean).join('/');
-  if (!rel) return;
-  try {
-    fs.rmSync(path.join(env.uploadDir, rel), { force: true });
-  } catch {}
 }
 
 /**
@@ -576,14 +566,11 @@ async function syncArtistEntity(artistName, artistImage = null) {
   );
 
   // 3) Nettoyage : un ancien fichier local n'est supprimé que si plus AUCUN
-  //    disque (tous utilisateurs) ne le référence.
+  //    disque (tous utilisateurs) ne le référence — délégation au service
+  //    GÉNÉRIQUE de nettoyage (orphan check + candidats legacy).
   for (const r of oldFiles.rows) {
     if (!r.img || r.img === artistImage) continue;
-    const stillRef = await query(
-      'SELECT 1 FROM vinyls WHERE artist_image = $1 LIMIT 1',
-      [r.img]
-    );
-    if (stillRef.rows.length === 0) deleteLocalArtistFile(r.img);
+    await deleteOrphanedUpload(r.img, 'vinyls', 'artist_image');
   }
 
   return { artistId: targetId, image: artistImage };
@@ -1195,27 +1182,13 @@ async function createVinyl(req, res, next) {
 /**
  * Supprime le fichier local de jaquette décrit par le chemin stocké en base
  * ("/uploads/vinyls/<fichier>" ou "/uploads/<fichier>" pour les anciennes
- * lignes). Résout d'abord le chemin physique réel (avec gestion du
- * sous-dossier "vinyls/") pour que le bon fichier soit retiré.
+ * lignes). Délégation au service GÉNÉRIQUE de nettoyage
+ * (imageCleanupService.deleteLocalUploadFile) : normalise d'abord le chemin,
+ * puis teste les candidats physiques (chemin exact, sous-dossier legacy
+ * "vinyls/", fichier en racine du volume) pour que le bon fichier soit retiré.
  */
 function deleteLocalCoverFile(coverUrl) {
-  const raw = normalizeStoredCoverPath(coverUrl);
-  if (!raw.startsWith('/uploads/')) return;
-  const rel = raw.slice('/uploads/'.length).split(/[\/\\]/).filter(Boolean).join('/');
-  if (!rel) return;
-  const candidates = [
-    path.join(env.uploadDir, rel),
-    path.join(env.uploadDir, 'vinyls', rel),
-    path.join(env.uploadDir, path.basename(rel)),
-  ];
-  for (const candidate of candidates) {
-    try {
-      if (fs.existsSync(candidate)) {
-        fs.rmSync(candidate, { force: true });
-        return;
-      }
-    } catch {}
-  }
+  deleteLocalUploadFile(normalizeStoredCoverPath(coverUrl), 'vinyls');
 }
 
 /**

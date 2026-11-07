@@ -5,11 +5,11 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License.
  */
-const fs = require('fs');
-const path = require('path');
-const env = require('../config/env');
 const { query } = require('../config/db');
 const { normalizeArtistName } = require('./musicBrainzClient');
+// Service GÉNÉRIQUE de nettoyage des fichiers d'image uploadés (orphan check
+// + suppression physique) — partagé par toutes les entités.
+const { deleteOrphanedUpload } = require('./imageCleanupService');
 
 // ------------------------------------------------------------
 // ENTITÉ ARTISTE (table `artists`, dédupliquee par nom normalisé)
@@ -142,18 +142,13 @@ async function removeArtistImageGlobally(artistName, artistId = null) {
     } catch {}
 
     // 4) Nettoyage : un ancien fichier local n'est supprimé que si plus AUCUN
-    //    disque (tous utilisateurs) ne le référence.
+    //    disque (tous utilisateurs) ne le référence — délégation au service
+    //    GÉNÉRIQUE de nettoyage (orphan check + candidats legacy).
     for (const r of oldFiles) {
       if (!r.img) continue;
       const raw = String(r.img).trim();
       if (!raw.startsWith('/uploads/')) continue;
-      try {
-        const stillRef = await query('SELECT 1 FROM vinyls WHERE artist_image = $1 LIMIT 1', [raw]);
-        if (stillRef.rows.length === 0) {
-          const rel = raw.slice('/uploads/'.length).split(/[\/\\]/).filter(Boolean).join('/');
-          fs.rmSync(path.join(env.uploadDir, rel), { force: true });
-        }
-      } catch {}
+      await deleteOrphanedUpload(raw, 'vinyls', 'artist_image');
     }
   } catch (err) {
     console.warn(`[artistImage] Purge globale de l'image d'artiste impossible (« ${name} ») :`, err.message);

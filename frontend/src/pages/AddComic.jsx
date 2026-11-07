@@ -133,6 +133,10 @@ export default function AddComic() {
   // Image / logo de la SÉRIE (colonne comics.series_image) : fichier choisi par
   // l'utilisateur + image courante en base (aperçu en mode édition).
   const [seriesFile, setSeriesFile] = useState(null)
+  // URL distante SAISIE pour l'image de la SÉRIE (Google Books, Open Library…) :
+  // alternative au téléversement de fichier — le backend la télécharge dans
+  // ./uploads/series au moment de l'enregistrement.
+  const [seriesRemoteUrl, setSeriesRemoteUrl] = useState('')
   const [remoteUrl, setRemoteUrl] = useState('')
   const [existingCover, setExistingCover] = useState('')
   const [existingSeriesImage, setExistingSeriesImage] = useState('')
@@ -323,11 +327,13 @@ export default function AddComic() {
   // stockée en base, jamais la jaquette du volume.
   const seriesPreview = useMemo(() => {
     if (seriesFile) return URL.createObjectURL(seriesFile)
+    // URL distante SAISIE : aperçu immédiat (doit être http/https).
+    if (!removeSeriesImage && seriesRemoteUrl) return /^https?:\/\//.test(seriesRemoteUrl) ? seriesRemoteUrl : null
     if (isEdit && existingSeriesImage && !removeSeriesImage) {
       return sameAsCover(existingSeriesImage, existingCover) ? IMG_NO_TITLE : toDisplayCover(existingSeriesImage)
     }
     return IMG_NO_TITLE
-  }, [seriesFile, existingSeriesImage, removeSeriesImage, isEdit, existingCover])
+  }, [seriesFile, seriesRemoteUrl, existingSeriesImage, removeSeriesImage, isEdit, existingCover])
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
@@ -365,6 +371,8 @@ export default function AddComic() {
       // Fichier fraîchement choisi : retiré de l'état + input DOM ré-initialisé.
       setSeriesFile(null)
       if (seriesFileInput.current) seriesFileInput.current.value = ''
+      // URL distante saisie : vidée (sinon l'aperçu y retomberait).
+      setSeriesRemoteUrl('')
       // Image de série COURANTE en base : suppression explicite -> l'emblème
       // par défaut img/no_title.jpg s'affiche INSTANTANÉMENT dans l'aperçu et
       // la colonne series_image est ÉCRASÉE par NULL au submit (drapeau
@@ -456,6 +464,11 @@ export default function AddComic() {
           // ne touche JAMAIS cover_url (le backend traite les deux colonnes par
           // des branches strictement séparées).
           fd.append('seriesImage', seriesFile)
+        } else if (seriesRemoteUrl.trim()) {
+          // URL distante SAISIE pour l'image de la série : le backend la
+          // télécharge dans ./uploads/series et l'associe à la série (entité +
+          // TOUS les tomes du même nom). Ne touche JAMAIS cover_url.
+          fd.append('seriesImageRemoteUrl', seriesRemoteUrl.trim())
         } else if (isEdit && storedLocalPath(existingSeriesImage)) {
           // Série existante, aucun nouveau fichier choisi : on renvoie le chemin
           // local STOCKÉ tel quel (/uploads/… uniquement) —
@@ -519,15 +532,20 @@ export default function AddComic() {
           coverRemoteUrl: removeCover
             ? null
             : remoteUrl || ((isEdit && storedLocalPath(existingCover)) || null),
-          // IMAGE DE SÉRIE (colonne series_image, mode JSON) : en édition sans
-          // nouveau fichier, le chemin local STOCKÉ est repassé tel quel (le backend
-          // reconnaît qu'il n'y a rien à télécharger et conserve la valeur en base).
-          // SUPPRESSION EXPLICITE armée : le drapeau prime — jamais de repassage du
-          // chemin (le backend ÉCRASE series_image par NULL — couverture du tome
-          // strictement intacte, dissociation stricte).
+          // IMAGE DE SÉRIE (colonne series_image, mode JSON) : URL distante SAISIE
+          // prioritaire (le backend la télécharge dans ./uploads/series) ; sinon, en
+          // édition sans nouveau fichier, le chemin local STOCKÉ est repassé tel quel
+          // (le backend reconnaît qu'il n'y a rien à télécharger et conserve la valeur
+          // en base). SUPPRESSION EXPLICITE armée : le drapeau prime — jamais de
+          // repassage du chemin (le backend ÉCRASE series_image par NULL — couverture
+          // du tome strictement intacte, dissociation stricte).
           ...(removeSeriesImage
             ? { remove_series_image: true }
-            : { seriesImageRemoteUrl: isEdit ? storedLocalPath(existingSeriesImage) || null : null }),
+            : {
+                seriesImageRemoteUrl:
+                  seriesRemoteUrl.trim() ||
+                  (isEdit ? storedLocalPath(existingSeriesImage) || null : null),
+              }),
         }
         result = isEdit ? await api.comics.update(id, payload) : await api.comics.create(payload)
       }
@@ -673,9 +691,9 @@ export default function AddComic() {
 
         {/* Image de la SÉRIE (photo / logo) — entité Série. Champ « seriesImage »
             du formulaire : téléversée dans ./uploads/series et partagée entre
-            TOUS les tomes du même nom (tous users). Optionnelle : à défaut, le
-            backend la récupère automatiquement (Google Books / Open Library),
-            repli propre img/no_title.jpg. N'affecte jamais la couverture
+            TOUS les tomes du même nom (tous users). Optionnelle : sans visuel
+            fourni, l'emblème par défaut img/no_title.jpg s'affiche (aucune
+            recherche automatique forcée). N'affecte jamais la couverture
             d'album ci-dessus. */}
         <fieldset className="space-y-3">
           <legend className="label !mb-0">{t('comicForm.seriesImageSection')}</legend>
@@ -709,6 +727,23 @@ export default function AddComic() {
                 </label>
                 {seriesFile && <p className="mt-1 text-xs text-slate-500 truncate">{seriesFile.name}</p>}
               </div>
+              {/* URL distante pour l'image de la SÉRIE (alternative au fichier) :
+                  Google Books, Open Library… — le backend la télécharge dans
+                  ./uploads/series à l'enregistrement. */}
+              <div>
+                <label className="label">{t('common.orRemoteUrl')}</label>
+                <input
+                  className="input"
+                  placeholder={t('comicForm.seriesRemoteUrlPlaceholder')}
+                  value={seriesRemoteUrl}
+                  onChange={(e) => {
+                    setSeriesRemoteUrl(e.target.value)
+                    // Une URL est (re)saisie : la suppression explicite demandée
+                    // avant devient caduque.
+                    if (e.target.value.trim()) setRemoveSeriesImage(false)
+                  }}
+                />
+              </div>
               {/* « Retirer le fichier » — SUPPRESSION EXPLICITE de l'image de
                   Série : retire le fichier éventuellement choisi + ré-initialise
                   l'input DOM, bascule immédiatement l'aperçu sur l'image de
@@ -717,7 +752,7 @@ export default function AddComic() {
                   au backend (colonne series_image ÉCRASÉE par NULL — jamais
                   l'ancienne image, jamais la jaquette du tome). Visible si un
                   fichier est choisi OU s'il existe une image en base à retirer. */}
-              {(seriesFile || (isEdit && existingSeriesImage)) && (
+              {(seriesFile || seriesRemoteUrl.trim() || (isEdit && existingSeriesImage)) && (
                 <button
                   type="button"
                   className="text-[11px] text-slate-500 underline decoration-dotted hover:text-slate-300"

@@ -5,12 +5,13 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License.
  */
-const fs = require('fs');
-const path = require('path');
 const env = require('../config/env');
 const { query } = require('../config/db');
 const { downloadCoverImageToDir } = require('./musicBrainzClient');
 const googleBooks = require('./googleBooksClient');
+// Service GÉNÉRIQUE de nettoyage des fichiers d'image uploadés (orphan check
+// + suppression physique) — partagé par toutes les entités.
+const { deleteOrphanedUpload } = require('./imageCleanupService');
 
 // ------------------------------------------------------------
 // ENTITÉ SÉRIE (table `series`, dédupliquée par nom normalisé)
@@ -22,11 +23,11 @@ const googleBooks = require('./googleBooksClient');
 //   l'ENTITÉ ARTISTE (artistService.js) :
 //     1. image MANUELLE (upload `seriesImage` ou URL distante) : priorité ;
 //     2. série DÉJÀ RÉFÉRENCÉE : réutilisation de l'image existante ;
-//     3. sinon : recherche automatique d'une image / logo via les APIs
-//        Open Library / Google Books, téléchargée dans <uploads>/series/ ;
-//     4. en cas d'ABSENCE DE RÉSULTAT OU D'ÉCHEC de ces APIs : repli propre
-//        sur l'image locale img/no_title.jpg — la création de la BD n'est
-//        JAMAIS bloquée.
+//     3. sinon : AUCUNE recherche automatique forcée — la colonne reste VIDE
+//        (null) et l'affichage retombe sur l'emblème par défaut
+//        img/no_title.jpg (la création de la BD n'est JAMAIS bloquée).
+// autoFetchSeriesImage (cascade Open Library / Google Books) reste exposée
+// pour un usage explicite, mais le contrôleur ne l'appelle plus à la création.
 // La clé `norm_name` est calculée avec normalizeSeriesName() : IDENTIQUE au
 // backfill SQL de la migration « series.table » (config/db.js / 009).
 // ------------------------------------------------------------
@@ -340,18 +341,13 @@ async function removeSeriesImageGlobally(seriesName, seriesId = null) {
     } catch {}
 
     // 4) Nettoyage : un ancien fichier local n'est supprimé que si plus AUCUN
-    //    tome (tous utilisateurs) ne le référence.
+    //    tome (tous utilisateurs) ne le référence — délégation au service
+    //    GÉNÉRIQUE de nettoyage (orphan check + candidats legacy).
     for (const r of oldFiles) {
       if (!r.img) continue;
       const raw = String(r.img).trim();
       if (!raw.startsWith(`/uploads/${SERIES_UPLOAD_SUBDIR}/`)) continue;
-      try {
-        const stillRef = await query('SELECT 1 FROM comics WHERE series_image = $1 LIMIT 1', [raw]);
-        if (stillRef.rows.length === 0) {
-          const rel = raw.slice('/uploads/'.length).split(/[\/\\]/).filter(Boolean).join('/');
-          fs.rmSync(path.join(env.uploadDir, rel), { force: true });
-        }
-      } catch {}
+      await deleteOrphanedUpload(raw, 'comics', 'series_image');
     }
   } catch (err) {
     console.warn(`[serie] Purge globale de l'image de série impossible (« ${name} ») :`, err.message);

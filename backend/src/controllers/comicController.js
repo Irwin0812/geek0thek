@@ -15,15 +15,17 @@ const { downloadCoverImage, isLocalCoverPath, searchByIsbn } = require('../utils
 // direct par code-barres (voir importComicByIsbn ci-dessous).
 const googleBooks = require('../utils/googleBooksClient');
 const {
-  SERIES_NO_TITLE_URL,
   SERIES_UPLOAD_SUBDIR,
   findSeries,
   ensureSeries,
-  autoFetchSeriesImage,
   removeSeriesImageGlobally,
 } = require('../utils/seriesService');
 const { canEditItem, canConsult } = require('../middlewares/auth');
 const { convertFileToWebP } = require('../utils/imageProcessor');
+// Service GÉNÉRIQUE de nettoyage des fichiers d'image uploadés (suppression
+// physique + orphan check) — partagé par toutes les entités (BD, vinyle,
+// artiste, avatar, futures collections).
+const { deleteLocalUploadFile, deleteOrphanedUpload } = require('../utils/imageCleanupService');
 
 // Garde l'arborescence des uploads en place (volume monté de la VM hôte) :
 // le sous-dossier « series/ » peut aussi bien être créé que par multer.
@@ -64,21 +66,13 @@ function isLocalSeriesPath(value) {
  * Supprime un fichier local d'image de série s'il n'est plus référencé par
  * aucune ligne de la base : les images de série sont PARTAGÉES entre TOUS
  * les tomes / utilisateurs (dédupliqués par nom de série), on ne supprime
- * donc qu'un chemin orphelin.
+ * donc qu'un chemin orphelin. Délégation au service GÉNÉRIQUE de nettoyage
+ * (imageCleanupService.deleteOrphanedUpload) — même sémantique que pour les
+ * autres entités (artiste, jaquette, avatar, futures collections).
  */
 async function deleteLocalSeriesFileIfOrphan(storedPath) {
-  const raw = String(storedPath || '').trim();
-  if (!isLocalSeriesPath(raw)) return;
-  const rel = raw.slice('/uploads/'.length).split(/[\/\\]/).filter(Boolean).join('/');
-  try {
-    const stillRef = await query(
-      'SELECT 1 FROM comics WHERE series_image = $1 LIMIT 1',
-      [raw]
-    );
-    if (stillRef.rows.length === 0) {
-      fs.rmSync(path.join(env.uploadDir, rel), { force: true });
-    }
-  } catch {}
+  if (!isLocalSeriesPath(storedPath)) return;
+  await deleteOrphanedUpload(storedPath, 'comics', 'series_image');
 }
 
 /**
@@ -186,61 +180,42 @@ async function resolveComicSeriesImage(req, existingImage = null) {
 }
 
 /**
- * Recherche automatique du VISUEL GLOBAL d'une SÉRIE (distinct des
- * couvertures de tomes individuels — cf. seriesService.autoFetchSeriesImage) :
- *   1. série DÉJÀ RÉFÉRENCÉE (même nom normalisé) -> réutilisation de
- *      l'image déjà stockée sur l'entité / les tomes (LA MÊME image pour
- *      tous, y compris le repli img/no_title.jpg déjà attribué — on ne doit
- *      PAS relancer de recherche API « à chaque tome ») ;
- *   2. sinon : métadonnées SÉRIE d'Open Library (logo global), puis Google
- *      Books / Open Library sur le nom de série seul, téléchargées dans
- *      <uploads>/series/ ;
- * EN CAS D'ABSENCE DE RÉSULTAT OU D'ÉCHEC total : repli FORCÉ sur l'image
- * de secours locale img/no_title.jpg (chemin absolu :
- * C:\Users\irwin\geek0thek\img\no_title.jpg, servie sous « /img/no_title.jpg »)
- * — la création de la BD n'est JAMAIS bloquée.
+ * Résout le VISUEL GLOBAL d'une SÉRIE (distinct des couvertures de tomes
+ * individuels) — SANS recherche automatique forcée :
+ *   1. série DÉJÀ RÉFÉRENCÉE (même nom normalisé) ET portant une image ->
+ *      réutilisation de l'image déjà stockée sur l'entité / les tomes (LA MÊME
+ *      image pour tous, y compris un repli img/no_title.jpg déjà attribué — on
+ *      ne doit PAS relancer de recherche API « à chaque tome ») ;
+ *   2. sinon : AUCUNE recherche automatique (Open Library / Google Books) —
+ *      tant qu'aucun visuel n'est fourni par l'utilisateur, la colonne
+ *      series_image reste VIDE (null) et l'affichage retombe sur l'emblème par
+ *      défaut img/no_title.jpg. L'image de série n'est plus jamais « trouvée »
+ *      toute seule à la création / au rattachement d'une BD.
  * @param {string} seriesName nom de la série tel qu'enregistré sur la BD
  * @param {string|null} [forbiddenCover] couverture du TOME en cours : si
  *   l'image déjà référencée par l'entité (réutilisation) lui est IDENTIQUE
  *   (contamination legacy), elle est rejetée au titre même de la dissociation
- *   série/tome — le repli « recherche auto puis img/no_title.jpg » s'applique
- *   à la place ; la couverture du tome ne doit JAMAIS devenir l'image de
+ *   série/tome — la couverture du tome ne doit JAMAIS devenir l'image de
  *   série (ni par réutilisation, ni par écriture).
- * @returns {Promise<{seriesId: number|null, image: string, from: 'existing'|'auto'|'fallback'}>}
- *   image : « /uploads/series/<fichier> » (nouveau visuel), l'image déjà
- *   stockée, ou « /img/no_title.jpg » en dernier repli.
+ * @returns {Promise<{seriesId: number|null, image: string|null, from: 'existing'|'none'}>}
+ *   image : l'image déjà stockée sur l'entité, ou null (aucun visuel —
+ *   l'affichage retombe alors sur img/no_title.jpg).
  */
 async function autoResolveComicSeriesImage(seriesName, forbiddenCover = null) {
   const found = await findSeries(seriesName);
   // RÉUTILISATION de l'image déjà référencée par l'entité — SAUF si elle est
   // interdite (identique à la couverture du TOME en cours) : jamais la
-  // jaquette d'un tome en image de série ; dans ce cas on repart sur la
-  // recherche automatique (forbiddenCover n'y est pas réappliquée).
+  // jaquette d'un tome en image de série ; dans ce cas on retombe sur
+  // « aucun visuel » (forbiddenCover n'y est pas réappliquée).
   const foundImageForbidden = Boolean(
     forbiddenCover && stripOrigin(found?.image || '') === stripOrigin(forbiddenCover)
   );
   if (found && found.image && !foundImageForbidden) {
     return { seriesId: found.seriesId, image: found.image, from: 'existing' };
   }
-  let fetched;
-  let from = 'auto';
-  try {
-    fetched = await autoFetchSeriesImage(seriesName);
-  } catch (err) {
-    // Non bloquant : les APIs peuvent être en panne sans que la création de
-    // la BD doive échouer.
-    console.warn('[serie] Image de série indisponible, repli img/no_title.jpg :', err.message);
-    fetched = SERIES_NO_TITLE_URL;
-    from = 'fallback';
-  }
-  // Garantie finale : même si le service revenait à vide (fichier introuvable,
-  // URL invalide, erreur non levée), la colonne doit TOUJOURS porter le repli
-  // propre « /img/no_title.jpg » plutôt qu'une valeur vide.
-  if (!fetched) {
-    fetched = SERIES_NO_TITLE_URL;
-    from = 'fallback';
-  }
-  return { seriesId: found ? found.seriesId : null, image: fetched, from };
+  // PLUS AUCUNE recherche automatique forcée : sans visuel existant, la
+  // colonne reste VIDE (null) — l'affichage retombe sur img/no_title.jpg.
+  return { seriesId: found ? found.seriesId : null, image: null, from: 'none' };
 }
 
 /**
@@ -528,32 +503,14 @@ function isLocalVinylCoverPath(value) {
 /**
  * Supprime le fichier local de couverture s'il existe.
  * Gère les chemins "/uploads/comics/<fichier>" (nouveaux) et les anciens
- * "/uploads/<fichier>" stockés avant le sous-dossier "comics/".
+ * "/uploads/<fichier>" stockés avant le sous-dossier "comics/". Délégation au
+ * service GÉNÉRIQUE de nettoyage (imageCleanupService.deleteLocalUploadFile,
+ * legacySubdir « comics ») — même sémantique que pour les autres entités.
  */
 function removeLocalCover(coverUrl) {
   const raw = normalizeStoredCoverPath(coverUrl);
   if (!isLocalCoverPath(raw) && !isLocalVinylCoverPath(raw)) return;
-  const rel = raw.slice('/uploads/'.length).split(/[\/\\]/).filter(Boolean).join('/');
-  if (!rel) return;
-  const candidates = [
-    path.join(env.uploadDir, rel),
-    path.join(env.uploadDir, 'comics', rel),
-    path.join(env.uploadDir, path.basename(rel)),
-  ];
-  for (const candidate of candidates) {
-    try {
-      if (fs.existsSync(candidate)) {
-        fs.rmSync(candidate, { force: true });
-        return;
-      }
-    } catch {}
-  }
-  if (isLocalCoverPath(raw)) {
-    try {
-      // Compat legacy (ancien comportement : sans le sous-dossier "comics/")
-      fs.rmSync(path.join(env.uploadDir, path.relative('/uploads', raw)), { force: true });
-    } catch {}
-  }
+  deleteLocalUploadFile(raw, 'comics');
 }
 
 // ------------------------------------------------------------
@@ -704,17 +661,18 @@ async function createComic(req, res, next) {
     // IMAGE DE SÉRIE (image / logo) — portée par la colonne
     // `comics.series_image` : 1. si le formulaire en fournit une
     // (champ "seriesImage" ou URL distante), elle est utilisée ;
-    // 2. sinon, série DÉJÀ RÉFÉRENCÉE (autre BD du même nom) : on
-    //    réutilise l'image déjà stockée — tous les tomes d'une série
-    //    affichent LA MÊME image ;
-    // 3. sinon : recherche automatique d'une image / logo (Open Library,
-    //    Google Books) téléchargée localement ; en cas d'ABSENCE DE
-    //    RÉSULTAT OU D'ÉCHEC : repli PROPRE sur l'image locale par défaut
-    //    img/no_title.jpg. La création de la BD n'est JAMAIS bloquée.
+    // 2. sinon, série DÉJÀ RÉFÉRENCÉE (autre BD du même nom) portant une
+    //    image : on réutilise l'image déjà stockée — tous les tomes d'une
+    //    série affichent LA MÊME image ;
+    // 3. sinon : AUCUNE recherche automatique forcée — la colonne reste
+    //    VIDE (null) et l'affichage retombe sur l'emblème par défaut
+    //    img/no_title.jpg. L'image de série n'est plus jamais « trouvée »
+    //    toute seule à la création d'une BD. La création n'est JAMAIS
+    //    bloquée.
     // L'ENTITÉ SÉRIE (table `series`) est créée / mise à jour en même temps.
     // --------------------------------------------------------------
     let seriesId = null;
-    let seriesImage = values.series ? SERIES_NO_TITLE_URL : null;
+    let seriesImage = null;
     // Image de SÉRIE fournie par le formulaire — connue AVANT le try pour que
     // le catch ci-dessous (panne de propagation à l'entité syncSeriesEntity)
     // sache ce qu'il DOIT conserver : une image manuelle RÉSOLUE avec succès
@@ -742,10 +700,12 @@ async function createComic(req, res, next) {
           // 1) Image MANUELLE fournie par le formulaire : elle prime.
           resolvedImage = manualSeriesImage;
         } else {
-          // 2/3) Série référencée -> réutilisation ; sinon recherche auto,
-          // repli propre img/no_title.jpg. La couverture du TOME est passée en
-          // interdiction : une image de série identique à la jaquette n'est
-          // JAMAIS réutilisée (dissociation totale).
+          // 2) Série DÉJÀ RÉFÉRENCÉE portant une image -> réutilisation ;
+          // sinon AUCUNE recherche automatique forcée : resolved.image vaut
+          // null et la colonne reste VIDE (l'affichage retombe sur
+          // img/no_title.jpg). La couverture du TOME est passée en interdiction
+          // : une image de série identique à la jaquette n'est JAMAIS
+          // réutilisée (dissociation totale).
           const resolved = await autoResolveComicSeriesImage(values.series, coverUrl);
           resolvedImage = resolved.image;
         }
@@ -785,12 +745,12 @@ async function createComic(req, res, next) {
           } catch {}
         }
       } catch (err) {
-        // Non bloquant : toute panne (base non migrée « series… », APIs
-        // injoignables…) n'empêche JAMAIS la création de la BD.
+        // Non bloquant : toute panne (base non migrée « series… »…) n'empêche
+        // JAMAIS la création de la BD.
         console.warn(
           '[serie] Résolution de l\'image de série impossible — choix de ' +
             'l\'utilisateur conservé si une image manuelle a été résolue, ' +
-            'sinon repli ' + SERIES_NO_TITLE_URL + ' :',
+            'sinon colonne laissée VIDE (repli img/no_title.jpg à l\'affichage) :',
           err.message
         );
         if (manualKeepOnCatch && manualSeriesImage) {
@@ -805,10 +765,11 @@ async function createComic(req, res, next) {
           seriesImage = manualSeriesImage;
         } else {
           // Rien à conserver (échec du téléchargement d'une URL distante, ou
-          // upload rejeté par la garde-fou série/tome) : nettoyage éventuel +
-          // repli propre.
+          // upload rejeté par la garde-fou série/tome) : nettoyage éventuel ;
+          // la colonne reste VIDE (null) — l'affichage retombe sur
+          // img/no_title.jpg.
           removeUnusedSeriesFiles(req.files);
-          seriesImage = SERIES_NO_TITLE_URL;
+          seriesImage = null;
         }
       }
     }
@@ -855,8 +816,9 @@ async function createComic(req, res, next) {
         values.addedDate || null,
         // ENTITÉ SÉRIE : id (null si la table `series` est absente — cf.
         // auto-migration « series.table » de config/db.js) + image / logo
-        // avec repli propre « /img/no_title.jpg ». Colonne TEXT : jamais
-        // null en base quand une série est renseignée (pas de COALESCE).
+        // fournie par le formulaire ou réutilisée depuis l'entité existante ;
+        // VIDE (null) sinon — l'affichage retombe alors sur l'emblème par
+        // défaut img/no_title.jpg (plus aucune recherche auto forcée).
         seriesId,
         seriesImage,
       ]
@@ -997,9 +959,8 @@ async function updateComic(req, res, next) {
     //    courante (aucune requête API, aucune réécriture) ; une ligne legacy
     //    sans entité est simplement rattachée à son entité existante ;
     //  - série DÉCLARÉE avec image absente ou NOM RENOMMÉ (nom inconnu) :
-    //    recherche automatique Open Library / Google Books, téléchargement
-    //    local, repli propre img/no_title.jpg — l'entité reçoit l'image et
-    //    tous les tomes du même nom l'adoptent ;
+    //    AUCUNE recherche automatique forcée — la colonne reste VIDE (null) et
+    //    l'affichage retombe sur l'emblème par défaut img/no_title.jpg ;
     //  - série VIDE : reset des colonnes du tome vers NULL (après l'UPDATE,
     //    le fichier local n'est retiré qu'une fois devenu orphelin — il est
     //    partagé avec les autres tomes de l'ancien nom).
@@ -1116,15 +1077,23 @@ async function updateComic(req, res, next) {
           }
         } else {
           // 3) Nom inconnu (renommage), image absente OU contaminée (=
-          //    couverture du tome legacy) : recherche AUTOMATIQUE Open
-          //    Library / Google Books sur le NOM DE SÉRIE seul, téléchargée
-          //    localement, repli PROPRE img/no_title.jpg — l'entité reçoit
-          //    l'image et tous les tomes du même nom l'adoptent. La couverture
-          //    du tome n'est JAMAIS réécrite dans series_image (forbiddenCover).
+          //    couverture du tome legacy) : AUCUNE recherche automatique
+          //    forcée. On réutilise l'image de l'entité si le (nouveau) nom en
+          //    porte déjà une ; sinon la colonne reste VIDE (null) et
+          //    l'affichage retombe sur l'emblème par défaut img/no_title.jpg.
+          //    La couverture du tome n'est JAMAIS réécrite dans series_image
+          //    (forbiddenCover).
           const resolved = await autoResolveComicSeriesImage(values.series, coverUrl);
           seriesImageToWrite = resolved.image;
-          const synced = await syncSeriesEntity(values.series, resolved.image);
-          seriesIdToWrite = synced.seriesId || null;
+          if (resolved.image) {
+            const synced = await syncSeriesEntity(values.series, resolved.image);
+            seriesIdToWrite = synced.seriesId || null;
+          } else if (resolved.seriesId != null) {
+            // Série renommée vers un nom déjà référencé (entité existante sans
+            // image) : rattachement à l'entité du nouveau nom, sans écriture
+            // d'image.
+            seriesIdToWrite = resolved.seriesId;
+          }
         }
       } catch (err) {
         // Non bloquant (base non migrée « series… », APIs injoignables…) : on
@@ -1384,20 +1353,20 @@ async function importComicByIsbn(req, res, next) {
     // bloc « IMAGE DE SÉRIE » : aucun code en double — voir la section
     // « IMAGE DE SÉRIE » de createComic ci-dessus, seule source de vérité).
     let seriesId = null;
-    let seriesImage = values.series ? SERIES_NO_TITLE_URL : null;
+    let seriesImage = null;
     if (values.series) {
       try {
         ensureUploadDirs();
         // Image MANUELLE fournie optionnellement avec l'import (« seriesImage ») :
-        // elle prime sur toute recherche automatique — même chaîne que le formulaire.
+        // elle prime sur toute réutilisation — même chaîne que le formulaire.
         const manualSeriesImage = await resolveComicSeriesImage(req, null);
         let resolvedImage = null;
         if (manualSeriesImage) {
           resolvedImage = manualSeriesImage;
         } else {
-          // Série DÉJÀ RÉFÉRENCÉE -> réutilisation du visuel existant ; sinon
-          // recherche auto Open Library / Google Books (NOM DE SÉRIE seul) —
-          // le client googleBooks est déjà intégré à autoFetchSeriesImage.
+          // Série DÉJÀ RÉFÉRENCÉE portant une image -> réutilisation du visuel
+          // existant ; sinon AUCUNE recherche automatique forcée : la colonne
+          // reste VIDE (null) et l'affichage retombe sur img/no_title.jpg.
           const resolved = await autoResolveComicSeriesImage(values.series, coverUrl);
           resolvedImage = resolved.image;
         }
@@ -1420,9 +1389,9 @@ async function importComicByIsbn(req, res, next) {
         }
       } catch (err) {
         // Non bloquant : la création de la BD n'est JAMAIS stoppée par la série.
-        console.warn("[serie] Résolution de l'image de série impossible lors de l'import ISBN — repli img/no_title.jpg :", err.message);
+        console.warn("[serie] Résolution de l'image de série impossible lors de l'import ISBN — colonne laissée VIDE (repli img/no_title.jpg à l'affichage) :", err.message);
         removeUnusedSeriesFiles(req.files);
-        seriesImage = SERIES_NO_TITLE_URL;
+        seriesImage = null;
       }
     }
 
