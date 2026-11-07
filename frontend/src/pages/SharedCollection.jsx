@@ -12,6 +12,7 @@ import GroupedItemList from '../components/GroupedItemList.jsx'
 import ViewToolbar from '../components/ViewToolbar.jsx'
 import CollectionSearch from '../components/CollectionSearch.jsx'
 import CollectionCounter from '../components/CollectionCounter.jsx'
+import AlphabetFilterBar, { letterOf } from '../components/AlphabetFilterBar.jsx'
 import { groupVinylsByArtist } from '../components/collection.js'
 import { groupComicsBySeries } from '../components/collection.js'
 import { useDisplay, DisplayProvider, DISPLAY_SCOPES } from '../services/display.jsx'
@@ -52,6 +53,13 @@ export default function SharedCollection() {
   const [comics, setComics] = useState([])
   const [loadError, setLoadError] = useState('')
   const [detail, setDetail] = useState(null) // { type: 'vinyl'|'comic', item }
+  // Lettre active du filtre alphabétique (#, A–Z), null = aucun filtre — un état
+  // PAR ONGLET (disques / BD), comme sur les pages personnelles.
+  const [vinylLetter, setVinylLetter] = useState(null)
+  const [comicLetter, setComicLetter] = useState(null)
+  // Clé du groupe ouvert au niveau 2 (null = vue racine) — un état PAR ONGLET.
+  const [openVinylGroup, setOpenVinylGroup] = useState(null)
+  const [openComicGroup, setOpenComicGroup] = useState(null)
 
   // Scopes accordés à CE compte pour la collection de cet émetteur :
   // « vinyls » / « comics » / « all ». Déterminent les onglets disponibles.
@@ -144,6 +152,19 @@ export default function SharedCollection() {
   const vinylGroups = useMemo(() => groupVinylsByArtist(vinyls), [vinyls])
   const comicGroups = useMemo(() => groupComicsBySeries(comics), [comics])
 
+  // Filtre alphabétique (#, A–Z) : groupes dont la lettre du nom correspond à
+  // `letter` — accents normalisés (« Étrangers » → E, « À la page » → A).
+  // null = tous les groupes. Un état PAR ONGLET (disques / BD), comme sur les
+  // pages personnelles Collection / ComicCollection.
+  const filteredVinylGroups = useMemo(
+    () => (vinylLetter ? vinylGroups.filter((g) => letterOf(g.name) === vinylLetter) : vinylGroups),
+    [vinylGroups, vinylLetter]
+  )
+  const filteredComicGroups = useMemo(
+    () => (comicLetter ? comicGroups.filter((g) => letterOf(g.name) === comicLetter) : comicGroups),
+    [comicGroups, comicLetter]
+  )
+
   return (
     // `lib-coll` : ancre CSS du thème « Médiathèque » — harmonise grilles /
     // listes à la charte chaude (même classe que les pages personnelles).
@@ -207,11 +228,26 @@ export default function SharedCollection() {
           <div className="space-y-6">
             {/* Barre d'actions : compteur → recherche → vue. AUCUN bouton « Ajouter ». */}
             <div className="cb-actions flex flex-wrap items-center gap-3">
-              <CollectionCounter type="disks" groups={vinylGroups.length} items={vinyls.length} />
+              <CollectionCounter type="disks" groups={filteredVinylGroups.length} items={vinyls.length} />
               <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
               <ViewToolbar />
             </div>
-            <SharedVinylsView vinyls={vinyls} q={q} onDetail={(v) => openDetail(v, 'vinyl')} />
+            {/* Barre de filtre alphabétique (#, A–Z) : intégrée directement sous le
+                bloc recherche / sélection Grille-Liste. Visible UNIQUEMENT sur la vue
+                racine « Tous les artistes » — masquée dès qu'une recherche est en
+                cours ou qu'un artiste est ouvert (niveau 2). */}
+            {!q && !openVinylGroup && (
+              <AlphabetFilterBar labels={vinylGroups.map((g) => g.name)} value={vinylLetter} onChange={setVinylLetter} />
+            )}
+            <SharedVinylsView
+              vinyls={vinyls}
+              q={q}
+              letter={vinylLetter}
+              openGroup={openVinylGroup}
+              onOpenGroup={setOpenVinylGroup}
+              onResetLetter={() => setVinylLetter(null)}
+              onDetail={(v) => openDetail(v, 'vinyl')}
+            />
           </div>
         </DisplayProvider>
       ) : (
@@ -220,11 +256,26 @@ export default function SharedCollection() {
           <div className="space-y-6">
             {/* Barre d'actions : compteur → recherche → vue. AUCUN bouton « Ajouter ». */}
             <div className="cb-actions flex flex-wrap items-center gap-3">
-              <CollectionCounter type="comics" groups={comicGroups.length} items={comics.length} />
+              <CollectionCounter type="comics" groups={filteredComicGroups.length} items={comics.length} />
               <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
               <ViewToolbar />
             </div>
-            <SharedComicsView comics={comics} q={q} onDetail={(c) => openDetail(c, 'comic')} />
+            {/* Barre de filtre alphabétique (#, A–Z) : intégrée directement sous le
+                bloc recherche / sélection Grille-Liste. Visible UNIQUEMENT sur la vue
+                racine « Toutes les séries » — masquée dès qu'une recherche est en
+                cours ou qu'une série est ouverte (niveau 2). */}
+            {!q && !openComicGroup && (
+              <AlphabetFilterBar labels={comicGroups.map((g) => g.name)} value={comicLetter} onChange={setComicLetter} />
+            )}
+            <SharedComicsView
+              comics={comics}
+              q={q}
+              letter={comicLetter}
+              openGroup={openComicGroup}
+              onOpenGroup={setOpenComicGroup}
+              onResetLetter={() => setComicLetter(null)}
+              onDetail={(c) => openDetail(c, 'comic')}
+            />
           </div>
         </DisplayProvider>
       )}
@@ -244,17 +295,21 @@ export default function SharedCollection() {
 /* ═══════════════════════════════════════════════════════════════════════
    VUE DISQUES PARTAGÉS — hiérarchie Artistes → Albums (lecture seule)
    ═══════════════════════════════════════════════════════════════════════ */
-function SharedVinylsView({ vinyls, q, onDetail }) {
+function SharedVinylsView({ vinyls, q, letter, openGroup, onOpenGroup, onResetLetter, onDetail }) {
   const { settings } = useDisplay()
   const { t } = useTranslation()
-  // Clé du groupe (artiste) ouvert au niveau 2, null pour la vue principale.
-  const [openGroup, setOpenGroup] = useState(null)
 
   const groups = useMemo(() => groupVinylsByArtist(vinyls), [vinyls])
+  // Filtre alphabétique (#, A–Z) : groupes dont la lettre du nom correspond à
+  // `letter` — accents normalisés. null = tous les groupes.
+  const filteredGroups = useMemo(
+    () => (letter ? groups.filter((g) => letterOf(g.name) === letter) : groups),
+    [groups, letter]
+  )
   const currentGroup = openGroup ? groups.find((g) => g.key === openGroup) : null
   useEffect(() => {
-    if (openGroup && !groups.some((g) => g.key === openGroup)) setOpenGroup(null)
-  }, [groups, openGroup])
+    if (openGroup && !groups.some((g) => g.key === openGroup)) onOpenGroup(null)
+  }, [groups, openGroup, onOpenGroup])
 
   // ------- Vue pilotée par les préférences d'affichage (grille / liste) -------
   const isList = settings.view === 'list'
@@ -306,7 +361,7 @@ function SharedVinylsView({ vinyls, q, onDetail }) {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <button className="btn-ghost" onClick={() => setOpenGroup(null)}>
+              <button className="btn-ghost" onClick={() => onOpenGroup(null)}>
                 {t('collection.allArtists')}
               </button>
               <div>
@@ -348,10 +403,16 @@ function SharedVinylsView({ vinyls, q, onDetail }) {
         </div>
       ) : (
         // ------- Niveau 1 : accordéons par artiste (liste) / tuiles (grille) -------
-        isList ? (
+        filteredGroups.length === 0 ? (
+          <EmptyState
+            title={t('collection.noResults')}
+            subtitle={t('collection.noLetterMatch', { letter })}
+            action={<button className="btn-ghost" onClick={() => onResetLetter()}>{t('collection.resetFilter')}</button>}
+          />
+        ) : isList ? (
           <GroupedItemList
             type="vinyl"
-            groups={groups}
+            groups={filteredGroups}
             actions={[]}
             onDetail={openDetailCb}
             showTitle={settings.showTitle}
@@ -360,7 +421,7 @@ function SharedVinylsView({ vinyls, q, onDetail }) {
           />
         ) : (
           <div className={gridCls}>
-            {groups.map((g) => (
+            {filteredGroups.map((g) => (
               <GroupCard
                 key={g.key}
                 name={g.name}
@@ -371,7 +432,7 @@ function SharedVinylsView({ vinyls, q, onDetail }) {
                 view={cardView}
                 showTitle={settings.showTitle}
                 isUnlabeled={g.isUnlabeled}
-                onClick={() => setOpenGroup(g.key)}
+                onClick={() => onOpenGroup(g.key)}
               />
             ))}
           </div>
@@ -384,17 +445,21 @@ function SharedVinylsView({ vinyls, q, onDetail }) {
 /* ═══════════════════════════════════════════════════════════════════════
    VUE BD PARTAGÉES — hiérarchie Séries → Tomes (lecture seule)
    ═══════════════════════════════════════════════════════════════════════ */
-function SharedComicsView({ comics, q, onDetail }) {
+function SharedComicsView({ comics, q, letter, openGroup, onOpenGroup, onResetLetter, onDetail }) {
   const { settings } = useDisplay()
   const { t } = useTranslation()
-  // Clé du groupe (série) ouvert au niveau 2, null pour la vue principale.
-  const [openGroup, setOpenGroup] = useState(null)
 
   const groups = useMemo(() => groupComicsBySeries(comics), [comics])
+  // Filtre alphabétique (#, A–Z) : séries dont la lettre du nom correspond à
+  // `letter` — accents normalisés. null = toutes les séries.
+  const filteredGroups = useMemo(
+    () => (letter ? groups.filter((g) => letterOf(g.name) === letter) : groups),
+    [groups, letter]
+  )
   const currentGroup = openGroup ? groups.find((g) => g.key === openGroup) : null
   useEffect(() => {
-    if (openGroup && !groups.some((g) => g.key === openGroup)) setOpenGroup(null)
-  }, [groups, openGroup])
+    if (openGroup && !groups.some((g) => g.key === openGroup)) onOpenGroup(null)
+  }, [groups, openGroup, onOpenGroup])
 
   // ------- Vue pilotée par les préférences d'affichage (grille / liste) -------
   const isList = settings.view === 'list'
@@ -441,7 +506,7 @@ function SharedComicsView({ comics, q, onDetail }) {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <button className="btn-ghost" onClick={() => setOpenGroup(null)}>
+              <button className="btn-ghost" onClick={() => onOpenGroup(null)}>
                 {t('collection.allSeries')}
               </button>
               <div>
@@ -478,10 +543,16 @@ function SharedComicsView({ comics, q, onDetail }) {
         </div>
       ) : (
         // ------- Niveau 1 : accordéons par série (liste) / tuiles (grille) -------
-        isList ? (
+        filteredGroups.length === 0 ? (
+          <EmptyState
+            title={t('collection.noResults')}
+            subtitle={t('collection.noLetterMatch', { letter })}
+            action={<button className="btn-ghost" onClick={() => onResetLetter()}>{t('collection.resetFilter')}</button>}
+          />
+        ) : isList ? (
           <GroupedItemList
             type="comic"
-            groups={groups}
+            groups={filteredGroups}
             actions={[]}
             onDetail={openDetailCb}
             showTitle={settings.showTitle}
@@ -490,7 +561,7 @@ function SharedComicsView({ comics, q, onDetail }) {
           />
         ) : (
           <div className={gridCls}>
-            {groups.map((g) => (
+            {filteredGroups.map((g) => (
               <GroupCard
                 key={g.key}
                 name={g.name}
@@ -500,7 +571,7 @@ function SharedComicsView({ comics, q, onDetail }) {
                 view={cardView}
                 showTitle={settings.showTitle}
                 isUnlabeled={g.isUnlabeled}
-                onClick={() => setOpenGroup(g.key)}
+                onClick={() => onOpenGroup(g.key)}
               />
             ))}
           </div>
