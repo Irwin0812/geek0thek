@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2026 Irwin
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ */
 // Smoke test : migrate() de config/db.js — « column "acquired_date" does not exist »
 // ------------------------------------------------------------
 // Reproduit les trois situations de base rencontrées en production et vérifie

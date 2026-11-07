@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2026 Irwin
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ */
 /**
  * Icônes par thème du sous-menu « Thème » (menu déroulant de l'utilisateur).
  * Une icône GRAPHIQUE et distincte par thème — les pastilles de palette restent

@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2026 Irwin
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ */
 /* Test de la recherche TEXTUELLE combinée Google Books + Open Library.
    Parcours réel : contrôleur searchBooks (fake req/res) -> searchByQuery
    (isbnClient, cascade/fusion OL/GB) — mêmes exigences que GET /api/isbn/search. */

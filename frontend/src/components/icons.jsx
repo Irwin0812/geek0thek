@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2026 Irwin
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ */
 /**
  * Icônes SVG inline (trait 1.75, style régulier) utilisées par la toolbar
  * de vue, le menu d'options, la vue liste et les menus contextuels.

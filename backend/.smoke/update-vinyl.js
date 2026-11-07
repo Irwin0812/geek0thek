@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2026 Irwin
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ */
 // Smoke test : PUT /api/vinyls/:id — vérifie que l'UPDATE bind $1…$19
 // sans trou (en particulier id en $19, dont l'absence provoquait
 // « column "acquired_date" does not exist ») et que la date d'ajout

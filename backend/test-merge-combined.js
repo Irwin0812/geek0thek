@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2026 Irwin
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ */
 /* Tests UNITAIRES de la stratégie de fusion Google Books + Open Library
    (helpers exposés par isbnClient.js). Aucun appel réseau : fixtures fixes. */
 const { mergeQueryResults, dedupeKeyComicPrefill } = require('./src/utils/isbnClient');

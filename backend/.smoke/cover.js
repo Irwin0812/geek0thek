@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2026 Irwin
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ */
 // Harness de reproduction du bug de persistance de jaquette (vinyles)
 // - monte les VRAIES routes vinylRoutes (multer + auth JWT réels)
 // - mocke uniquement la couche db (requête in-mémoire)
