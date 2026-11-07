@@ -165,7 +165,10 @@ export default function ViewToolbar({ forceGrid = false }) {
     <div
       ref={panelRef}
       style={{ top: pos.top, left: pos.left }}
-      className="fixed z-[9999] w-72 card p-1.5 shadow-2xl shadow-black/50"
+      /* lib-coll-options : ancre CSS du thème « Médiathèque » (src/themes/
+         library.css) — le panneau étant PORTALÉ dans <body> (hors du DOM de la
+         page), il est ciblé par cette classe dédiée et non par .lib-coll. */
+      className="fixed z-[9999] w-72 card lib-coll-options p-1.5 shadow-2xl shadow-black/50"
     >
       <div className="flex items-center justify-between px-3 pb-1.5 pt-2">
         <span className="text-xs font-bold uppercase tracking-wider text-slate-400">

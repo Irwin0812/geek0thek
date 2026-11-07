@@ -162,7 +162,10 @@ function ComicCollectionView() {
   )
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+    // `lib-coll` : ancre CSS du thème « Médiathèque » (src/themes/library.css,
+    // bloc « PAGES DE COLLECTIONS ») — harmonise grilles / listes / boutons
+    // d'action de cette page à la charte chaude. Inerte sous les autres thèmes.
+    <div className="lib-coll max-w-7xl mx-auto px-4 py-8 space-y-6">
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           {/* Nomenclature officielle (i18n navbar.myComics) : « Mes BD ». */}

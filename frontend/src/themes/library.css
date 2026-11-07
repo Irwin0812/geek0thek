@@ -475,3 +475,334 @@
 [data-theme='library'] .lib-dash p[class*='text-rose-400'] {
   color: var(--lib-bordeaux);
 }
+
+/* ============================================================
+    PAGES DE COLLECTIONS (« Mes Disques » / « Mes Bandes Dessinées ») —
+    HARMONISATION COMPLÈTE À LA CHARTE « MÉDIATHÈQUE ».
+    Principe (identique au bloc Dashboard ci-dessus) : les tuiles, lignes et
+    panneaux CONSERVENT leur STRUCTURE et leurs FOND d'origine ; seule la
+    COULEUR DU TEXTE est ré-ancrée à l'encre chaude du thème pour une
+    lisibilité irréprochable sur le papier clair des cartes. Les textes codés
+    en dur pour l'ancien fond sombre (text-white / text-slate-* → spécificité
+    0,1,0) sont donc ré-ancrés par les règles ci-dessous (spécificité
+    multi-classe 0,2,x+ > utilitaire .text-* : elles gagnent). Aucune autre
+    page n'est touchée : le bloc est scellé sous [data-theme='library'] ET
+    ancré sur la classe .lib-coll posée sur la racine des deux pages de
+    collections (Collection.jsx / ComicCollection.jsx) — inerte ailleurs.
+
+    Surfaces concernées :
+      * TUILES DE GRILLE (VinylCard / ComicCard / GroupCard, data-card) :
+        papier clair du thème (règle .card ci-dessus) ;
+      * LIGNES DE VUE LISTE (ItemList / GroupedItemList : <article class="card">
+        dans un <ul>) : même papier clair ;
+      * BARRE D'ACTIONS (.cb-actions) : compteur, recherche, toolbar Grille/
+        Liste ⚙, bouton « Ajouter » ;
+      * PANNEAUX FLOTTANTS : menu ⋯ des lignes (absolu z-50) et panneau
+        d'OPTIONS de la toolbar (PORTALÉ dans <body> — hors du DOM de la page,
+        il est donc ciblé par sa propre classe .lib-coll-options posée dans
+        ViewToolbar.jsx) ;
+      * MODALES : détail (ItemDetailModal) + confirmation de suppression.
+
+    EXCEPTIONS CONSERVÉES (fonds sombres d'origine volontairement gardés —
+    le texte clair y reste parfaitement lisible, comme sous les autres thèmes) :
+      * CADRES DE VIGNETTES des tuiles (jaquette / couverture / image de
+        groupe) : dégradé night conservé ;
+      * BANDEAUX DÉGRADÉS bas de vignette (nom du groupe + compteur, titre en
+        mode « carte à jouer ») : fond ENCRE conservé → lettrage clair
+        conservé ;
+      * BADGES SUPERPOSÉS À LA VIGNETTE (année haut-gauche, « Édition spéciale »,
+        « Livre dédicacé », « Collection de … ») : vivent sur le fond ENCRE de
+        la vignette → identité or/clair conservée.
+    ============================================================ */
+
+/* ── A) TUILES DE GRILLE (data-card) — pied de carte sur papier clair :
+    * TITRES <h3> (titre disque / BD) → ENCRE PRIMAIRE #2b1d12 ;
+    * MÉTADONNÉES <p> (artiste / auteurs / série / « N titre(s) ») → ENCRE
+      SECONDAIRE #4a3524 ;
+    * SÉRIE BD (text-gold-400/90 d'origine, accent volontaire) → MOUTARDE
+      soutenu #b57e00 : lisible sur le papier (ratio ~4:1) tout en gardant
+      son rôle d'accent de la charte ;
+    * BADGES du PIED de carte (genre / label / éditeur) → PAPIER CHAUD
+      --bg-raised + ENCRE SECONDAIRE + liseré moutarde doux (au lieu des fonds
+      or/night pensés pour le fond sombre).
+    Ciblage : les tuiles de grille sont les UNIQUES .card[data-card] de la page
+    (les lignes liste vivent dans un <ul>, les modales n'ont pas data-card) →
+    aucune régression. Le corps de carte est le <div> enfant direct SANS
+    « gradient » (le cadre de vignette porte bg-gradient-to-br) : `> div:not(
+    [class*='gradient'])` isole donc le pied de carte et épargne les badges
+    superposés à la vignette. */
+[data-theme='library'] .lib-coll .card[data-card] h3 {
+  color: var(--text-primary);
+}
+[data-theme='library'] .lib-coll .card[data-card] p {
+  color: var(--text-secondary);
+}
+[data-theme='library'] .lib-coll .card[data-card] p[class*='text-gold-400'] {
+  color: #b57e00; /* moutarde soutenu — accent série lisible sur papier */
+}
+[data-theme='library'] .lib-coll .card[data-card] > div:not([class*='gradient']) .badge {
+  background: var(--bg-raised);
+  color: var(--text-secondary);
+  border-color: rgba(230, 161, 0, 0.45);
+}
+
+/* EXCEPTION : bandeau « carte à jouer » (mode jukebox) — son fond est un
+   DÉGRADÉ SOMBRE conservé d'origine (from-night-950/95) : le texte y reste
+   CLAIR (titre blanc, métadonnées crème chaud), comme sous les autres thèmes.
+   Ciblage [class*='gradient'] = le bandeau bas de jaquette/couverture ; la
+   règle gagne sur celles ci-dessus (spécificité multi-classe supérieure). */
+[data-theme='library'] .lib-coll .card[data-card] [class*='gradient'] h3 {
+  color: #ffffff;
+}
+[data-theme='library'] .lib-coll .card[data-card] [class*='gradient'] p {
+  color: #f0e6d8; /* crème chaud — métadonnées du bandeau sombre */
+}
+
+/* EXCEPTION : badges SUPERPOSÉS à la vignette (année haut-gauche, « Édition
+   spéciale », « Livre dédicacé », « Collection de … ») — ils vivent sur le
+   fond ENCRE de la vignette (dégradé night conservé) et CONSERVENT leur
+   identité or/clair d'origine. Ciblage : le cadre de vignette est le <div>
+   enfant direct PORTANT « gradient » ; la règle gagne sur celle du pied de
+   carte ci-dessus (spécificité supérieure). */
+[data-theme='library'] .lib-coll .card[data-card] > div[class*='gradient'] .badge {
+  background: rgba(8, 11, 19, 0.7);
+  color: #e2e8f0;
+  border-color: rgba(42, 51, 72, 0.6);
+}
+[data-theme='library'] .lib-coll .card[data-card] > div[class*='gradient'] .badge[class*='text-gold-300'] {
+  color: var(--lib-moutarde); /* « Collection de … » : or chaud de la charte */
+}
+
+/* ── B) LIGNES DE VUE LISTE (ItemList / GroupedItemList) — même papier clair
+    que les tuiles ; toute la matière textuelle passe à l'ENCRE du thème
+    (titre, sous-titre, année, badges, compteur d'accordéon, chevron).
+    Ciblage : les lignes sont les UNIQUES <article class="card"> descendants
+    de <li> de la page (les tuiles de grille vivent dans des <div>) → aucune
+    régression côté grille. */
+[data-theme='library'] .lib-coll li article.card {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: var(--card-border);
+}
+/* Survol d'une ligne : voile crème chaud du thème (au lieu du voile nuit). */
+[data-theme='library'] .lib-coll li article.card:hover {
+  background: var(--ghost-hover);
+}
+/* Accordéon ouvert / accordéon relevé (classe bg-night-700/30 posée par
+   GroupedItemList) : plateau crème — l'encre reste parfaitement lisible. */
+[data-theme='library'] .lib-coll li article.card[class*='bg-night-700'] {
+  background-color: var(--bg-hover);
+}
+/* Surfaces internes des lignes (plateau de vignette, pastilles d'année /
+   compteur) : fond PAPIER CHAUD --bg-raised + liseré moutarde doux (remplace
+   les fonds bg-night-900/-700 quasi invisibles sur la carte papier). */
+[data-theme='library'] .lib-coll li article.card [class*='bg-night-900']:not([class*='gradient']),
+[data-theme='library'] .lib-coll li article.card [class*='bg-night-700']:not([class*='gradient']) {
+  background-color: var(--bg-raised);
+  border-color: rgba(230, 161, 0, 0.45);
+}
+/* TOUTE la matière textuelle des lignes passe à l'ENCRE (quasi noir chaud).
+   Spécificité multi-classe : gagne sur les utilitaires Tailwind
+   (.text-slate-100 / -300 / -400 / -500), quel que soit le niveau DOM. */
+[data-theme='library'] .lib-coll li article.card * {
+  color: var(--text-primary);
+}
+/* Ré-ancre des accents volontaires par-dessus l'encre générale :
+   a. Badges or (genre / collection / monogrammes) : ambré soutenu, lisible
+      sur papier ET sur le fond encre de la vignette. */
+[data-theme='library'] .lib-coll li article.card [class*='text-gold-300'],
+[data-theme='library'] .lib-coll li article.card [class*='text-gold-400'],
+[data-theme='library'] .lib-coll li article.card .badge {
+  color: #b57e00;
+}
+/* b. Validité « vérifié » (émeraude) : vert soutenu contrasté. */
+[data-theme='library'] .lib-coll li article.card [class*='text-emerald-300'] {
+  color: #047857;
+}
+/* c. Cœur « favoris » actif (rose) : bordeaux de la charte. */
+[data-theme='library'] .lib-coll li article.card [class*='text-rose-400'] {
+  color: var(--lib-bordeaux);
+}
+/* d. Chevrons / bouton-menu purement graphiques (▾ accordéon, ⋯ de la ligne) :
+   encre atténuée --text-subtle — visibles sans dominer le titre. */
+[data-theme='library'] .lib-coll li article.card span[class*='leading-none'],
+[data-theme='library'] .lib-coll li article.card [aria-haspopup] {
+  color: var(--text-subtle);
+}
+
+/* ── B2) MENU ⋯ DROPPDOWN DES LIGNES : panneau absolu (z-50, fond ENCRE
+    bg-night-800 d'origine). Sa matière textuelle est EXCLUE de la règle
+    ci-dessus et remise en clair, survols tonés ; « Supprimer » passe au
+    bordeaux CLAIR de la charte (lisible sur le fond encre). */
+[data-theme='library'] .lib-coll li article.card .absolute button {
+  color: #f0e6d8;
+}
+[data-theme='library'] .lib-coll li article.card .absolute button:hover {
+  background-color: rgba(255, 107, 53, 0.16);
+  color: var(--lib-noir);
+}
+[data-theme='library'] .lib-coll li article.card .absolute button[class*='text-rose-300'] {
+  color: #ffb3bc; /* « Supprimer » : bordeaux clair lisible sur fond encre */
+}
+[data-theme='library'] .lib-coll li article.card .absolute button[class*='text-rose-300']:hover {
+  background-color: rgba(230, 57, 70, 0.3);
+}
+
+/* ── C) BARRE D'ACTIONS (.cb-actions) — compteur, recherche, toolbar, bouton
+    « Ajouter ». Le compteur (police GRIS TRÈS CLAIR + ombrage NOIR d'origine,
+    index.css .collection-badge) se noierait sur le voile clair : il passe à
+    l'ENCRE CHAUDE avec un halo BLANC doux (même logique que les titres de
+    pages ci-dessus). Les variables --badge-* sont écrasées ici (elles sont
+    reprises par la règle de base de index.css). */
+[data-theme='library'] .lib-coll .collection-badge {
+  color: var(--lib-brun);
+  --badge-foreground: var(--lib-brun);
+  --badge-outline: #ffffff;
+  text-shadow:
+    -1.5px -1.5px 0 rgba(255, 255, 255, 0.9),
+    1.5px -1.5px 0 rgba(255, 255, 255, 0.9),
+    -1.5px 1.5px 0 rgba(255, 255, 255, 0.9),
+    1.5px 1.5px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* ── C2) BARRE GRILLE/LISTE ⚙ (.cb-viewtoolbar) — papier clair + encre chaude
+    (au lieu du voile night-800/70 quasi invisible sur le fond clair). */
+[data-theme='library'] .lib-coll .cb-viewtoolbar {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--border-default);
+}
+/* Petit plateau du sélecteur Grille/Liste : papier chaud + liseré moutarde. */
+[data-theme='library'] .lib-coll .cb-viewtoolbar > div[role='group'] {
+  background: var(--bg-raised);
+  border: 1px solid rgba(230, 161, 0, 0.45);
+}
+/* Boutons du sélecteur : encre secondaire au repos ; le segment ACTIF est
+   EXCLU (son texte blanc est piloté par les variables du thème
+   text-[var(--accent-contrast)] sur fond orange de la charte). */
+[data-theme='library'] .lib-coll .cb-viewtoolbar button:not([aria-pressed='true']) {
+  color: var(--text-secondary);
+}
+[data-theme='library'] .lib-coll .cb-viewtoolbar button:not([aria-pressed='true']):hover {
+  background: var(--bg-hover);
+  color: var(--lib-noir);
+}
+
+/* ── C3) PANNEAU D'OPTIONS DE LA TOOLBAR — PORTALÉ dans <body> (hors du DOM
+    de la page, cf. ViewToolbar.jsx) : il est donc ciblé par sa propre classe
+    .lib-coll-options posée sur le panneau. Papier clair + encre chaude,
+    séparateurs moutarde doux, interrupteurs « ON » en orange de la charte. */
+[data-theme='library'] .lib-coll-options {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(230, 161, 0, 0.45);
+}
+[data-theme='library'] .lib-coll-options * {
+  color: var(--text-secondary);
+}
+/* Titres de section (« OPTIONS », « TYPE D'IMAGE », « CARTES ») : encre
+   atténuée — hiérarchie conservée. */
+[data-theme='library'] .lib-coll-options [class*='uppercase'] {
+  color: var(--text-muted);
+}
+/* Lien « Réinitialiser » : moutarde soutenu (au lieu de l'or froid). */
+[data-theme='library'] .lib-coll-options button[class*='text-gold-400'] {
+  color: #b57e00;
+}
+[data-theme='library'] .lib-coll-options button[class*='text-gold-400']:hover {
+  color: var(--lib-orange);
+}
+/* Ligne d'image active (« Principal ») : voile orange doux + encre chaude. */
+[data-theme='library'] .lib-coll-options button[class*='bg-gold-500'] {
+  background: rgba(255, 107, 53, 0.14);
+  color: var(--text-primary);
+}
+/* Interrupteurs « ON » : orange de la charte (au lieu de l'or froid). */
+[data-theme='library'] .lib-coll-options [class*='bg-gold-500']:not(button) {
+  background-color: var(--accent-strong);
+  border-color: var(--accent-deep);
+}
+/* Bouton OPTIONS (⚙) de la barre : état ouvert = voile orange doux. */
+[data-theme='library'] .lib-coll .cb-viewtoolbar .btn-ghost.\!bg-night-600 {
+  background: rgba(255, 107, 53, 0.18);
+  color: var(--lib-orange);
+}
+
+/* ── D) MODALES (détail ItemDetailModal + confirmation de suppression) —
+    la carte est déjà en papier clair (règle .card ci-dessus) ; le texte
+    codé pour l'ancien fond sombre y serait illisible : ré-ancrage à l'encre
+    chaude. Ciblage [role='dialog'] : les modales sont les UNIQUES éléments
+    portant cet attribut dans la page (les tuiles / lignes n'en portent pas). */
+[data-theme='library'] .lib-coll [role='dialog'] h3 {
+  color: var(--text-primary);
+}
+[data-theme='library'] .lib-coll [role='dialog'] p,
+[data-theme='library'] .lib-coll [role='dialog'] dd {
+  color: var(--text-secondary);
+}
+/* Libellés de métadonnées (dt) : encre atténuée — hiérarchie conservée. */
+[data-theme='library'] .lib-coll [role='dialog'] dt {
+  color: var(--text-muted);
+}
+/* Titres de section (« DÉTAILS DU DISQUE », « TRACKLIST »…) : moutarde
+   soutenu (au lieu de l'or froid, illisible sur papier). */
+[data-theme='library'] .lib-coll [role='dialog'] h2,
+[data-theme='library'] .lib-coll [role='dialog'] h4 {
+  color: #b57e00;
+}
+/* Liens de référence (MusicBrainz / Discogs) : moutarde soutenu. */
+[data-theme='library'] .lib-coll [role='dialog'] a[class*='text-gold-300'] {
+  color: #b57e00;
+}
+[data-theme='library'] .lib-coll [role='dialog'] a[class*='text-gold-300']:hover {
+  color: var(--lib-orange);
+}
+/* Badges « Édition spéciale » / « Livre dédicacé » du modal : conservés en
+   couleur (fond or/orange SOLIDE + texte ENCRE) — lisible sur papier. */
+[data-theme='library'] .lib-coll [role='dialog'] .badge[class*='bg-gold-500'],
+[data-theme='library'] .lib-coll [role='dialog'] .badge[class*='bg-orange-500'] {
+  color: var(--lib-noir);
+}
+/* Séparateurs internes du modal : liseré moutarde doux. */
+[data-theme='library'] .lib-coll [role='dialog'] [class*='border-t'],
+[data-theme='library'] .lib-coll [role='dialog'] [class*='border-b'] {
+  border-color: rgba(230, 161, 0, 0.4);
+}
+
+/* ── E) ÉTAT VIDE (EmptyState) : c'est une .card SANS data-card → papier clair
+    du thème ; son texte d'origine (text-white / text-slate-400, pensé pour le
+    fond sombre) y serait illisible. Ré-ancrage à l'encre chaude du thème.
+    L'icône (disque emoji sur pastille sombre) n'est pas du texte : conservée. */
+[data-theme='library'] .lib-coll .card.col-span-full h3 {
+  color: var(--text-primary);
+}
+[data-theme='library'] .lib-coll .card.col-span-full p {
+  color: var(--text-secondary);
+}
+
+/* ── F) MESSAGES DE LA PAGE — toast de confirmation (ambre froid d'origine →
+    voile crème chaud + encre) et message d'erreur de chargement (rose froid →
+    bordeaux de la charte). */
+[data-theme='library'] .lib-coll p[class*='bg-amber-100'] {
+  background: var(--bg-raised);
+  color: var(--text-secondary);
+  border-color: rgba(230, 161, 0, 0.45);
+}
+[data-theme='library'] .lib-coll p[class*='text-rose-600'] {
+  color: var(--lib-bordeaux);
+}
+
+/* ── G) TITRE DE GROUPE NIVEAU 2 (« Divers » / « Hors série ») — lettrage
+    FUTURA de la charte (classe .cb-group-title posée dans les pages) : brun
+    profond + ombrage blanc doux, cohérent avec le titre de page. Le compteur
+    sous-jacent (text-slate-400) passe à l'encre secondaire. */
+[data-theme='library'] .lib-coll .cb-group-title {
+  font-family: var(--lib-font-futura);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--lib-noir);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8),
+    0 2px 6px rgba(255, 255, 255, 0.6);
+}
+[data-theme='library'] .lib-coll h2 + p {
+  color: var(--text-secondary);
+}
