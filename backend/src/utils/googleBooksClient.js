@@ -27,6 +27,7 @@
  */
 
 const env = require("../config/env");
+const { createTtlCache } = require("./imageProcessor");
 
 const USER_AGENT = env.books.userAgent;
 const BASE_URL = "https://www.googleapis.com/books/v1";
@@ -240,10 +241,25 @@ function maskUrlForLog(url) {
  * @returns {Promise<object|null>} la réponse JSON complète, ou null si AUCUN
  *   volume trouvé (items vides = ISBN inconnu : pas une erreur).
  */
+// Cache in-memory (TTL 10 min) des résultats de recherche Google Books :
+// une même requête (ISBN / nom de série) répétée ne re-frappe PAS l'API —
+// économie de quota journalier. Le RÉSULTAT FINAL (objet data ou null « aucun
+// volume ») est mémorisé, jamais la réponse brute.
+const GOOGLE_BOOKS_CACHE = createTtlCache({ ttlMs: 10 * 60 * 1000, maxSize: 500 });
+
 async function searchVolumes(queryString, { maxResults = 1 } = {}) {
   // 🔐 Clé API : présente -> paramètre `key` ; absente -> requête publique.
   const apiKey = getApiKey();
   const url = buildVolumesUrl(queryString, maxResults, apiKey);
+
+  // Cache : un résultat déjà connu (y compris « aucun volume ») est renvoyé
+  // sans nouvel appel réseau.
+  const cached = GOOGLE_BOOKS_CACHE.get(url);
+  if (cached !== undefined) {
+    console.log(`[googleBooks] <<< cache hit pour cette requête (${maskUrlForLog(url)})`);
+    return cached;
+  }
+
   console.log(
     `[googleBooks] >>> GET ${maskUrlForLog(url)} (clé GOOGLE_BOOKS_API_KEY : ${
       apiKey ? "OUI — quotas du projet Google Cloud" : "NON — quotas publics par IP (~1000/j)"
@@ -291,6 +307,9 @@ async function searchVolumes(queryString, { maxResults = 1 } = {}) {
         typeof data.totalItems === "number" ? data.totalItems : 0
       })`
     );
+    // « Aucun volume » est un résultat STABLE (ISBN inconnu) : on le mémorise
+    // (null) pour ne pas re-frapper l'API au prochain scan du même code-barres.
+    GOOGLE_BOOKS_CACHE.set(url, null);
     return null;
   }
   if (items.length < 1) {
@@ -303,6 +322,9 @@ async function searchVolumes(queryString, { maxResults = 1 } = {}) {
   console.log(
     `[googleBooks] <<< Réponse OK : totalItems=${data.totalItems}, 1er volume renvoyé : « ${String(firstTitle).slice(0, 80)} »`
   );
+  // Résultat trouvé : on mémorise la réponse JSON complète (le cache est
+  // volontairement au-dessus de l'analyse — analyzeVolume reste idempotent).
+  GOOGLE_BOOKS_CACHE.set(url, data);
   return data;
 }
 

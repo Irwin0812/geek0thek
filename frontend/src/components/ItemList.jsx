@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDismiss } from './hooks.js'
 import {
@@ -57,7 +57,11 @@ export default function ItemList({
   )
 }
 
-function Row({ type, item, actions, onAction, onDetail, showTitle, showYear, showBadges, onElevate }) {
+/* memo : une ligne ne se re-rend que si SON item / ses props changent —
+   le scroll / la recherche / l'ouverture d'un menu ⋯ ailleurs dans la liste
+   ne redessinent plus TOUTES les lignes (grille de plusieurs dizaines de
+   couvertures). */
+const Row = memo(function Row({ type, item, actions, onAction, onDetail, showTitle, showYear, showBadges, onElevate }) {
   const [fav, setFav] = useState(false)
   /* État du menu ⋯ remonté dans la LIGNE : à l'ouverture la carte passe en
      z-10 (voir className de <article>) pour que le panneau absolu s'affiche
@@ -194,7 +198,7 @@ function Row({ type, item, actions, onAction, onDetail, showTitle, showYear, sho
       </article>
     </li>
   )
-}
+})
 
 /** Étoile de note (réservée — les notes n'existent pas encore en données). */
 function StarIcon({ title }) {

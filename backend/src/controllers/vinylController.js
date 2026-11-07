@@ -22,6 +22,7 @@ const {
 } = require('../utils/discogsClient');
 const { canEditItem, canConsult } = require('../middlewares/auth');
 const { findArtistId, ensureArtist, removeArtistImageGlobally } = require('../utils/artistService');
+const { convertFileToWebP } = require('../utils/imageProcessor');
 
 function toVinylDto(row) {
   return {
@@ -176,6 +177,13 @@ async function resolveCover(req, existingCover = null) {
     // downloadRemoteCover() (monter le chemin SANS le préfixe "/uploads"
     // faisait pointer le client vers <origine>/vinyls/… qui ne correspond à
     // aucune route statique : la jaquette disparaissait après enregistrement).
+    // ⚙ CONVERSION WEBP : le fichier est converti en WebP (qualité 82, max
+    // 1000×1000 px) avant stockage — seul le format compressé reste sur le
+    // volume. En cas d'échec de conversion, convertFileToWebP renvoie le
+    // chemin d'origine (repli : l'image n'est jamais perdue). On MUTER
+    // coverFile.path pour que TOUS les nettoyages en aval (rmSync(f.path) —
+    // rejet artiste/jaquette, validation 400…) suppriment bien le bon fichier.
+    coverFile.path = await convertFileToWebP(coverFile.path);
     const rel = path.relative(env.uploadDir, coverFile.path).split(path.sep).join('/');
     return rel ? `/uploads/${rel}` : `/uploads/${path.basename(coverFile.path)}`;
   }
@@ -373,6 +381,12 @@ async function resolveArtistImage(req) {
     // valeur (colonne vinyls.artist_image + entité Artiste, propagation via
     // syncArtistEntity) — jamais l'inverse : l'ancienne photo en base ne doit
     // JAMAIS évincer le fichier nouvellement stocké.
+    // ⚙ CONVERSION WEBP : le fichier est converti en WebP avant stockage
+    // (seul le format compressé reste sur le volume ; en cas d'échec,
+    // convertFileToWebP renvoie le chemin d'origine — l'image n'est jamais
+    // perdue). On MUTER artistFile.path pour que TOUS les nettoyages en aval
+    // (removeUnusedArtistFiles / rmSync(f.path)) suppriment bien le bon fichier.
+    artistFile.path = await convertFileToWebP(artistFile.path);
     return localArtistFilePath(artistFile);
   }
 
@@ -1233,10 +1247,21 @@ async function updateVinyl(req, res, next) {
     // neutraliser (fichier retiré du volume -> le chemin ne doit plus être
     // écrit sur la colonne par le bloc « PRIORITÉ ABSOLUE »).
     const manualArtistFile = uploadedFileOf(req, 'artistImage');
-    let manualArtistUploadPath = manualArtistFile ? localArtistFilePath(manualArtistFile) : null;
+    let manualArtistUploadPath = null;
 
     const { error, values } = cleanVinyl(req.body);
     if (error) return res.status(400).json({ error });
+
+    // ⚙ CONVERSION WEBP : le fichier est converti en WebP (qualité 82, max
+    // 1000×1000 px) APRÈS la validation du body — si la validation échoue
+    // (400), l'original reste sur disque (même comportement qu'avant : orphelin
+    // nettoyé par le client ou par un prochain upload). On MUTER
+    // manualArtistFile.path pour que TOUS les consommateurs aval (chemin stocké
+    // + removeUnusedArtistFiles / rmSync(f.path)) voient le bon fichier.
+    if (manualArtistFile) {
+      manualArtistFile.path = await convertFileToWebP(manualArtistFile.path);
+      manualArtistUploadPath = localArtistFilePath(manualArtistFile);
+    }
 
     // --------------------------------------------------------------
     // PROPAGATION DU GENRE MUSICAL — règle définitive (vérification

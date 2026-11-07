@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FallbackCover as ComicFallback } from './ComicCard.jsx'
 import { FallbackCover as VinylFallback } from './VinylCard.jsx'
@@ -34,7 +34,7 @@ import { resolveGroupImage } from './collection.js'
  *  - `view` : 'card' | 'jukebox' (format carte à jouer)
  *  - `size` : 'md' | 'sm' (dashboard, image réduite)
  */
-export default function GroupCard({
+function GroupCard({
   name,
   count,
   coverUrl,
@@ -156,3 +156,5 @@ export default function GroupCard({
     </article>
   )
 }
+
+export default memo(GroupCard)

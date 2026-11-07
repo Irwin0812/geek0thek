@@ -6,6 +6,7 @@ const { query } = require('../config/db');
 const { validatePassword } = require('../utils/password');
 const emailService = require('../utils/emailService');
 const totp = require('../utils/totp');
+const { convertFileToWebP } = require('../utils/imageProcessor');
 
 // ------------------------------------------------------------
 // Helpers
@@ -359,9 +360,17 @@ async function createUser(req, res, next) {
     const passwordHash = await bcrypt.hash(String(password), 10);
     // Avatar fourni en création (multipart, champ "avatar")
     const uploadedAvatar = getUploadedAvatarFile(req);
-    const avatarUrl = uploadedAvatar
-      ? `/uploads/avatars/${path.basename(uploadedAvatar.path)}`
-      : null;
+    let avatarUrl = null;
+    if (uploadedAvatar) {
+      // ⚙ CONVERSION WEBP : l'avatar est converti en WebP (qualité 82, max
+      // 1000×1000 px) avant stockage — seul le format compressé reste sur le
+      // volume. En cas d'échec de conversion, convertFileToWebP renvoie le
+      // chemin d'origine (repli : l'image n'est jamais perdue). On MUTER
+      // uploadedAvatar.path pour que tout nettoyage en aval pointe vers le bon
+      // fichier.
+      uploadedAvatar.path = await convertFileToWebP(uploadedAvatar.path);
+      avatarUrl = `/uploads/avatars/${path.basename(uploadedAvatar.path)}`;
+    }
 
     try {
       const { rows } = await query(
@@ -465,6 +474,12 @@ async function updateUser(req, res, next) {
     let removeFile = null;
     const uploaded = getUploadedAvatarFile(req);
     if (uploaded) {
+      // ⚙ CONVERSION WEBP : l'avatar est converti en WebP avant stockage
+      // (seul le format compressé reste sur le volume ; en cas d'échec,
+      // convertFileToWebP renvoie le chemin d'origine — l'image n'est jamais
+      // perdue). On MUTER uploaded.path pour que tout nettoyage en aval pointe
+      // vers le bon fichier.
+      uploaded.path = await convertFileToWebP(uploaded.path);
       avatarUrl = `/uploads/avatars/${path.basename(uploaded.path)}`;
       removeFile = target.avatar_url;
     } else if (body.removeAvatar) {
@@ -545,6 +560,12 @@ async function updateMe(req, res, next) {
     let avatarUrl = null;
     const uploaded = getUploadedAvatarFile(req);
     if (uploaded) {
+      // ⚙ CONVERSION WEBP : l'avatar est converti en WebP avant stockage
+      // (seul le format compressé reste sur le volume ; en cas d'échec,
+      // convertFileToWebP renvoie le chemin d'origine — l'image n'est jamais
+      // perdue). On MUTER uploaded.path pour que tout nettoyage en aval pointe
+      // vers le bon fichier.
+      uploaded.path = await convertFileToWebP(uploaded.path);
       avatarUrl = `/uploads/avatars/${path.basename(uploaded.path)}`;
       const { rows } = await query('SELECT avatar_url FROM users WHERE id = $1', [req.user.id]);
       if (rows[0] && rows[0].avatar_url) removeAvatarFile(rows[0].avatar_url);

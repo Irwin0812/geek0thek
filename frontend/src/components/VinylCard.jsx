@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { GRID_SIZES, coverAspect, coverFit, resolveCoverUrl, releaseDateFr } from './cards.js'
@@ -15,7 +16,7 @@ import { releaseYear } from './listData.js'
  *    descend en pied de carte, sous le badge de genre. Dans les collections
  *    rien ne change : année de sortie en haut-gauche, rien en bas.
  */
-export default function VinylCard({
+function VinylCard({
   vinyl,
   view = 'card',
   size = 'md',
@@ -189,6 +190,8 @@ export default function VinylCard({
     </article>
   )
 }
+
+export default memo(VinylCard)
 
 function Tag({ children, muted = false, className = '' }) {
   return (

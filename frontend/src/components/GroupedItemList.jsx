@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ItemList from './ItemList.jsx'
 import { resolveGroupImage } from './collection.js'
@@ -32,14 +32,17 @@ export default function GroupedItemList({
      groupes peuvent être ouverts en même temps (menu déroulant multipliable). */
   const [openSet, setOpenSet] = useState(() => new Set())
 
-  const toggle = (key) => {
+  /* useCallback : le callback de toggle est STABLE entre rendus — indispensable
+     pour que le memo des GroupRow fonctionne (une fermeture `() => toggle(g.key)`
+     recréée à chaque rendu invaliderait le memo de TOUS les groupes). */
+  const toggle = useCallback((key) => {
     setOpenSet((prev) => {
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
       else next.add(key)
       return next
     })
-  }
+  }, [])
 
   if (!groups || groups.length === 0) return null
   return (
@@ -50,7 +53,7 @@ export default function GroupedItemList({
           type={type}
           group={g}
           open={openSet.has(g.key)}
-          onToggle={() => toggle(g.key)}
+          onToggle={toggle}
           actions={actions}
           onAction={onAction}
           onDetail={onDetail}
@@ -64,8 +67,11 @@ export default function GroupedItemList({
 }
 
 /** Ligne principale : tête d'accordéon (image + nom + compteur) + panneau
-    déroulant contenant la sous-liste détaillée des éléments du groupe. */
-function GroupRow({ type, group, open, onToggle, actions, onAction, onDetail, showTitle, showYear, showBadges }) {
+    déroulant contenant la sous-liste détaillée des éléments du groupe.
+    memo : un groupe ne se re-rend que si SON état (open / group / props)
+    change — l'ouverture d'un autre accordéon ne redessine plus tous les
+    groupes de la liste. */
+const GroupRow = memo(function GroupRow({ type, group, open, onToggle, actions, onAction, onDetail, showTitle, showYear, showBadges }) {
   /* Montée en z-10 de l'accordéon actif quand le menu ⋯ d'une sous-ligne est
      ouvert (remontée via ItemList → Row → ActionsMenu) : le panneau absolu
      (z-50) se peint alors au-dessus des groupes suivants. */
@@ -113,7 +119,7 @@ function GroupRow({ type, group, open, onToggle, actions, onAction, onDetail, sh
       >
         <button
           type="button"
-          onClick={onToggle}
+          onClick={() => onToggle(group.key)}
           aria-expanded={open}
           title={open ? t('collection.collapse') : t('collection.expandItems')}
           className="flex min-w-0 flex-1 items-center gap-3 text-left"
@@ -175,7 +181,7 @@ function GroupRow({ type, group, open, onToggle, actions, onAction, onDetail, sh
       )}
     </li>
   )
-}
+})
 
 function ChevronIcon({ open }) {
   return (

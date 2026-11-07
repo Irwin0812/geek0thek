@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const env = require('../config/env');
+const { convertToWebP, createTtlCache } = require('./imageProcessor');
 
 // ------------------------------------------------------------
 // Configuration
@@ -29,12 +30,20 @@ class MusicBrainzError extends Error {
 // Requêtes vers l'API MusicBrainz
 // ------------------------------------------------------------
 
+// Cache in-memory (TTL 10 min) des réponses JSON MusicBrainz : évite les
+// appels répétés pour la même release / le même artiste (re-import d'un code-
+// barres déjà vu, plusieurs disques du même artiste…) et économise le quota
+// de 1 req/seconde. Seules les réponses RÉUSSIES sont mémorisées.
+const MB_JSON_CACHE = createTtlCache({ ttlMs: 10 * 60 * 1000, maxSize: 500 });
+
 /**
  * Requête GET JSON vers MusicBrainz (aucune authentification,
  * seul l'en-tête User-Agent est requis).
  * @throws {MusicBrainzError} en cas d'échec réseau ou de réponse en erreur.
  */
 async function getJSON(url) {
+  const cached = MB_JSON_CACHE.get(url);
+  if (cached !== undefined) return cached;
   let response;
   try {
     response = await fetch(url, {
@@ -53,18 +62,24 @@ async function getJSON(url) {
     );
   }
   if (response.status === 404) {
+    // Fermeture propre du corps de réponse (fuite mémoire évitée).
+    try { await response.body?.cancel(); } catch {}
     throw new MusicBrainzError('Ressource MusicBrainz introuvable.', 404);
   }
   if (response.status === 429) {
+    try { await response.body?.cancel(); } catch {}
     throw new MusicBrainzError(
       'Limite de débit MusicBrainz atteinte (429) : réessayez dans quelques instants.',
       429
     );
   }
   if (!response.ok) {
+    try { await response.body?.cancel(); } catch {}
     throw new MusicBrainzError(`Erreur MusicBrainz HTTP ${response.status}.`, 502);
   }
-  return response.json();
+  const data = await response.json();
+  MB_JSON_CACHE.set(url, data);
+  return data;
 }
 
 // ------------------------------------------------------------
@@ -115,7 +130,11 @@ async function fetchCoverArt(releaseId) {
       headers: { 'User-Agent': USER_AGENT },
       signal: AbortSignal.timeout(15000),
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      // Fermeture propre du corps (fuite mémoire évitée).
+      try { await response.body?.cancel(); } catch {}
+      return null;
+    }
     const data = await response.json();
     const images = Array.isArray(data.images) ? data.images : [];
     const front = images[0];
@@ -230,7 +249,11 @@ async function fetchArtistArtwork(artistMbid) {
       headers: { 'User-Agent': USER_AGENT },
       signal: AbortSignal.timeout(15000),
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      // Fermeture propre du corps (fuite mémoire évitée).
+      try { await response.body?.cancel(); } catch {}
+      return null;
+    }
     const data = await response.json();
     const images = Array.isArray(data.images) ? data.images : [];
     const front = images.find((i) => i && (i.front || (i.types && i.types.front))) || images[0];
@@ -638,9 +661,16 @@ const MIME_TO_EXT = {
  * Télécharge une image distante et l'enregistre dans un sous-dossier du
  * volume de uploads. Générique : également utilisé par isbnClient.js
  * pour le téléchargement des couvertures BD (./uploads/comics).
+ *
+ * ⚙ CONVERSION WEBP : l'image est systématiquement convertie en WebP
+ * (qualité 82, max 1000×1000 px) AVANT écriture — seul le format compressé
+ * est conservé sur le volume (gain de disque + poids réseau réduit pour les
+ * clients). Si la conversion échoue (image exotique), on retombe sur le
+ * format d'origine : l'image n'est jamais perdue.
  * @param {string} url         URL http(s) de l'image
  * @param {string} subDir      sous-dossier relatif à env.uploadDir (ex. "vinyls")
  * @param {string} [fallbackExt] extension si le Content-Type est inconnu
+ *   (utilisée uniquement en repli quand la conversion WebP échoue)
  * @returns {Promise<string>} chemin d'accès local "/uploads/<subDir>/<fichier>"
  * @throws {Error} si l'URL est invalide ou si le téléchargement échoue.
  */
@@ -659,6 +689,8 @@ async function downloadCoverImageToDir(url, subDir, fallbackExt = '.jpg') {
     throw new Error(`Téléchargement de l'image impossible (${err.message}).`);
   }
   if (!response.ok) {
+    // Fermeture propre du corps de réponse (fuite mémoire évitée).
+    try { await response.body?.cancel(); } catch {}
     throw new Error(`Téléchargement de l'image impossible (HTTP ${response.status}).`);
   }
   const buffer = Buffer.from(await response.arrayBuffer());
@@ -669,11 +701,23 @@ async function downloadCoverImageToDir(url, subDir, fallbackExt = '.jpg') {
     .split(';')[0]
     .trim()
     .toLowerCase();
-  const ext = MIME_TO_EXT[contentType] || fallbackExt;
+
+  // Conversion WebP (qualité 82, max 1000×1000 px) — seul le format
+  // compressé est stocké. En cas d'échec de conversion, repli sur le
+  // format d'origine (l'image n'est jamais perdue).
+  let finalBuffer = buffer;
+  let ext = '.webp';
+  try {
+    finalBuffer = await convertToWebP(buffer);
+  } catch (err) {
+    console.warn(`[musicbrainz] Conversion WebP impossible (${err.message}) : repli sur le format d'origine.`);
+    ext = MIME_TO_EXT[contentType] || fallbackExt;
+  }
+
   const filename = `cover-${crypto.randomBytes(12).toString('hex')}${ext}`;
   const dir = path.join(env.uploadDir, subDir);
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, filename), buffer);
+  fs.writeFileSync(path.join(dir, filename), finalBuffer);
   return `/uploads/${subDir}/${filename}`;
 }
 

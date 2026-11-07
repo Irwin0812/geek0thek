@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const env = require('../config/env');
+const { createTtlCache } = require('./imageProcessor');
 
 // ------------------------------------------------------------
 // Client API Last.fm — PRIORITÉ 1 pour :
@@ -63,6 +64,11 @@ if (isConfigured() && SHARED_SECRET.length > 0 && API_KEY === SHARED_SECRET) {
   );
 }
 
+// Cache in-memory (TTL 10 min) des réponses JSON Last.fm : évite les appels
+// répétés pour la même fiche artiste / album (re-import, plusieurs disques du
+// même artiste…). Seules les réponses RÉUSSIES sont mémorisées.
+const LASTFM_JSON_CACHE = createTtlCache({ ttlMs: 10 * 60 * 1000, maxSize: 500 });
+
 /**
  * Requête GET JSON vers l'API Last.fm.
  * Les code=10 (clé invalide), 429 et erreurs génériques sont normalisés en
@@ -70,6 +76,8 @@ if (isConfigured() && SHARED_SECRET.length > 0 && API_KEY === SHARED_SECRET) {
  * @throws {LastfmError} 404 (méthode inexistante), 429 (quota), 502 (autre échec).
  */
 async function getJSON(url) {
+  const cached = LASTFM_JSON_CACHE.get(url);
+  if (cached !== undefined) return cached;
   let response;
   try {
     response = await fetch(url, {
@@ -86,6 +94,8 @@ async function getJSON(url) {
     throw new LastfmError(`Impossible de joindre l'API Last.fm (${err.message}).`, 502);
   }
   if (response.status === 429) {
+    // Fermeture propre du corps de réponse (fuite mémoire évitée).
+    try { await response.body?.cancel(); } catch {}
     throw new LastfmError('Quota Last.fm atteint (429) : réessayez dans un instant.', 429);
   }
   // Lire le corps même en cas d'échec HTTP : Last.fm renvoie des erreurs
@@ -112,7 +122,11 @@ async function getJSON(url) {
           : `Erreur Last.fm ${data.error}${detail}`;
     throw new LastfmError(message, data.error === 10 || data.error === 6 ? 503 : (response.ok ? 502 : response.status));
   }
-  if (!response.ok) throw new LastfmError(`Erreur Last.fm HTTP ${response.status}.`, 502);
+  if (!response.ok) {
+    try { await response.body?.cancel(); } catch {}
+    throw new LastfmError(`Erreur Last.fm HTTP ${response.status}.`, 502);
+  }
+  LASTFM_JSON_CACHE.set(url, data);
   return data;
 }
 

@@ -91,14 +91,16 @@ function ComicCollectionView() {
     }
   }
 
-  const goEdit = (comic) => {
+  // useCallback : callback STABLE — requis pour que le memo des lignes/cartes
+  // fonctionne (onAction en dépend, cf. plus bas).
+  const goEdit = useCallback((comic) => {
     const params = new URLSearchParams()
     Object.entries(comic).forEach(([k, v]) => {
       if (v !== null && v !== undefined && v !== '' && typeof v !== 'boolean') params.set(k, String(v))
     })
     setOpenGroup(null)
     navigate(`/comics/${comic.id}?${params.toString()}`)
-  }
+  }, [navigate])
 
   /** Pré-remplit le formulaire de création avec les infos du groupe (série, auteurs, éditeur). */
   const addForGroup = (group) => {
@@ -117,17 +119,30 @@ function ComicCollectionView() {
   // ------- Vue pilotée par les préférences d'affichage (grille / liste) -------
   const isList = settings.view === 'list'
   const cardView = settings.jukebox ? 'jukebox' : 'card'
-  const listActions = [
-    { value: 'edit', label: t('common.edit'), icon: <PencilIcon size={15} /> },
-    { value: 'remove', label: t('common.delete'), icon: <TrashIcon size={15} />, danger: true },
-  ]
-  const onAction = (value, c) => (value === 'edit' ? goEdit(c) : setConfirmDelete(c))
-  const openDetail = (c) => setDetailComic(c)
-  const cardProps = {
-    view: cardView,
-    showTitle: settings.showTitle,
-    showYear: settings.showYear,
-  }
+  // ⚙ OPTIMISATION LISTE/GRILLE : ces props sont STABILISÉES (useMemo /
+  // useCallback) pour que le React.memo des lignes (Row de ItemList) et des
+  // cartes (ComicCard) fonctionne — sans cela, un littéral recréé à chaque
+  // rendu invaliderait le memo de TOUTES les lignes à chaque re-rendu.
+  const listActions = useMemo(
+    () => [
+      { value: 'edit', label: t('common.edit'), icon: <PencilIcon size={15} /> },
+      { value: 'remove', label: t('common.delete'), icon: <TrashIcon size={15} />, danger: true },
+    ],
+    [t]
+  )
+  const onAction = useCallback(
+    (value, c) => (value === 'edit' ? goEdit(c) : setConfirmDelete(c)),
+    [goEdit]
+  )
+  const openDetail = useCallback((c) => setDetailComic(c), [])
+  const cardProps = useMemo(
+    () => ({
+      view: cardView,
+      showTitle: settings.showTitle,
+      showYear: settings.showYear,
+    }),
+    [cardView, settings.showTitle, settings.showYear]
+  )
   const gridCls = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
   // Nom AFFICHÉ du groupe (série) au niveau 2 : « Hors série » si non étiqueté, sinon le nom.
   const currentGroupName = currentGroup

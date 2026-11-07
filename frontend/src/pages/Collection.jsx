@@ -100,17 +100,30 @@ function CollectionView() {
   // ------- Vue pilotée par les préférences d'affichage (grille / liste) -------
   const isList = settings.view === 'list'
   const cardView = settings.jukebox ? 'jukebox' : 'card'
-  const listActions = [
-    { value: 'edit', label: t('common.edit'), icon: <PencilIcon size={15} /> },
-    { value: 'remove', label: t('common.delete'), icon: <TrashIcon size={15} />, danger: true },
-  ]
-  const onAction = (value, v) => (value === 'edit' ? window.location.assign(`/vinyles/${v.id}`) : setConfirmDelete(v))
-  const openDetail = (v) => setDetailVinyl(v)
-  const cardProps = {
-    view: cardView,
-    showTitle: settings.showTitle,
-    showYear: settings.showYear,
-  }
+  // ⚙ OPTIMISATION LISTE/GRILLE : ces props sont STABILISÉES (useMemo /
+  // useCallback) pour que le React.memo des lignes (Row de ItemList) et des
+  // cartes (VinylCard) fonctionne — sans cela, un littéral recréé à chaque
+  // rendu invaliderait le memo de TOUTES les lignes à chaque re-rendu.
+  const listActions = useMemo(
+    () => [
+      { value: 'edit', label: t('common.edit'), icon: <PencilIcon size={15} /> },
+      { value: 'remove', label: t('common.delete'), icon: <TrashIcon size={15} />, danger: true },
+    ],
+    [t]
+  )
+  const onAction = useCallback(
+    (value, v) => (value === 'edit' ? window.location.assign(`/vinyles/${v.id}`) : setConfirmDelete(v)),
+    []
+  )
+  const openDetail = useCallback((v) => setDetailVinyl(v), [])
+  const cardProps = useMemo(
+    () => ({
+      view: cardView,
+      showTitle: settings.showTitle,
+      showYear: settings.showYear,
+    }),
+    [cardView, settings.showTitle, settings.showYear]
+  )
   const gridCls = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
   // Nom AFFICHÉ du groupe niveau 2 : « Divers » si non étiqueté, sinon son nom.
   const currentGroupName = currentGroup

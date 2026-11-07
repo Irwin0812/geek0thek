@@ -3,6 +3,7 @@ const env = require('../config/env');
 // (mots, sans articles : le même album est référencé différemment entre les
 // bases — « Black Album » / « The Black Album » / « Metallica - Black Album »).
 const { albumTitleTokens, albumTitleEquals, titleContainsAll } = require('./musicBrainzClient');
+const { createTtlCache } = require('./imageProcessor');
 
 // ------------------------------------------------------------
 // Configuration
@@ -95,6 +96,12 @@ function applyThrottling(retryAfterHeader) {
 // Requêtes vers l'API Discogs
 // ------------------------------------------------------------
 
+// Cache in-memory (TTL 10 min) des réponses JSON Discogs : placé AU-DESSUS
+// du rate limiter — une réponse déjà en cache ne consomme AUCUN jeton de la
+// file anti-débit (25 req/min), ce qui préserve le quota pour les recherches
+// réellement nouvelles. Seules les réponses RÉUSSIES sont mémorisées.
+const DISCOGS_JSON_CACHE = createTtlCache({ ttlMs: 10 * 60 * 1000, maxSize: 500 });
+
 /**
  * Requête GET JSON vers l'API Discogs (authentifiée via `Authorization`).
  * @throws {DiscogsError} 401 (jeton invalide), 403 (token/permissions),
@@ -107,6 +114,8 @@ async function getJSON(url) {
       503
     );
   }
+  const cached = DISCOGS_JSON_CACHE.get(url);
+  if (cached !== undefined) return cached;
   await acquireRateToken();
   let response;
   try {
@@ -123,12 +132,15 @@ async function getJSON(url) {
     throw new DiscogsError(`Impossible de joindre l'API Discogs (${err.message}).`, 502);
   }
   if (response.status === 401) {
+    // Fermeture propre du corps de réponse (fuite mémoire évitée).
+    try { await response.body?.cancel(); } catch {}
     throw new DiscogsError(
       'Jeton Discogs invalide ou expiré : régénérez-le (https://www.discogs.com/settings/developers).',
       401
     );
   }
   if (response.status === 403) {
+    try { await response.body?.cancel(); } catch {}
     throw new DiscogsError(
       "Accès Discogs refusé (403) : vérifiez que le token est actif et que l'application possède la permission de lecture.",
       403
@@ -136,15 +148,19 @@ async function getJSON(url) {
   }
   if (response.status === 429) {
     applyThrottling(response.headers.get('retry-after'));
+    try { await response.body?.cancel(); } catch {}
     throw new DiscogsError(
       'Débit Discogs atteint (429) : réessayez dans 1 à 2 minutes.',
       429
     );
   }
   if (!response.ok) {
+    try { await response.body?.cancel(); } catch {}
     throw new DiscogsError(`Erreur Discogs HTTP ${response.status}.`, 502);
   }
-  return response.json();
+  const data = await response.json();
+  DISCOGS_JSON_CACHE.set(url, data);
+  return data;
 }
 
 // ------------------------------------------------------------

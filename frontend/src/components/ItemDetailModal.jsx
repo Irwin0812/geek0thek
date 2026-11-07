@@ -127,6 +127,7 @@ export default function ItemDetailModal({ type, item, onClose, onEdit }) {
               <img
                 src={cover}
                 alt={t(isVinyl ? 'collection.coverAltVinyl' : 'collection.coverAltComic', { title: item.title, artist: item.artist })}
+                loading="lazy"
                 className={`h-full w-full ${isVinyl ? 'object-cover' : 'object-contain'}`}
                 onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
               />

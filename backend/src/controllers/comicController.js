@@ -16,6 +16,7 @@ const {
   removeSeriesImageGlobally,
 } = require('../utils/seriesService');
 const { canEditItem, canConsult } = require('../middlewares/auth');
+const { convertFileToWebP } = require('../utils/imageProcessor');
 
 // Garde l'arborescence des uploads en place (volume monté de la VM hôte) :
 // le sous-dossier « series/ » peut aussi bien être créé que par multer.
@@ -142,6 +143,12 @@ async function resolveComicSeriesImage(req, existingImage = null) {
     // (série déclinée comprise) — jamais l'inverse (l'ancienne valeur ne doit
     // JAMAIS évincer le fichier nouvellement stocké, ni déclencher le repli de
     // « conservable » qui ignorerait le téléchargement en cours).
+    // ⚙ CONVERSION WEBP : le fichier est converti en WebP avant stockage
+    // (seul le format compressé reste sur le volume ; en cas d'échec,
+    // convertFileToWebP renvoie le chemin d'origine — l'image n'est jamais
+    // perdue). On MUTER seriesFile.path pour que TOUS les nettoyages en aval
+    // (removeUnusedSeriesFiles / rmSync(f.path)) suppriment bien le bon fichier.
+    seriesFile.path = await convertFileToWebP(seriesFile.path);
     return localSeriesFilePath(seriesFile);
   }
 
@@ -473,6 +480,13 @@ async function resolveComicCover(req, existingCover = null) {
     // (monter le chemin SANS le préfixe "/uploads" faisait pointer le client
     // vers <origine>/comics/… qui n'existe pas : image qui disparaît après
     // enregistrement).
+    // ⚙ CONVERSION WEBP : le fichier est converti en WebP (qualité 82, max
+    // 1000×1000 px) avant stockage — seul le format compressé reste sur le
+    // volume. En cas d'échec de conversion, convertFileToWebP renvoie le
+    // chemin d'origine (repli : l'image n'est jamais perdue). On MUTER
+    // coverFile.path pour que TOUS les nettoyages en aval (rmSync(f.path) —
+    // rejet série/tome, validation 400…) suppriment bien le bon fichier.
+    coverFile.path = await convertFileToWebP(coverFile.path);
     const rel = path.relative(env.uploadDir, coverFile.path).split(path.sep).join('/');
     return rel ? `/uploads/${rel}` : `/uploads/comics/${path.basename(coverFile.path)}`;
   }
@@ -891,7 +905,7 @@ async function updateComic(req, res, next) {
     // la lecture listique ne trouvait JAMAIS le fichier : il restait déposé sur
     // disque (orphan) et la colonne série était ignorée / replacée.
     const manualSeriesFile = uploadedFileOf(req, 'seriesImage');
-    const manualSeriesUploadPath = manualSeriesFile ? localSeriesFilePath(manualSeriesFile) : null;
+    let manualSeriesUploadPath = null;
 
     const { error, values } = cleanComic({
       ...req.body,
@@ -900,6 +914,16 @@ async function updateComic(req, res, next) {
       publisher: req.body.publisher || existing.publisher,
     });
     if (error) return res.status(400).json({ error });
+
+    // ⚙ CONVERSION WEBP : le fichier est converti en WebP (qualité 82, max
+    // 1000×1000 px) APRÈS la validation du body — si la validation échoue
+    // (400), l'original reste sur disque (même comportement qu'avant). On MUTER
+    // manualSeriesFile.path pour que TOUS les consommateurs aval (chemin stocké
+    // + removeUnusedSeriesFiles / rmSync(f.path)) voient le bon fichier.
+    if (manualSeriesFile) {
+      manualSeriesFile.path = await convertFileToWebP(manualSeriesFile.path);
+      manualSeriesUploadPath = localSeriesFilePath(manualSeriesFile);
+    }
 
     // ------------------------------------------------------------
     // SUPPRESSION EXPLICITE des images (bouton « Retirer le fichier » du

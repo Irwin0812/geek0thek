@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GRID_SIZES, coverAspect, coverFit, resolveCoverUrl, releaseDateFr } from './cards.js'
 import { releaseYear } from './listData.js'
@@ -15,7 +16,7 @@ import { releaseYear } from './listData.js'
  * authors, publisher, releaseDate, genre, condition, isSpecialEdition,
  * isSigned, addedDate, owner }
  */
-export default function ComicCard({
+function ComicCard({
   comic,
   view = 'card',
   size = 'md',
@@ -195,6 +196,8 @@ export default function ComicCard({
     </article>
   )
 }
+
+export default memo(ComicCard)
 
 function Tag({ children, muted = false, className = '' }) {
   return (
