@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2026 Irwin
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ */
 const env = require('../config/env');
 // Helpers de comparaison de TITRES D'ALBUM partagés avec MusicBrainz
 // (mots, sans articles : le même album est référencé différemment entre les

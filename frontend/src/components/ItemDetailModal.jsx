@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2026 Irwin
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ */
 /**
  * Modale de détail d'un disque (« vinyl ») ou d'une BD (« comic »),
  * ouverte au clic sur la carte.

@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2026 Irwin
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ */
 /* Test local de la NOUVELLE stratégie d'import disque (PRIORITÉ Last.fm) :
    1. combinedBarcodeLookup : Last.fm d'ABORD (album.search&query=<EAN> →
       album.getInfo), puis MusicBrainz + Discogs en parallèle en secours ;

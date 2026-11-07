@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2026 Irwin
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ */
 const path = require('path');
 // Chargement du .env : par défaut il est recherché dans le cwd (backend/ en
 // développement local), mais il vit à la RACINE du dépôt (geek0thek/.env) :

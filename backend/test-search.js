@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2026 Irwin
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ */
 /* Test de la recherche TEXTUELLE par mots-clés (modale « Remplir via ISBN »,
    onglet « Recherche par mots-clés »).
    Parcours réel : contrôleur searchBooks (fake req/res) -> searchByQuery

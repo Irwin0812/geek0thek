@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2026 Irwin
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ */
 /**
  * Pied de page global : même fond sombre et uniforme que la barre de
  * navigation principale (Navbar.jsx — bg-night-950/85 + backdrop-blur),
