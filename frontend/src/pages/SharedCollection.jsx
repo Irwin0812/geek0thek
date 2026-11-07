@@ -5,26 +5,37 @@ import { api } from '../services/api.js'
 import Avatar from '../components/Avatar.jsx'
 import VinylCard, { EmptyState } from '../components/VinylCard.jsx'
 import ComicCard from '../components/ComicCard.jsx'
+import GroupCard from '../components/GroupCard.jsx'
 import ItemDetailModal from '../components/ItemDetailModal.jsx'
+import ItemList from '../components/ItemList.jsx'
+import GroupedItemList from '../components/GroupedItemList.jsx'
+import ViewToolbar from '../components/ViewToolbar.jsx'
 import CollectionSearch from '../components/CollectionSearch.jsx'
+import CollectionCounter from '../components/CollectionCounter.jsx'
+import { groupVinylsByArtist } from '../components/collection.js'
+import { groupComicsBySeries } from '../components/collection.js'
+import { useDisplay, DisplayProvider, DISPLAY_SCOPES } from '../services/display.jsx'
 
 /**
  * COLLECTION PARTAGÉE — vue EN LECTURE SEULE de la collection d'UN AUTRE
  * utilisateur, cible du lien envoyé par e-mail lors d'un partage de
  * bibliothèque (chemin /shared/:ownerUserId).
  *
+ * CHARTE VISUELLE : adopte rigoureusement la même structure que les pages
+ * « Mes Disques » / « Mes BD » :
+ *  - Compteur à gauche de la barre de recherche (« X artistes — Y disques »)
+ *  - Basculement Grille / Liste (ViewToolbar, mêmes préférences localStorage)
+ *  - Classement hiérarchique : Artistes → Albums (disques), Séries → Tomes (BD)
+ *  - Tuiles GroupCard niveau 1, cartes individuelles niveau 2
+ *
  * SÉCURITÉ / ISOLATION DES SESSIONS :
  *  - Le destinataire accède à cette vue sous SA PROPRE identité (celle de sa
- *    session JWT courante) — jamais sous celle de l'émetteur. Aucun jeton,
- *    mot de passe ou identifiant de connexion n'est transmis par le lien.
- *  - Si le visiteur n'est PAS connecté, la route est protégée (ProtectedRoute)
- *    : il est redirigé vers /login puis revient ici après identification avec
- *    SES PROPRES identifiants.
+ *    session JWT courante) — jamais sous celle de l'émetteur.
+ *  - Si le visiteur n'est PAS connecté, la route est protégée (ProtectedRoute).
  *  - LECTURE SEULE STRICTE : aucun bouton de création / modification /
- *    suppression / import n'est affiché (pas d'« Ajouter », pas d'actions sur
- *    les cartes, modale de détail sans bouton « Modifier »). Le backend
- *    verrouille par ailleurs toutes les routes d'écriture (POST/PUT/PATCH/
- *    DELETE) pour tout utilisateur qui n'est pas le propriétaire légitime.
+ *    suppression / import n'est affiché. Le backend verrouille par ailleurs
+ *    toutes les routes d'écriture (POST/PUT/PATCH/DELETE) pour tout utilisateur
+ *    qui n'est pas le propriétaire légitime.
  *
  * Les onglets affichés (Disques / BD) dépendent du SCOPE du partage accordé à
  * ce compte (cf. GET /api/users/library-shares -> sharedWithMe).
@@ -43,7 +54,7 @@ export default function SharedCollection() {
   const [detail, setDetail] = useState(null) // { type: 'vinyl'|'comic', item }
 
   // Scopes accordés à CE compte pour la collection de cet émetteur :
-  // « vinyls » / « comiques » / « all ». Déterminent les onglets disponibles.
+  // « vinyls » / « comics » / « all ». Déterminent les onglets disponibles.
   const scopes = useMemo(() => {
     if (!shares) return null
     const mine = (shares.sharedWithMe || []).filter(
@@ -127,16 +138,22 @@ export default function SharedCollection() {
     setQ('')
   }
 
-  const items = activeTab === 'vinyls' ? vinyls : comics
-  const gridCls = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+  const openDetail = useCallback((item, type) => setDetail({ type, item }), [])
+
+  // Compteur de collection (calculé ici pour la barre d'actions).
+  const vinylGroups = useMemo(() => groupVinylsByArtist(vinyls), [vinyls])
+  const comicGroups = useMemo(() => groupComicsBySeries(comics), [comics])
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+    // `lib-coll` : ancre CSS du thème « Médiathèque » — harmonise grilles /
+    // listes à la charte chaude (même classe que les pages personnelles).
+    <div className="lib-coll max-w-7xl mx-auto px-4 py-8 space-y-6">
       {/* En-tête : émetteur + mention LECTURE SEULE. */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {owner && <Avatar user={owner} size={48} />}
           <div>
+            {/* cb-page-title : lettrage « case de BD » sous le thème Comic Books. */}
             <h1 className="cb-page-title text-2xl md:text-3xl font-extrabold text-white">
               {t('sharedCollection.title', { name: owner ? `${owner.firstName} ${owner.lastName}`.trim() : '' })}
             </h1>
@@ -165,13 +182,6 @@ export default function SharedCollection() {
         </div>
       )}
 
-      {/* Barre de recherche (lecture seule). */}
-      {shares && tabs.length > 0 && (
-        <div className="flex justify-end">
-          <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
-        </div>
-      )}
-
       {loadError ? (
         <p className="text-sm text-rose-400">{loadError}</p>
       ) : shares && tabs.length === 0 ? (
@@ -181,22 +191,42 @@ export default function SharedCollection() {
           subtitle={t('sharedCollection.noAccessSubtitle')}
           action={<Link to="/partages" className="btn-primary">{t('sharedLibraries.title')}</Link>}
         />
-      ) : shares && items.length === 0 ? (
+      ) : shares && (activeTab === 'vinyls' ? vinyls.length === 0 : comics.length === 0) ? (
         <EmptyState
           title={q ? t('collection.noResults') : t('sharedCollection.emptyTitle')}
-          subtitle={q ? t(activeTab === 'vinyls' ? 'collection.noVinylMatch' : 'collection.noComicMatch', { q }) : t('sharedCollection.emptySubtitle')}
+          subtitle={q
+            ? t(activeTab === 'vinyls' ? 'collection.noVinylMatch' : 'collection.noComicMatch', { q })
+            : t('sharedCollection.emptySubtitle')}
           action={q ? <button className="btn-ghost" onClick={() => setQ('')}>{t('collection.resetSearch')}</button> : null}
         />
+      ) : activeTab === 'vinyls' ? (
+        // ------- Onglet DISQUES : scope d'affichage dédié « disks ».
+        // Le DisplayProvider englobe la barre d'actions ET le contenu pour que
+        // ViewToolbar et la vue partagent le MÊME état (grille/liste). -------
+        <DisplayProvider scope={DISPLAY_SCOPES.disks}>
+          <div className="space-y-6">
+            {/* Barre d'actions : compteur → recherche → vue. AUCUN bouton « Ajouter ». */}
+            <div className="cb-actions flex flex-wrap items-center gap-3">
+              <CollectionCounter type="disks" groups={vinylGroups.length} items={vinyls.length} />
+              <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
+              <ViewToolbar />
+            </div>
+            <SharedVinylsView vinyls={vinyls} q={q} onDetail={(v) => openDetail(v, 'vinyl')} />
+          </div>
+        </DisplayProvider>
       ) : (
-        <div className={gridCls}>
-          {activeTab === 'vinyls'
-            ? vinyls.map((v) => (
-                <VinylCard key={v.id} vinyl={v} onClick={() => setDetail({ type: 'vinyl', item: v })} />
-              ))
-            : comics.map((c) => (
-                <ComicCard key={c.id} comic={c} onClick={() => setDetail({ type: 'comic', item: c })} />
-              ))}
-        </div>
+        // ------- Onglet BD : scope d'affichage dédié « comics ». -------
+        <DisplayProvider scope={DISPLAY_SCOPES.comics}>
+          <div className="space-y-6">
+            {/* Barre d'actions : compteur → recherche → vue. AUCUN bouton « Ajouter ». */}
+            <div className="cb-actions flex flex-wrap items-center gap-3">
+              <CollectionCounter type="comics" groups={comicGroups.length} items={comics.length} />
+              <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
+              <ViewToolbar />
+            </div>
+            <SharedComicsView comics={comics} q={q} onDetail={(c) => openDetail(c, 'comic')} />
+          </div>
+        </DisplayProvider>
       )}
 
       {/* Modale de détail EN LECTURE SEULE : aucun bouton « Modifier » (onEdit absent). */}
@@ -208,5 +238,274 @@ export default function SharedCollection() {
         />
       )}
     </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   VUE DISQUES PARTAGÉS — hiérarchie Artistes → Albums (lecture seule)
+   ═══════════════════════════════════════════════════════════════════════ */
+function SharedVinylsView({ vinyls, q, onDetail }) {
+  const { settings } = useDisplay()
+  const { t } = useTranslation()
+  // Clé du groupe (artiste) ouvert au niveau 2, null pour la vue principale.
+  const [openGroup, setOpenGroup] = useState(null)
+
+  const groups = useMemo(() => groupVinylsByArtist(vinyls), [vinyls])
+  const currentGroup = openGroup ? groups.find((g) => g.key === openGroup) : null
+  useEffect(() => {
+    if (openGroup && !groups.some((g) => g.key === openGroup)) setOpenGroup(null)
+  }, [groups, openGroup])
+
+  // ------- Vue pilotée par les préférences d'affichage (grille / liste) -------
+  const isList = settings.view === 'list'
+  const cardView = settings.jukebox ? 'jukebox' : 'card'
+  const cardProps = useMemo(
+    () => ({
+      view: cardView,
+      showTitle: settings.showTitle,
+      showYear: settings.showYear,
+    }),
+    [cardView, settings.showTitle, settings.showYear]
+  )
+  const gridCls = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+  const openDetailCb = useCallback((v) => onDetail(v), [onDetail])
+
+  // Nom AFFICHÉ du groupe niveau 2 : « Divers » si non étiqueté, sinon son nom.
+  const currentGroupName = currentGroup
+    ? (currentGroup.isUnlabeled ? t('collection.groupNoArtist') : currentGroup.name)
+    : ''
+
+  return (
+    <>
+      {q ? (
+        // ------- Recherche en cours : liste à plat de tous les résultats -------
+        isList ? (
+          <ItemList
+            type="vinyl"
+            items={vinyls}
+            actions={[]}
+            onDetail={openDetailCb}
+            showTitle={settings.showTitle}
+            showYear={settings.showYear}
+            showBadges={settings.showBadges}
+          />
+        ) : (
+          <div className={gridCls}>
+            {vinyls.map((v) => (
+              <VinylCard
+                key={v.id}
+                vinyl={v}
+                onClick={() => onDetail(v)}
+                {...cardProps}
+              />
+            ))}
+          </div>
+        )
+      ) : currentGroup ? (
+        // ------- Niveau 2 : disques de l'artiste ouvert (lecture seule) -------
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <button className="btn-ghost" onClick={() => setOpenGroup(null)}>
+                {t('collection.allArtists')}
+              </button>
+              <div>
+                {/* cb-group-title : lettrage « case de BD » sous le thème Comic Books. */}
+                <h2 className="cb-group-title text-xl font-extrabold text-white" title={currentGroupName}>
+                  {currentGroupName}
+                </h2>
+                <p className="text-sm text-slate-400">
+                  {t('collection.vinylsCount', { count: currentGroup.items.length })}
+                  {currentGroup.items[0]?.label ? ` — ${currentGroup.items[0].label}` : ''}
+                </p>
+              </div>
+            </div>
+            {/* AUCUN bouton « Ajouter pour cet artiste » — lecture seule stricte. */}
+          </div>
+
+          {isList ? (
+            <ItemList
+              type="vinyl"
+              items={currentGroup.items}
+              actions={[]}
+              onDetail={openDetailCb}
+              showTitle={settings.showTitle}
+              showYear={settings.showYear}
+              showBadges={settings.showBadges}
+            />
+          ) : (
+            <div className={gridCls}>
+              {currentGroup.items.map((v) => (
+                <VinylCard
+                  key={v.id}
+                  vinyl={v}
+                  onClick={() => onDetail(v)}
+                  {...cardProps}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        // ------- Niveau 1 : accordéons par artiste (liste) / tuiles (grille) -------
+        isList ? (
+          <GroupedItemList
+            type="vinyl"
+            groups={groups}
+            actions={[]}
+            onDetail={openDetailCb}
+            showTitle={settings.showTitle}
+            showYear={settings.showYear}
+            showBadges={settings.showBadges}
+          />
+        ) : (
+          <div className={gridCls}>
+            {groups.map((g) => (
+              <GroupCard
+                key={g.key}
+                name={g.name}
+                count={g.items.length}
+                coverUrl={g.coverUrl}
+                artistImage={g.artistImage}
+                variant="vinyl"
+                view={cardView}
+                showTitle={settings.showTitle}
+                isUnlabeled={g.isUnlabeled}
+                onClick={() => setOpenGroup(g.key)}
+              />
+            ))}
+          </div>
+        )
+      )}
+    </>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   VUE BD PARTAGÉES — hiérarchie Séries → Tomes (lecture seule)
+   ═══════════════════════════════════════════════════════════════════════ */
+function SharedComicsView({ comics, q, onDetail }) {
+  const { settings } = useDisplay()
+  const { t } = useTranslation()
+  // Clé du groupe (série) ouvert au niveau 2, null pour la vue principale.
+  const [openGroup, setOpenGroup] = useState(null)
+
+  const groups = useMemo(() => groupComicsBySeries(comics), [comics])
+  const currentGroup = openGroup ? groups.find((g) => g.key === openGroup) : null
+  useEffect(() => {
+    if (openGroup && !groups.some((g) => g.key === openGroup)) setOpenGroup(null)
+  }, [groups, openGroup])
+
+  // ------- Vue pilotée par les préférences d'affichage (grille / liste) -------
+  const isList = settings.view === 'list'
+  const cardView = settings.jukebox ? 'jukebox' : 'card'
+  const cardProps = useMemo(
+    () => ({
+      view: cardView,
+      showTitle: settings.showTitle,
+      showYear: settings.showYear,
+    }),
+    [cardView, settings.showTitle, settings.showYear]
+  )
+  const gridCls = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+  const openDetailCb = useCallback((c) => onDetail(c), [onDetail])
+
+  // Nom AFFICHÉ du groupe (série) au niveau 2 : « Hors série » si non étiquetée.
+  const currentGroupName = currentGroup
+    ? (currentGroup.isUnlabeled ? t('collection.groupNoSeries') : currentGroup.name)
+    : ''
+
+  return (
+    <>
+      {q ? (
+        // ------- Recherche en cours : liste à plat de tous les résultats -------
+        isList ? (
+          <ItemList
+            type="comic"
+            items={comics}
+            actions={[]}
+            onDetail={openDetailCb}
+            showTitle={settings.showTitle}
+            showYear={settings.showYear}
+            showBadges={settings.showBadges}
+          />
+        ) : (
+          <div className={gridCls}>
+            {comics.map((c) => (
+              <ComicCard key={c.id} comic={c} onClick={() => onDetail(c)} {...cardProps} />
+            ))}
+          </div>
+        )
+      ) : currentGroup ? (
+        // ------- Niveau 2 : albums de la série ouverte (lecture seule) -------
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <button className="btn-ghost" onClick={() => setOpenGroup(null)}>
+                {t('collection.allSeries')}
+              </button>
+              <div>
+                {/* cb-group-title : lettrage « case de BD » sous le thème Comic Books. */}
+                <h2 className="cb-group-title text-xl font-extrabold text-white" title={currentGroupName}>
+                  {currentGroupName}
+                </h2>
+                <p className="text-sm text-slate-400">
+                  {t('collection.albumsCount', { count: currentGroup.items.length })}
+                  {currentGroup.items[0]?.authors ? ` — ${currentGroup.items[0].authors}` : ''}
+                </p>
+              </div>
+            </div>
+            {/* AUCUN bouton « Ajouter dans la série » — lecture seule stricte. */}
+          </div>
+
+          {isList ? (
+            <ItemList
+              type="comic"
+              items={currentGroup.items}
+              actions={[]}
+              onDetail={openDetailCb}
+              showTitle={settings.showTitle}
+              showYear={settings.showYear}
+              showBadges={settings.showBadges}
+            />
+          ) : (
+            <div className={gridCls}>
+              {currentGroup.items.map((c) => (
+                <ComicCard key={c.id} comic={c} onClick={() => onDetail(c)} {...cardProps} />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        // ------- Niveau 1 : accordéons par série (liste) / tuiles (grille) -------
+        isList ? (
+          <GroupedItemList
+            type="comic"
+            groups={groups}
+            actions={[]}
+            onDetail={openDetailCb}
+            showTitle={settings.showTitle}
+            showYear={settings.showYear}
+            showBadges={settings.showBadges}
+          />
+        ) : (
+          <div className={gridCls}>
+            {groups.map((g) => (
+              <GroupCard
+                key={g.key}
+                name={g.name}
+                count={g.items.length}
+                coverUrl={g.coverUrl}
+                seriesImage={g.seriesImage}
+                view={cardView}
+                showTitle={settings.showTitle}
+                isUnlabeled={g.isUnlabeled}
+                onClick={() => setOpenGroup(g.key)}
+              />
+            ))}
+          </div>
+        )
+      )}
+    </>
   )
 }
