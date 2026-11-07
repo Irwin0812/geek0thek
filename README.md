@@ -405,6 +405,32 @@ page de forçage. Une **réinitialisation du mot de passe par un admin**
 (`PUT /api/users/:id` avec `newPassword`) remet le drapeau à `TRUE` : la
 prochaine connexion du compte redevient un onboarding forcé.
 
+### 📅 Rappel de sécurité semestriel (comptes SANS 2FA)
+
+En complément de l'onboarding forcé, un **rappel automatique** est envoyé
+**tous les 6 mois** à chaque utilisateur **actif** qui n'a **pas activé
+l'authentification à deux facteurs (2FA)**, pour l'inviter / inciter à changer
+son mot de passe et à activer la 2FA.
+
+- **Mécanisme** : une tâche planifiée (planificateur natif `setInterval`, sans
+  dépendance externe) démarre au boot de l'API, une fois la base disponible.
+  Elle vérifie **quotidiennement** les comptes éligibles ; le rappel n'est
+  réellement envoyé que si le compte est « échu ».
+- **Éligibilité** : compte `is_active = TRUE`, `totp_enabled = FALSE` (2FA non
+  activée), dont le mot de passe a plus de 6 mois (`users.password_changed_at`,
+  ou `created_at` en repli) **et** qui n'a pas reçu de rappel depuis plus de
+  6 mois (`users.last_password_reminder_at`).
+- **Règle non bloquante** : il s'agit d'une simple demande **informative** par
+  e-mail. Elle ne bloque **jamais** l'accès à l'application, ne modifie ni le
+  mot de passe ni le drapeau `must_change_password` — seul le champ
+  `last_password_reminder_at` est mis à jour (pour éviter les doublons).
+- **Idempotence** : le champ `last_password_reminder_at` garantit qu'aucun
+  utilisateur ne reçoit plus d'un rappel par période de 6 mois, même si la
+  vérification tourne quotidiennement ou que le conteneur est redémarré.
+- **SMTP requis** : si le SMTP n'est pas configuré, aucun rappel n'est envoyé
+  (et aucun compte n'est marqué) — les rappels partiront dès que le SMTP sera
+  opérationnel.
+
 ---
 
 ## 🖥️ Configuration d'un reverse proxy externe
@@ -544,13 +570,20 @@ Après ce `pull` + rebuild, le commit déployé rejoint la HEAD de GitHub : le b
 
 ## ✉️ Configuration des notifications E-mail (SMTP)
 
-L'application peut envoyer des **notifications par e-mail** automatiques dans deux cas :
+L'application peut envoyer des **notifications par e-mail** automatiques dans les cas suivants :
 
 - **Création de compte par un admin** : le nouvel utilisateur reçoit un e-mail
   confirmant la création de son compte avec ses accès (identifiant + mot de passe
   provisoire).
 - **Partage de bibliothèque** : quand un utilisateur ouvre l'accès en consultation à
   sa collection à un autre utilisateur, ce dernier reçoit un e-mail de notification.
+- **Réinitialisation du mot de passe** (« identifiant / mot de passe oublié ») : le
+  propriétaire du compte reçoit un lien temporaire (jeton à usage unique, validité 1 h).
+- **Rappel de sécurité semestriel (comptes SANS 2FA)** : tous les 6 mois, chaque
+  utilisateur actif qui n'a **pas** activé l'authentification à deux facteurs (2FA)
+  reçoit un e-mail d'**information** l'invitant à changer son mot de passe et à activer
+  la 2FA. Ce rappel est **non bloquant** : il ne bloque jamais l'accès à l'application
+  (voir section *Rappel de sécurité semestriel* ci-dessous).
 
 Ces envois sont pilotés **exclusivement par les variables d'environnement** du fichier
 `.env` (à la racine du projet). Chaque utilisateur configure ainsi **son propre serveur
@@ -619,6 +652,10 @@ docker compose logs -f backend
   → changement de mot de passe obligatoire (double saisie) et pseudo de login
   personnalisable avant tout accès ; garde API `requirePasswordChanged`
   (`403 must-change-password`) sur toutes les routes protégées.
+- **Rappel de sécurité semestriel (comptes SANS 2FA)** : tâche planifiée qui envoie,
+  tous les 6 mois, un e-mail d'**information** aux utilisateurs actifs n'ayant pas
+  activé la 2FA, pour les inciter à changer leur mot de passe. **Non bloquant**
+  (jamais de blocage d'accès) ; idempotent via `users.last_password_reminder_at`.
 - **Helmet** (en-têtes sécurité) + **CORS** restreint aux origines autorisées.
 - **Express `trust proxy = 1`** pour lire correctement `X-Forwarded-For`.
 - Couvertures servies statiquement (`/uploads/...`) : noms de fichiers
@@ -644,6 +681,9 @@ docker compose logs -f backend
 users      (id, last_name, first_name, email UNIQUE, login UNIQUE, password_hash,
             role [admin|user], phone, bio, is_public BOOLEAN,
             must_change_password BOOLEAN (défaut FALSE ; TRUE = onboarding forcé),
+            totp_secret TEXT, totp_enabled BOOLEAN (2FA Google Authenticator / TOTP),
+            password_changed_at TIMESTAMPTZ (dernière modification du mot de passe),
+            last_password_reminder_at TIMESTAMPTZ (dernier rappel semestriel envoyé),
             created_at, updated_at)
 
 vinyls     (id, user_id FK->users ON DELETE CASCADE, cover_url TEXT NOT NULL,

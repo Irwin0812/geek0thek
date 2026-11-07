@@ -517,6 +517,11 @@ async function updateUser(req, res, next) {
       // sa prochaine connexion forcera la modification du mot de passe.
       values.push(true);
       fields.push(`must_change_password = $${values.length}`);
+      // Date de DERNIÈRE MODIFICATION du mot de passe (ancre du rappel de
+      // sécurité semestriel). Sera remise à jour par l'onboarding forcé dès
+      // que l'utilisateur choisira SON propre mot de passe.
+      values.push(new Date());
+      fields.push(`password_changed_at = $${values.length}`);
     }
 
     if (fields.length === 0) {
@@ -587,6 +592,10 @@ async function updateMe(req, res, next) {
     if (passwordHash) {
       values.push(passwordHash);
       fields.push(`password_hash = $${values.length}`);
+      // Date de DERNIÈRE MODIFICATION du mot de passe : ancre du rappel de
+      // sécurité semestriel (cf. utils/passwordReminderService.js).
+      values.push(new Date());
+      fields.push(`password_changed_at = $${values.length}`);
     }
 
     if (fields.length === 0) {

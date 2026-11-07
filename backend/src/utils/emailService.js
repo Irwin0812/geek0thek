@@ -268,10 +268,61 @@ function notifyPasswordReset({ to, firstName, login, resetUrl }) {
   });
 }
 
+// ------------------------------------------------------------
+// Déclencheur n°4 — RAPPEL DE SÉCURITÉ SEMESTRIEL (comptes SANS 2FA).
+// Envoi automatique, toutes les 6 MOIS, à chaque utilisateur ACTIF qui n'a
+// PAS activé l'authentification à deux facteurs (2FA) : une simple demande
+// INFORMATIVE l'invitant / incitant à changer son mot de passe.
+// RÈGLE NON BLOQUANTE : cet e-mail ne bloque JAMAIS l'accès à l'application,
+// ne modifie ni le mot de passe ni le drapeau must_change_password — il est
+// purement informatif (cf. utils/passwordReminderService.js). Le lien pointe
+// vers la page de profil (section « Sécurité ») où l'utilisateur peut changer
+// son mot de passe ET activer la 2FA.
+// ------------------------------------------------------------
+/**
+ * @param {object} p
+ * @param {string} p.to         adresse e-mail du destinataire
+ * @param {string} [p.firstName]
+ * @param {string} p.login      identifiant de connexion du compte
+ */
+function notifyPasswordReminder({ to, firstName, login }) {
+  const prenom = escapeHtml(firstName || '');
+  const salutation = prenom ? `Bonjour ${prenom}` : 'Bonjour';
+  // Lien vers la page de profil (section « Sécurité ») : changement de mot de
+  // passe + activation de la 2FA. Aucun jeton / identifiant sensible n'est
+  // transmis — l'utilisateur doit s'identifier avec SES propres accès.
+  const profileUrl = `${appBaseUrl()}/profil`;
+  const body = `
+    <p>${salutation},</p>
+    <p>Pour la sécurité de votre compte <strong>Geek0thek</strong>, nous vous recommandons de <strong>changer votre mot de passe</strong>.</p>
+    <p>Votre identifiant de connexion est : <strong>${escapeHtml(login)}</strong></p>
+    <p>Nous constatons que l'<strong>authentification à deux facteurs (2FA)</strong> n'est pas activée sur votre compte. Activer la 2FA (Google Authenticator, Aegis…) renforce considérablement la protection de vos accès.</p>
+    <p style="margin:20px 0;">
+      <a href="${escapeHtml(profileUrl)}"
+         style="display:inline-block;background:#38bdf8;color:#0f172a;font-weight:bold;text-decoration:none;padding:10px 18px;border-radius:8px;">
+        Changer mon mot de passe
+      </a>
+    </p>
+    <p style="color:#94a3b8;font-size:13px;">Ce rappel est envoyé automatiquement tous les 6 mois aux comptes sans 2FA. Il n'a aucun effet bloquant : votre accès à l'application reste inchangé. Si vous n'êtes pas concerné(e), ignorez ce message.</p>`;
+  return sendMail({
+    to,
+    subject: 'Rappel de sécurité Geek0thek — changez votre mot de passe',
+    html: layout('Rappel de sécurité : mot de passe & 2FA', body),
+    text:
+      `${salutation},\n\n` +
+      `Pour la sécurité de votre compte Geek0thek, nous vous recommandons de changer votre mot de passe.\n` +
+      `Votre identifiant de connexion est : ${login}\n\n` +
+      `Nous constatons que l'authentification à deux facteurs (2FA) n'est pas activée sur votre compte. Activer la 2FA renforce considérablement la protection de vos accès.\n\n` +
+      `Changer mon mot de passe : ${profileUrl}\n\n` +
+      `Ce rappel est envoyé automatiquement tous les 6 mois aux comptes sans 2FA. Il n'a aucun effet bloquant : votre accès à l'application reste inchangé.\n`,
+  });
+}
+
 module.exports = {
   isConfigured,
   sendMail,
   notifyAccountCreated,
   notifyLibraryShared,
   notifyPasswordReset,
+  notifyPasswordReminder,
 };

@@ -13,6 +13,10 @@ const morgan = require('morgan');
 const env = require('./config/env');
 const { pool, migrate } = require('./config/db');
 const { getUpdateStatus } = require('./utils/githubClient');
+// Rappel de sécurité semestriel (comptes SANS 2FA) : tâche planifiée qui envoie
+// un e-mail d'information tous les 6 mois aux utilisateurs n'ayant pas activé
+// la 2FA. Démarrée une fois la base disponible (cf. ensureDbReady).
+const { startPasswordReminderScheduler } = require('./utils/passwordReminderService');
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -203,6 +207,9 @@ async function ensureDbReady() {
       await pool.query('SELECT 1');
       await migrate();
       console.log(`[geek0thek] Connexion PostgreSQL établie, migrations idempotentes appliquées (tentative n°${attempt}).`);
+      // Démarrage du rappel de sécurité semestriel (comptes SANS 2FA) : une
+      // fois la base disponible et migrée. Idempotent — un seul timer.
+      startPasswordReminderScheduler();
       return;
     } catch (err) {
       console.warn(`[geek0thek] Base non encore disponible, on relance dans 5 s (tentative n°${attempt}) :`, err.message);

@@ -539,6 +539,29 @@ const MIGRATIONS = [
       'CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id);',
     ],
   },
+  // RAPPEL DE SÉCURITÉ SEMESTRIEL (comptes SANS 2FA) — deux colonnes de suivi
+  // sur users, utilisées par utils/passwordReminderService.js :
+  //   password_changed_at       — date de DERNIÈRE MODIFICATION du mot de passe
+  //                               (ou de la 1re connexion / onboarding). Un
+  //                               compte dont le mot de passe a plus de 6 mois
+  //                               est éligible au rappel. NULL = jamais
+  //                               renseignée (comptes créés avant cette
+  //                               migration) : le service retombe alors sur
+  //                               created_at (date de création / 1re connexion).
+  //   last_password_reminder_at — date du DERNIER e-mail de rappel envoyé.
+  //                               Garantit qu'aucun utilisateur ne reçoit plus
+  //                               d'un rappel par période de 6 mois, même si la
+  //                               vérification tourne quotidiennement.
+  // Les deux colonnes sont NULLABLES (pas de NOT NULL) : aucune donnée
+  // existante n'est affectée et le service gère proprement les NULL.
+  // Idempotent : ADD COLUMN IF NOT EXISTS.
+  {
+    name: 'users.password-reminder-dates',
+    statements: [
+      'ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMPTZ;',
+      'ALTER TABLE users ADD COLUMN IF NOT EXISTS last_password_reminder_at TIMESTAMPTZ;',
+    ],
+  },
 ];
 
 /**

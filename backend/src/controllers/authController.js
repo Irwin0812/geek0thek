@@ -253,7 +253,8 @@ async function resetPassword(req, res, next) {
         return res.status(400).json({ error: 'Lien de réinitialisation déjà utilisé.' });
       }
       await client.query(
-        `UPDATE users SET password_hash = $1, must_change_password = FALSE WHERE id = $2`,
+        `UPDATE users SET password_hash = $1, must_change_password = FALSE,
+         password_changed_at = now() WHERE id = $2`,
         [passwordHash, reset.userId]
       );
       await client.query('COMMIT');
@@ -340,7 +341,8 @@ async function onboarding(req, res, next) {
     const passwordHash = await bcrypt.hash(String(newPassword), 10);
     try {
       const { rows: updated } = await query(
-        `UPDATE users SET login = $1, password_hash = $2, must_change_password = FALSE
+        `UPDATE users SET login = $1, password_hash = $2, must_change_password = FALSE,
+         password_changed_at = now()
          WHERE id = $3 RETURNING *`,
         [nextLogin, passwordHash, user.id]
       );
