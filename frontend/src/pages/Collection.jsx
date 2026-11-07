@@ -196,8 +196,12 @@ function CollectionView() {
       </header>
 
       {/* Barre de filtre alphabétique (#, A–Z) : intégrée directement sous le
-          bloc recherche / sélection Grille-Liste. */}
-      <AlphabetFilterBar labels={groups.map((g) => g.name)} value={letter} onChange={setLetter} />
+          bloc recherche / sélection Grille-Liste. Visible UNIQUEMENT sur la vue
+          racine « Tous les artistes » — masquée dès qu'une recherche est en
+          cours ou qu'un artiste est ouvert (niveau 2). */}
+      {!q && !currentGroup && (
+        <AlphabetFilterBar labels={groups.map((g) => g.name)} value={letter} onChange={setLetter} />
+      )}
 
       {toast && (
         <p className="text-sm text-amber-800 bg-amber-100 border border-amber-500/30 rounded-lg px-3 py-2">

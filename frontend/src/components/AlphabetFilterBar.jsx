@@ -6,7 +6,9 @@ import { useTranslation } from 'react-i18next'
  *
  * - Disposition : UNE ligne horizontale, intégrée directement SOUS le bloc de
  *   recherche / sélection Grille-Liste (cf. pages Collection / ComicCollection).
- * - Boutons : `#` (chiffres + caractères spéciaux) puis A à Z.
+ * - Boutons : `#` (chiffres + caractères spéciaux) puis A à Z, suivi d'un
+ *   bouton de réinitialisation « Tous » qui lève le filtre actif et réaffiche
+ *   la vue globale complète.
  * - Normalisation des accents : É/È/Ê → E, À/Â/Ä → A… via NFD + suppression des
  *   diacritiques — « Les Étrangers » correspond donc au bouton E, « À la page »
  *   au bouton A.
@@ -91,6 +93,23 @@ export default function AlphabetFilterBar({ labels, value, onChange }) {
           {letter}
         </button>
       ))}
+      {/* Bouton de réinitialisation « Tous » : lève le filtre actif (null) et
+          réaffiche la vue globale complète. Mis en évidence quand un filtre
+          est actif ; inerte sinon. */}
+      <button
+        type="button"
+        disabled={!value}
+        aria-pressed={false}
+        title={t('collection.filterAll')}
+        onClick={() => onChange(null)}
+        className={`h-8 shrink-0 rounded-lg px-2.5 text-xs font-bold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
+          value
+            ? 'bg-[var(--accent-strong)] text-[var(--accent-contrast)] shadow-[0_8px_16px_-8px_var(--ring)]'
+            : 'cursor-default text-slate-500/40'
+        }`}
+      >
+        {t('collection.filterAll')}
+      </button>
     </div>
   )
 }

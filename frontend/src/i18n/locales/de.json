@@ -61,6 +61,7 @@
     "filterNumbers": "Zahlen und Sonderzeichen",
     "filterLetter": "{{letter}} — {{count}} Eintrag(e)",
     "filterEmpty": "Keine Einträge unter {{letter}}",
+    "filterAll": "Alle",
     "noLetterMatch": "Keine Gruppe beginnt mit „{{letter}}“.",
     "resetFilter": "Filter zurücksetzen",
     "allArtists": "← Alle Künstler",

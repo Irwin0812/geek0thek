@@ -61,6 +61,7 @@
     "filterNumbers": "Cijfers en speciale tekens",
     "filterLetter": "{{letter}} — {{count}} item(s)",
     "filterEmpty": "Geen items onder {{letter}}",
+    "filterAll": "Alle",
     "noLetterMatch": "Geen groep begint met « {{letter}} ».",
     "resetFilter": "Filter wissen",
     "allArtists": "← Alle artiesten",
