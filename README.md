@@ -113,6 +113,52 @@ geek0thek/
 
 ---
 
+## ⚙️ Spécifications système minimales
+
+L'application tourne sous **Docker Compose** avec **3 conteneurs** : PostgreSQL 16,
+backend Node.js 22 (API Express) et frontend nginx. Les spécifications ci-dessous
+sont celles recommandées pour l'exécuter **sereinement** sur la VM hôte.
+
+### Matériel
+
+| Ressource | Minimum | Recommandé |
+|---|---|---|
+| **CPU** | 2 cœurs (vCPU) | 4 cœurs (vCPU) |
+| **Mémoire RAM** | 2 Go | 4 Go |
+| **Espace disque libre** | 10 Go | 30 Go+ (les couvertures téléversées/téléchargées s'accumulent dans `./uploads`) |
+| **Réseau** | Connexion internet sortante (egress) | — |
+
+> **Répartition indicative de la RAM** : PostgreSQL ~500 Mo, backend Node.js
+> ~300 Mo, nginx ~50 Mo, le reste pour l'OS et Docker. En dessous de 2 Go, les
+> imports par code-barres/ISBN (téléchargement + ré-hébergement des couvertures)
+> peuvent devenir lents ou provoquer des OOM.
+
+### Logiciels (prérequis hôte)
+
+| Logiciel | Version | Rôle |
+|---|---|---|
+| **Système d'exploitation** | Debian 12 (cible) — tout Linux compatible Docker fonctionne | Hôte de la VM |
+| **Docker Engine** | ≥ 24.x (dernière stable) | Exécution des conteneurs |
+| **Docker Compose** | v2 (plugin `docker compose`) | Orchestration db + backend + frontend |
+| **Git** | récent | Déploiement (`git clone`) et mises à jour (`git pull`) |
+
+### Accès réseau sortant (egress)
+
+L'application a besoin d'une **connexion internet sortante** pour :
+
+- **Imports vinyles** : MusicBrainz, Cover Art Archive, Discogs (si `DISCOGS_TOKEN`), Last.fm.
+- **Imports BD** : Google Books, Open Library.
+- **Indicateur de mise à jour** : API GitHub (dépôt privé → `GITHUB_TOKEN`).
+
+Sans egress, l'application fonctionne normalement (collections locales,
+authentification) mais les imports par code-barres/ISBN échouent (`502`).
+
+> Les ports entrants requis sont uniquement le **port 80** (frontend). PostgreSQL
+> (5432) et l'API backend (8080) restent **internes au réseau Docker** et ne sont
+> pas exposés sur l'hôte.
+
+---
+
 ## 🚀 Installation pas à pas (Debian 12 — VM `172.16.2.75`)
 
 ### 1. Prérequis sur la VM
