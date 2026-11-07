@@ -803,6 +803,10 @@ curl -s http://172.16.2.75/api/health   # -> { "status": "ok", "schema_ok": true
 
 ---
 
-## Licence
+## Licence & Politique de contribution
 
-Ce projet est sous licence **GNU AGPLv3**. Consultez le fichier [LICENSE](LICENSE) pour plus d'informations.
+Ce logiciel est distribué sous licence **GNU Affero General Public License v3.0 (AGPLv3)**. 
+
+Toutefois, le dépôt officiel **n'accepte aucune contribution externe ni aucune Pull Request** de la part de tiers. Vous êtes totalement libre de forker le projet et de l'utiliser conformément aux termes de la licence AGPLv3, mais aucun code extérieur ne sera fusionné dans la branche principale.
+
+Consultez le fichier [LICENSE](LICENSE) pour plus d'informations.
