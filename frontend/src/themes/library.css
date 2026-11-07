@@ -702,6 +702,25 @@ html[data-theme='library'] {
   color: var(--lib-noir);
 }
 
+/* ── C2bis) BARRE DE FILTRE ALPHABÉTIQUE (#, A–Z) — même charte que la barre
+    Grille/Liste : papier clair + encre chaude, lettre active = tampon orange. */
+[data-theme='library'] .lib-coll .cb-alphabet {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--border-default);
+}
+[data-theme='library'] .lib-coll .cb-alphabet button:not([aria-pressed='true']) {
+  color: var(--text-secondary);
+}
+[data-theme='library'] .lib-coll .cb-alphabet button:not([aria-pressed='true']):hover {
+  background: var(--bg-hover);
+  color: var(--lib-noir);
+}
+[data-theme='library'] .lib-coll .cb-alphabet button[aria-pressed='true'] {
+  background: var(--accent-strong);
+  color: var(--accent-contrast);
+  box-shadow: 0 8px 16px -8px var(--ring);
+}
+
 /* ── C3) PANNEAU D'OPTIONS DE LA TOOLBAR — PORTALÉ dans <body> (hors du DOM
     de la page, cf. ViewToolbar.jsx) : il est donc ciblé par sa propre classe
     .lib-coll-options posée sur le panneau. Papier clair + encre chaude,

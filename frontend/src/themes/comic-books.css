@@ -673,6 +673,25 @@
   color: #191105;
 }
 
+/* --- BARRE DE FILTRE ALPHABÉTIQUE (#, A–Z) : papier + encre, lettre active =
+    tampon jaune « splash » (même charte que le segment actif Grille/Liste). */
+[data-theme='comic-books'] .cb-alphabet {
+  background: var(--bg-elevated); /* papier blanc franc */
+  border-color: #191105;
+}
+[data-theme='comic-books'] .cb-alphabet button {
+  color: #191105;
+}
+[data-theme='comic-books'] .cb-alphabet button[aria-pressed='true'] {
+  background: var(--cb-yellow);
+  color: #191105;
+  border: 2px solid #191105;
+  box-shadow: 2px 2px 0 #191105;
+}
+[data-theme='comic-books'] .cb-alphabet button:not([aria-pressed='true']):hover {
+  background: #fff3c4;
+}
+
 /* --- FENÊTRES MODALES : liseré tricolore « case de BD » en haut — indépendant
     des paddings responsive du modal ; le modal devient position: relative pour
     accueillir ce liseré absolu au-dessus du contenu. --- */

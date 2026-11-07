@@ -11,6 +11,7 @@ import GroupedItemList from '../components/GroupedItemList.jsx'
 import ViewToolbar from '../components/ViewToolbar.jsx'
 import CollectionSearch from '../components/CollectionSearch.jsx'
 import CollectionCounter from '../components/CollectionCounter.jsx'
+import AlphabetFilterBar, { letterOf } from '../components/AlphabetFilterBar.jsx'
 import { groupComicsBySeries, NO_SERIES_LABEL } from '../components/collection.js'
 import { useDisplay, DisplayProvider, DISPLAY_SCOPES } from '../services/display.jsx'
 import { PencilIcon, TrashIcon } from '../components/icons.jsx'
@@ -48,6 +49,8 @@ function ComicCollectionView() {
   const [toast, setToast] = useState(null)
   // Clé du groupe (série) ouvert au niveau 2, null pour la vue principale (niveau 1)
   const [openGroup, setOpenGroup] = useState(null)
+  // Lettre active du filtre alphabétique (#, A–Z), null = aucun filtre.
+  const [letter, setLetter] = useState(null)
 
   useEffect(() => {
     if (location.state?.toastKey) {
@@ -78,6 +81,14 @@ function ComicCollectionView() {
   useEffect(() => {
     if (openGroup && !groups.some((g) => g.key === openGroup)) setOpenGroup(null)
   }, [groups, openGroup])
+
+  // Filtre alphabétique (#, A–Z) : séries dont la lettre du nom correspond à
+  // `letter` — accents normalisés (« Étrangers » → E, « À la page » → A).
+  // null = toutes les séries.
+  const filteredGroups = useMemo(
+    () => (letter ? groups.filter((g) => letterOf(g.name) === letter) : groups),
+    [groups, letter]
+  )
 
   const remove = async (comic) => {
     try {
@@ -195,12 +206,16 @@ function ComicCollectionView() {
           {/* Compteur de collection « X séries — Y albums » : à GAUCHE de la
               barre de recherche (gras + ombrage noir ; jaune liseré d'encre sous
               le thème Comic Books — cf. CollectionCounter / index.css). */}
-          <CollectionCounter type="comics" groups={groups.length} items={comics.length} />
+          <CollectionCounter type="comics" groups={filteredGroups.length} items={comics.length} />
           <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
           <ViewToolbar />
           <Link to="/comics/nouveau" className="btn-primary !h-12">{t('dashboard.addComic')}</Link>
         </div>
       </header>
+
+      {/* Barre de filtre alphabétique (#, A–Z) : intégrée directement sous le
+          bloc recherche / sélection Grille-Liste. */}
+      <AlphabetFilterBar labels={groups.map((g) => g.name)} value={letter} onChange={setLetter} />
 
       {toast && (
         <p className="text-sm text-amber-800 bg-amber-100 border border-amber-500/30 rounded-lg px-3 py-2">
@@ -305,10 +320,18 @@ function ComicCollectionView() {
       ) : (
         // ------- Niveau 1 : accordéons par série (vue liste) /
         //            tuiles par série (vue grille) -------
-        isList ? (
+        filteredGroups.length === 0 ? (
+          <div className="grid grid-cols-1 gap-4">
+            <EmptyState
+              title={t('collection.noResults')}
+              subtitle={t('collection.noLetterMatch', { letter })}
+              action={<button className="btn-ghost" onClick={() => setLetter(null)}>{t('collection.resetFilter')}</button>}
+            />
+          </div>
+        ) : isList ? (
           <GroupedItemList
             type="comic"
-            groups={groups}
+            groups={filteredGroups}
             actions={listActions}
             onAction={onAction}
             onDetail={openDetail}
@@ -318,7 +341,7 @@ function ComicCollectionView() {
           />
         ) : (
           <div className={gridCls}>
-            {groups.map((g) => (
+            {filteredGroups.map((g) => (
               <GroupCard
                 key={g.key}
                 name={g.name}
