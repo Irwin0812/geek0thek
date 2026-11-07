@@ -13,11 +13,28 @@
    que le thème sombre (cf. index couleurs de theme.js).
    ============================================================ */
 
-:root,
-[data-theme='library'] {
+@font-face {
+  font-family: 'Alte Haas Grotesk';
+  src: url('/uploads/fonts/alte_haas_grotesk/AlteHaasGroteskBold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Kingthings Organica';
+  src: url('/uploads/fonts/kingthings_organica/Kingthings Organica.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+html[data-theme='library'] {
   /* Chemin absolu de la photo du thème (fichier public/img/bg-library.jpg,
-     servi sous /img par nginx / le build Vite / Vite dev). Déclaré dans
-     :root pour rester utilisable avant l'initialisation JS du thème. */
+     servi sous /img par nginx / le build Vite / Vite dev). Déclaré sur
+     html[data-theme='library'] (spécificité 0,1,1) pour l'emporter sur le
+     :root du thème « Comic Books » (0,1,0), importé après dans main.jsx —
+     sans cela bg_comics.jpg écraserait bg-library.jpg. */
   --theme-bg-image: url('/img/bg-library.jpg');
 
   /* ---- Charte « Médiathèque » : tons chauds autorisés ----
@@ -30,11 +47,13 @@
   --lib-coral: #ff7f66;
   --lib-moutarde: #e6a100;
   --lib-cyan: #00a8e8;
-  /* Typographies du thème : FUTURA (Jost — repli géométrique de Futura,
-     Google Fonts) pour l'en-tête de bienvenue, Garamond (EB Garamond)
-     pour les barres de navigation. */
-  --lib-font-futura: 'Futura', 'Jost', 'Century Gothic', 'Trebuchet MS', ui-sans-serif, sans-serif;
-  --lib-font-garamond: 'EB Garamond', 'Garamond', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  /* Typographies du thème (polices LOCALES, cf. @font-face en tête de fichier) :
+     Kingthings Organica pour les TITRES / SOUS-TITRES de pages (Dashboard,
+     Mes Disques, Mes BD, Mon Profil…) et Alte Haas Grotesk Bold pour la BARRE
+     DE MENU SUPÉRIEURE + le FOOTER. Les replis système garantissent une
+     lisibilité si le .ttf n'est pas encore servi. */
+  --lib-font-titles: 'Kingthings Organica', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  --lib-font-nav: 'Alte Haas Grotesk', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
 [data-theme='library'] {
@@ -133,7 +152,7 @@
    OMBRAGE BLANC doux (halo clair) pour se détacher de la photo.
    ============================================================ */
 [data-theme='library'] .comic-greeting {
-  font-family: var(--lib-font-futura);
+  font-family: var(--lib-font-titles);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -147,7 +166,7 @@
    même lettrage FUTURA que l'en-tête de bienvenue — cohérence globale. */
 [data-theme='library'] .cb-page-title,
 [data-theme='library'] .comic-page-title {
-  font-family: var(--lib-font-futura);
+  font-family: var(--lib-font-titles);
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -168,12 +187,12 @@
   border-bottom: 2px solid var(--lib-moutarde);
 }
 
-/* Lettrage Garamond de la barre (liens + logo + libellés). */
+/* Lettrage Alte Haas Grotesk Bold de la barre (liens + logo + libellés). */
 [data-theme='library'] .cb-navbar {
-  font-family: var(--lib-font-garamond);
+  font-family: var(--lib-font-nav);
 }
 [data-theme='library'] .cb-navbar .cb-logo {
-  font-family: var(--lib-font-garamond);
+  font-family: var(--lib-font-nav);
   font-weight: 600;
   letter-spacing: 0.02em;
   color: #ffffff;
@@ -186,7 +205,7 @@
 
 /* Liens de navigation : corail au repos, moutarde au survol, cyan actif. */
 [data-theme='library'] .cb-nav-link {
-  font-family: var(--lib-font-garamond);
+  font-family: var(--lib-font-nav);
   font-size: 1.05rem;
   letter-spacing: 0.02em;
   color: var(--lib-coral);
@@ -212,7 +231,7 @@
 }
 
 /* Menu déroulant de l'utilisateur (carte flottante) : papier clair + encre
-   brun chaud ; les valeurs courantes (thème / langue) passent au cyan. */
+   brun chaud ; les valeurs courantes (thème / langue) passent au brun. */
 [data-theme='library'] .cb-navbar .card a,
 [data-theme='library'] .cb-navbar .card button,
 [data-theme='library'] .cb-navbar .card p {
@@ -222,9 +241,13 @@
 [data-theme='library'] .cb-navbar .card button:hover {
   background: rgba(255, 107, 53, 0.12);
 }
-/* Rangées de bascule (Thème / Langue) : valeur courante en cyan de la charte. */
-[data-theme='library'] .cb-navbar .card span[class*='text-cyan-300'] {
-  color: var(--lib-cyan);
+/* Rangées de bascule (Thème / Langue) : nom du thème actif + icône planète
+   (Globe, SVG) + nom de la langue courante → BRUN de la charte (#5C3A21),
+   lisible sur le papier clair de la carte. Ciblage [class*='text-cyan-300']
+   (classe d'origine des trois éléments) : couvre le <span> du thème, le
+   <svg> Globe et le <span> de la langue. */
+[data-theme='library'] .cb-navbar .card [class*='text-cyan-300'] {
+  color: #5c3a21;
 }
 /* Élément ACTIF du sous-menu (thème / langue) : moutarde + encre noire. */
 [data-theme='library'] .cb-navbar .card button.bg-gold-400 {
@@ -246,7 +269,7 @@
   border-top: 2px solid var(--lib-moutarde);
 }
 [data-theme='library'] .cb-footer div {
-  font-family: var(--lib-font-garamond);
+  font-family: var(--lib-font-nav);
   color: #f3e9dc;
 }
 [data-theme='library'] .cb-footer a {
@@ -794,7 +817,7 @@
     profond + ombrage blanc doux, cohérent avec le titre de page. Le compteur
     sous-jacent (text-slate-400) passe à l'encre secondaire. */
 [data-theme='library'] .lib-coll .cb-group-title {
-  font-family: var(--lib-font-futura);
+  font-family: var(--lib-font-titles);
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
