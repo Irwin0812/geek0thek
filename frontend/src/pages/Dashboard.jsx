@@ -607,6 +607,11 @@ function AddMediaDropdown() {
   // Lecture RÉACTIVE (useAppliedTheme) : le lettrage du menu suit la bascule
   // de thème sans F5 (idem message de bienvenue).
   const comicTheme = useAppliedTheme() === 'comic-books'
+  // Thème « Médiathèque » : les options ACTIVES du menu (actuelles et futures)
+  // passent en ORANGE de la charte (#FF6B35, texte + icône) pour un contraste
+  // parfait sur le papier clair du panneau ; les options « PROCHAINEMENT »
+  // conservent leur style grisé/verrouillé d'origine. Inerte ailleurs.
+  const libraryTheme = useAppliedTheme() === 'library'
 
   const options = [
     { to: '/vinyles/nouveau', label: t('dashboard.addMedia.vinyl'), enabled: true },
@@ -673,12 +678,19 @@ function AddMediaDropdown() {
                     // Menu déroulant sur PAPIER (thème Comic Books) : encre du
                     // thème + survol jaune « splash » — jamais de slate clair.
                     ? 'text-[#191105] hover:bg-[#efe19a]/70'
-                    : 'text-slate-200 hover:bg-night-700/60 hover:text-white'
+                    : libraryTheme
+                      // Thème « Médiathèque » : options ACTIVES en ORANGE de la
+                      // charte (#FF6B35) — texte + icône (cf. TypeIcon) — pour
+                      // un contraste parfait sur le papier clair du panneau ;
+                      // survol = voile orange doux. S'applique automatiquement à
+                      // TOUTES les options actives (actuelles et futures).
+                      ? 'text-[#FF6B35] hover:bg-[#FF6B35]/10'
+                      : 'text-slate-200 hover:bg-night-700/60 hover:text-white'
                   : 'cursor-not-allowed text-slate-500 hover:bg-transparent'
               }`}
             >
               {/* Icône Lucide par type + libellé + badge « prochainement ». */}
-              <TypeIcon opt={opt} />
+              <TypeIcon opt={opt} libraryTheme={libraryTheme} />
               <span className="truncate">{opt.label}</span>
               {!opt.enabled && (
                 <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-300 bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-black shadow-sm">
@@ -695,10 +707,14 @@ function AddMediaDropdown() {
 }
 
 /** Icône contextuelle Lucide par type de média dans le menu d'ajout. */
-function TypeIcon({ opt }) {
+function TypeIcon({ opt, libraryTheme = false }) {
   const cls = 'shrink-0'
-  if (opt.to === '/vinyles/nouveau') return <Disc3 size={15} className={`${cls} text-gold-400`} aria-hidden="true" />
-  if (opt.to === '/comics/nouveau') return <BookOpen size={15} className={`${cls} text-teal-400`} aria-hidden="true" />
+  // Thème « Médiathèque » : icônes des options ACTIVES en ORANGE de la charte
+  // (#FF6B35) — même couleur que le texte (cf. AddMediaDropdown). Les options
+  // « PROCHAINEMENT » conservent leur gris d'origine (hérité du bouton).
+  const orange = libraryTheme && opt.enabled ? 'text-[#FF6B35]' : ''
+  if (opt.to === '/vinyles/nouveau') return <Disc3 size={15} className={`${cls} ${orange || 'text-gold-400'}`} aria-hidden="true" />
+  if (opt.to === '/comics/nouveau') return <BookOpen size={15} className={`${cls} ${orange || 'text-teal-400'}`} aria-hidden="true" />
   if (opt.to.startsWith('/livres')) return <Library size={15} className={`${cls}`} aria-hidden="true" />
   if (opt.to.startsWith('/jeux-de-mesa')) return <Dices size={15} className={`${cls}`} aria-hidden="true" />
   return <Gamepad2 size={15} className={`${cls}`} aria-hidden="true" />
