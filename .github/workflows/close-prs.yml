@@ -1,0 +1,32 @@
+name: "Auto Close Pull Requests"
+
+on:
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  close-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fermer la Pull Request avec explication
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commentBody = "Merci pour votre intérêt pour ce projet ! Le code est sous licence GNU AGPLv3, mais ce dépôt n'accepte pas les contributions extérieures ou les Pull Requests. Cette PR est donc fermée automatiquement.";
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: commentBody
+            });
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              state: 'closed'
+            });
