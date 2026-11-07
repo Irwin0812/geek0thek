@@ -803,6 +803,6 @@ curl -s http://172.16.2.75/api/health   # -> { "status": "ok", "schema_ok": true
 
 ---
 
-## 📝 Licence
+## Licence
 
-Projet fourni tel quel (as-is) pour un usage interne / de démonstration.
+Ce projet est sous licence **GNU AGPLv3**. Consultez le fichier [LICENSE](LICENSE) pour plus d'informations.
