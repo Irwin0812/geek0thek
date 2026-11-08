@@ -852,9 +852,9 @@ développement continu sont entièrement pris en charge par l'auteur.
 Si cette médiathèque vous est utile et que vous souhaitez contribuer à sa pérennité,
 vous pouvez faire un **don libre** via PayPal :
 
-[![Donner avec PayPal](https://www.paypalobjects.com/images/logos/315x49.gif)](https://paypal.me/geek0thek)
+[![Donner avec PayPal](https://www.paypalobjects.com/images/logos/315x49.gif)](https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN)
 
-👉 **[Soutenez le projet — paypal.me/geek0thek](https://paypal.me/geek0thek)**
+👉 **[Soutenez le projet — bouton de don officiel PayPal](https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN)**
 
 - **Aucun montant minimum ni maximum** : chaque contribution, quelle qu'en soit la
   taille, est la bienvenue et finance directement l'hébergement et le développement.

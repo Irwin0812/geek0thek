@@ -23,10 +23,11 @@ import { api } from '../services/api.js'
  *
  * BARRE À TROIS ZONES :
  *   - EXTRÊME GAUCHE : bouton « Soutenez le projet » (logo PayPal + lien
- *     paypal.me/geek0thek, nouvel onglet). Toujours visible — jamais masqué
- *     après un don. Style / icône / texte pilotés par les variables CSS du
- *     thème actif (--accent-strong / --accent-contrast) : le bouton s'accorde
- *     donc automatiquement aux 6 thèmes (icône en currentColor).
+ *     officiel du bouton de don hébergé PayPal, nouvel onglet). Toujours
+ *     visible — jamais masqué après un don. Style / icône / texte pilotés par
+ *     les variables CSS du thème actif (--accent-strong / --accent-contrast) :
+ *     le bouton s'accorde donc automatiquement aux 6 thèmes (icône en
+ *     currentColor).
  *   - CENTRE : mention de crédit (inchangée).
  *   - EXTRÊME DROITE : version de la webapp EXTRAITE DE GITHUB (shortSha du
  *     dernier commit de la branche par défaut, via GET /api/version — cf.
@@ -95,7 +96,7 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-x-3 gap-y-1 flex-wrap text-xs text-slate-400">
         {/* EXTRÊME GAUCHE — bouton de soutien (PayPal). Toujours visible. */}
         <a
-          href="https://paypal.me/geek0thek"
+          href="https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN"
           target="_blank"
           rel="noopener noreferrer"
           className="cb-footer-donate inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 font-semibold shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
@@ -115,8 +116,12 @@ export default function Footer() {
         </div>
 
         {/* EXTRÊME DROITE — version de la webapp extraite de GitHub. */}
-        <span className="font-mono text-[11px] tabular-nums opacity-80 whitespace-nowrap" title="Version (commit GitHub)">
-          {version ? `v${version}` : ''}
+        <span
+          className="font-bold text-lg whitespace-nowrap"
+          style={{ color: 'var(--accent-strong)' }}
+          title="Version (commit GitHub)"
+        >
+          {version ? `Version: ${version}` : ''}
         </span>
       </div>
     </footer>
