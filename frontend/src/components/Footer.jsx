@@ -113,7 +113,7 @@ export default function Footer() {
         {/* EXTRÊME DROITE — libellé de version, strictement collé à l'extrême
             droite (colonne 1fr, aligné en fin de ligne). */}
         <span
-          className="col-start-3 row-start-1 justify-self-end font-bold text-sm whitespace-nowrap"
+          className="cb-footer-version col-start-3 row-start-1 justify-self-end font-bold text-sm whitespace-nowrap"
           style={{ color: 'var(--accent-strong)' }}
           title="Version (commit GitHub)"
         >

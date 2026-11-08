@@ -1,0 +1,3 @@
+# Ce dossier est monté en volume Docker (./uploads -> /app/uploads).
+# Les jaquettes de vinyles téléversées ou téléchargées depuis Discogs
+# sont stockées ici sur le disque de la VM hôte (Debian 12).

@@ -20,9 +20,14 @@ coverage/
 !.env.example
 
 # ===== Données & stockages local (VM hôte) =====
-uploads/
-!uploads/**/.gitkeep
+# uploads/* : tout le contenu utilisateur (avatars, vinyles, BD) reste hors git ;
+# EXCEPTION : uploads/fonts/ — polices locales des thèmes (Super Comic, BD
+# Cartoon Shout, Alte Haas Grotesk…) servies par le backend sous /uploads/fonts/
+# et référencées par les @font-face des thèmes. Sans cette exception, `git pull`
+# sur le serveur ne déploie jamais les .ttf → 404 → repli sur la police système.
+uploads/*
 !uploads/.gitkeep
+!uploads/fonts/
 data/
 *.dump
 *.sql.bak

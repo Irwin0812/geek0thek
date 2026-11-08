@@ -378,11 +378,11 @@
 [data-theme='comic'] .comic-page-title,
 [data-theme='comic'] .cb-group-title {
   color: var(--cb-mustard); /* jaune vif */
-  -webkit-text-stroke: 2.5px #4169e1; /* contour bleu roi */
+  -webkit-text-stroke: 2px #4169e1; /* contour bleu roi (fin : pas de chevauchement) */
   paint-order: stroke fill;
   text-shadow:
     0 0 10px rgba(65, 105, 225, 0.65), /* ombrage bleu roi doux */
-    4px 4px 0 var(--cb-ink); /* léger décalage / effet cartoon (ombre dure) */
+    3px 3px 0 var(--cb-ink); /* léger décalage / effet cartoon (ombre dure) */
 }
 @media (max-width: 768px) {
   [data-theme='comic'] .cb-page-title,
@@ -396,12 +396,15 @@
 }
 
 /* ---- TAILLE DES GRANDS TITRES : BD_Cartoon_Shout est une police très large —
-   les titres principaux sur plusieurs lignes (« Mes Disques » / « Mes BD »…)
-   débordaient ou se désalignaient. Taille légèrement réduite (1.5rem au lieu
-   de 1.875rem) + casse conservée : aucun débordement, alignement propre. */
+   les titres principaux (« Mes Disques » / « Mes BD »…) débordaient ou leurs
+   glyphes se chevauchaient (contour 2.5px + ombre dure 4px). Taille réduite
+   (1.375rem au lieu de 1.875rem) + interlettrage léger + hauteur de ligne
+   resserrée : aucun chevauchement, alignement propre sur une seule ligne. */
 [data-theme='comic'] .cb-page-title,
 [data-theme='comic'] .comic-page-title {
-  font-size: 1.5rem;
+  font-size: 1.375rem;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
 }
 
 /* ---- BARRE DE NAVIGATION HAUTE (.cb-navbar) : NOIR PROFOND + bande vibrante.
@@ -467,6 +470,16 @@
 }
 [data-theme='comic'] .cb-footer a {
   color: var(--cb-mustard);
+}
+
+/* ---- FOOTER : textes « Soutenez le projet ! » + « Version: <sha> » en JAUNE
+   VIF (moutarde) — EXCLUSIF AU THÈME « Bande dessinée ». Ces deux libellés
+   portent un style inline color: var(--accent-strong) (bleu) dans Footer.jsx ;
+   le !important est indispensable pour l'emporter sur le style inline. Le
+   reste du footer (mention de crédit, lien PayPal) conserve ses couleurs. */
+[data-theme='comic'] .cb-footer-donate span,
+[data-theme='comic'] .cb-footer-version {
+  color: var(--cb-mustard) !important;
 }
 
 /* ============================================================
