@@ -22,13 +22,11 @@ import { api } from '../services/api.js'
  * compensatoire (pb-20) pour que le contenu ne passe jamais sous la barre.
  *
  * BARRE À TROIS ZONES :
- *   - EXTRÊME GAUCHE : bouton « Soutenez le projet » (texte en gras + image
- *     locale du bouton PayPal /img/paypal.png, lien officiel du bouton de don
- *     hébergé PayPal, nouvel onglet). Toujours visible — jamais masqué après
- *     un don. Le texte est piloté par la variable CSS du thème actif
- *     (--accent-strong) : il s'accorde donc automatiquement aux 6 thèmes.
- *     L'image est redimensionnée (h-10 = 40px, w-auto) pour être proportionnée
- *     au texte, sans déformation.
+ *   - EXTRÊME GAUCHE : image locale du bouton PayPal /img/paypalok.png
+ *     (lien officiel du bouton de don hébergé PayPal, nouvel onglet).
+ *     Toujours visible — jamais masquée après un don. L'image est
+ *     redimensionnée (h-9 = 36px, w-auto) pour s'intégrer proprement dans la
+ *     hauteur du footer, sans déformation.
  *   - CENTRE : mention de crédit (inchangée).
  *   - EXTRÊME DROITE : version de la webapp EXTRAITE DE GITHUB (shortSha du
  *     dernier commit de la branche par défaut, via GET /api/version — cf.
@@ -61,31 +59,24 @@ export default function Footer() {
   // cb-footer : accroche charte « Comic Books » (thèmes/comic-books.css) —
   // pied de page rouge comic qui s'accorde à la barre haute. Inerte ailleurs.
   // Les thèmes « Médiathèque » / « Comic Books » recolorent .cb-footer div / a ;
-  // le texte du bouton PayPal utilise la variable --accent-strong (inline)
-  // pour rester harmonisé dans les 6 thèmes.
+  // l'image du bouton PayPal reste inchangée dans tous les thèmes.
   return (
     <footer className="cb-footer fixed bottom-0 left-0 right-0 z-30 border-t border-night-700/70 bg-night-950/85 backdrop-blur">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-x-3 gap-y-1 flex-wrap text-xs text-slate-400">
-        {/* EXTRÊME GAUCHE — bouton de soutien (PayPal). Toujours visible. */}
+        {/* EXTRÊME GAUCHE — image du bouton de soutien (PayPal). Toujours visible. */}
         <a
           href="https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN"
           target="_blank"
           rel="noopener noreferrer"
-          className="cb-footer-donate inline-flex items-center gap-3 px-8 py-3 transition-all duration-200 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded-xl"
+          className="cb-footer-donate inline-flex items-center shrink-0 transition-all duration-200 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded-xl"
         >
-          <span
-            className="font-bold text-base whitespace-nowrap"
-            style={{ color: 'var(--accent-strong)' }}
-          >
-            Soutenez le projet
-          </span>
-          {/* Image locale du bouton PayPal : hauteur augmentée (h-10 = 40px)
-              pour être proportionnée au texte, largeur proportionnelle
-              (w-auto) — jamais de déformation. */}
+          {/* Image locale du bouton PayPal : hauteur ajustée (h-9 = 36px) pour
+              s'intégrer proprement dans la hauteur du footer, largeur
+              proportionnelle (w-auto) — jamais de déformation. */}
           <img
-            src="/img/paypal.png"
+            src="/img/paypalok.png"
             alt="Bouton de don PayPal"
-            className="h-10 w-auto shrink-0"
+            className="h-9 w-auto shrink-0"
             loading="lazy"
           />
         </a>
