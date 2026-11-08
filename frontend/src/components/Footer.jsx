@@ -27,8 +27,8 @@ import { api } from '../services/api.js'
  *     hébergé PayPal, nouvel onglet). Toujours visible — jamais masqué après
  *     un don. Le texte est piloté par la variable CSS du thème actif
  *     (--accent-strong) : il s'accorde donc automatiquement aux 6 thèmes.
- *     L'image est redimensionnée à la hauteur de la barre (h-6, w-auto) sans
- *     déformation.
+ *     L'image est redimensionnée (h-8 = 32px, w-auto) pour être proportionnée
+ *     au texte, sans déformation.
  *   - CENTRE : mention de crédit (inchangée).
  *   - EXTRÊME DROITE : version de la webapp EXTRAITE DE GITHUB (shortSha du
  *     dernier commit de la branche par défaut, via GET /api/version — cf.
@@ -71,21 +71,21 @@ export default function Footer() {
           href="https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN"
           target="_blank"
           rel="noopener noreferrer"
-          className="cb-footer-donate inline-flex items-center gap-2 transition-all duration-200 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded"
+          className="cb-footer-donate inline-flex items-center gap-2.5 px-3 py-1.5 transition-all duration-200 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded-lg"
         >
           <span
-            className="font-bold whitespace-nowrap"
+            className="font-bold text-sm whitespace-nowrap"
             style={{ color: 'var(--accent-strong)' }}
           >
             Soutenez le projet
           </span>
-          {/* Image locale du bouton PayPal : hauteur calée sur la barre du
-              footer (h-6 = 24px), largeur proportionnelle (w-auto) — jamais
-              de déformation. */}
+          {/* Image locale du bouton PayPal : hauteur augmentée (h-8 = 32px)
+              pour être proportionnée au texte, largeur proportionnelle
+              (w-auto) — jamais de déformation. */}
           <img
             src="/img/paypal.png"
             alt="Bouton de don PayPal"
-            className="h-6 w-auto shrink-0"
+            className="h-8 w-auto shrink-0"
             loading="lazy"
           />
         </a>
