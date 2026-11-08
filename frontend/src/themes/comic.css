@@ -42,19 +42,6 @@
   font-display: swap;
 }
 
-/* Police « Axera Round » : listes de données (lignes des collections),
-   sous-titres de tableaux, libellés de formulaires (modales d'import /
-   création) et badges de rôles / statuts du thème. La .ttf est servie par
-   le backend depuis ./uploads (volume local) sous /uploads/fonts/... —
-   même mécanisme que BD_Cartoon_Shout / Super Comic. */
-@font-face {
-  font-family: 'Axera Round';
-  src: url('/uploads/fonts/axera_round/Axera%20Round.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 [data-theme='comic'] {
   --bg-app: #f2d94e; /* jaune « splash page » en fond de page */
   --bg-surface: #e9cf3f;
@@ -483,8 +470,8 @@
 }
 
 /* ============================================================
-   AXERA ROUND — LECTURE DES DONNÉES (thème « Bande dessinée ») :
-   police locale Axera Round (cf. @font-face en tête de fichier) pour
+   SUPER COMIC — LECTURE DES DONNÉES (thème « Bande dessinée ») :
+   police locale Super Comic (cf. @font-face en tête de fichier) pour
    les éléments de données du thème, scellés sous [data-theme='comic'] :
      - listes de données : lignes des collections (vue liste — ItemList.jsx)
        + tableaux de gestion (ex. « Utilisateurs ») ;
@@ -504,22 +491,22 @@
 [data-theme='comic'] table,
 [data-theme='comic'] table td,
 [data-theme='comic'] table th {
-  font-family: 'Axera Round', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Sous-titres de tableaux : en-têtes de colonnes. */
 [data-theme='comic'] thead,
 [data-theme='comic'] thead th {
-  font-family: 'Axera Round', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Libellés de formulaires (modales d'import / création + pages). */
 [data-theme='comic'] .label {
-  font-family: 'Axera Round', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Badges de rôles / statuts (rôles admin/user, statuts actif/désactivé,
    collection publique/privée, genres, années…). */
 [data-theme='comic'] .badge {
-  font-family: 'Axera Round', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
