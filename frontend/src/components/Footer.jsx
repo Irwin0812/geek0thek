@@ -22,46 +22,18 @@ import { api } from '../services/api.js'
  * compensatoire (pb-20) pour que le contenu ne passe jamais sous la barre.
  *
  * BARRE À TROIS ZONES :
- *   - EXTRÊME GAUCHE : bouton « Soutenez le projet » (logo PayPal + lien
- *     officiel du bouton de don hébergé PayPal, nouvel onglet). Toujours
- *     visible — jamais masqué après un don. Style / icône / texte pilotés par
- *     les variables CSS du thème actif (--accent-strong / --accent-contrast) :
- *     le bouton s'accorde donc automatiquement aux 6 thèmes (icône en
- *     currentColor).
+ *   - EXTRÊME GAUCHE : bouton « Soutenez le projet » (texte en gras + image
+ *     locale du bouton PayPal /img/paypal.png, lien officiel du bouton de don
+ *     hébergé PayPal, nouvel onglet). Toujours visible — jamais masqué après
+ *     un don. Le texte est piloté par la variable CSS du thème actif
+ *     (--accent-strong) : il s'accorde donc automatiquement aux 6 thèmes.
+ *     L'image est redimensionnée à la hauteur de la barre (h-6, w-auto) sans
+ *     déformation.
  *   - CENTRE : mention de crédit (inchangée).
  *   - EXTRÊME DROITE : version de la webapp EXTRAITE DE GITHUB (shortSha du
  *     dernier commit de la branche par défaut, via GET /api/version — cf.
  *     utils/githubClient.js). Absente proprement si l'API GitHub est injoignable.
  */
-
-/**
- * Logo PayPal (monogramme « PP ») en currentColor : s'adapte à la couleur du
- * texte du bouton (var(--accent-contrast)) et donc au thème actif. Deux « P »
- * superposés (le second décalé + atténué) pour le rendu « couches » de la
- * marque, sans aucune dépendance externe ni image distante.
- */
-function PayPalMark({ size = 18 }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width={size}
-      height={size}
-      fill="currentColor"
-      aria-hidden="true"
-      className="shrink-0"
-    >
-      {/* « P » arrière : décalé en haut à droite, atténué (effet de profondeur). */}
-      <path
-        opacity="0.5"
-        transform="translate(2.5 -1.5)"
-        fillRule="evenodd"
-        d="M6 3h5a4 4 0 0 1 0 8h-3v10H6zM9 6h1.5a1.5 1.5 0 0 1 0 3H9z"
-      />
-      {/* « P » avant : pleine opacité. */}
-      <path fillRule="evenodd" d="M6 3h5a4 4 0 0 1 0 8h-3v10H6zM9 6h1.5a1.5 1.5 0 0 1 0 3H9z" />
-    </svg>
-  )
-}
 
 export default function Footer() {
   // Version de la webapp extraite de GitHub (shortSha du HEAD de la branche
@@ -89,8 +61,8 @@ export default function Footer() {
   // cb-footer : accroche charte « Comic Books » (thèmes/comic-books.css) —
   // pied de page rouge comic qui s'accorde à la barre haute. Inerte ailleurs.
   // Les thèmes « Médiathèque » / « Comic Books » recolorent .cb-footer div / a ;
-  // le bouton PayPal et l'icône utilisent les variables --accent-strong /
-  // --accent-contrast (inline) pour rester harmonisés dans les 6 thèmes.
+  // le texte du bouton PayPal utilise la variable --accent-strong (inline)
+  // pour rester harmonisé dans les 6 thèmes.
   return (
     <footer className="cb-footer fixed bottom-0 left-0 right-0 z-30 border-t border-night-700/70 bg-night-950/85 backdrop-blur">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-x-3 gap-y-1 flex-wrap text-xs text-slate-400">
@@ -99,11 +71,23 @@ export default function Footer() {
           href="https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN"
           target="_blank"
           rel="noopener noreferrer"
-          className="cb-footer-donate inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 font-semibold shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
-          style={{ background: 'var(--accent-strong)', color: 'var(--accent-contrast)' }}
+          className="cb-footer-donate inline-flex items-center gap-2 transition-all duration-200 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded"
         >
-          <PayPalMark />
-          <span className="whitespace-nowrap">Soutenez le projet</span>
+          <span
+            className="font-bold whitespace-nowrap"
+            style={{ color: 'var(--accent-strong)' }}
+          >
+            Soutenez le projet
+          </span>
+          {/* Image locale du bouton PayPal : hauteur calée sur la barre du
+              footer (h-6 = 24px), largeur proportionnelle (w-auto) — jamais
+              de déformation. */}
+          <img
+            src="/img/paypal.png"
+            alt="Bouton de don PayPal"
+            className="h-6 w-auto shrink-0"
+            loading="lazy"
+          />
         </a>
 
         {/* CENTRE — mention de crédit (inchangée). */}
@@ -117,7 +101,7 @@ export default function Footer() {
 
         {/* EXTRÊME DROITE — version de la webapp extraite de GitHub. */}
         <span
-          className="font-bold text-lg whitespace-nowrap"
+          className="font-bold text-sm whitespace-nowrap"
           style={{ color: 'var(--accent-strong)' }}
           title="Version (commit GitHub)"
         >
