@@ -163,7 +163,9 @@ export default function App() {
       <DisplayProvider>
       <div className="min-h-screen flex flex-col">
         {user && <Navbar />}
-        <main className="flex-1">
+        {/* pb-20 : marge compensatoire du pied de page FIXÉ (Footer.jsx —
+            fixed bottom-0) : le contenu ne passe jamais sous la barre. */}
+        <main className="flex-1 pb-20">
           <div key={location.pathname} className="animate-fadein">
             <Routes>
               <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
