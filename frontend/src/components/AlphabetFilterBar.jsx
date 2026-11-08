@@ -23,6 +23,12 @@ import { useTranslation } from 'react-i18next'
  *   --accent-contrast, --ring) ; les thèmes « Médiathèque » et « Comic Books »
  *   scellent leurs propres déclinaisons (cf. themes/library.css,
  *   themes/comic-books.css).
+ * - Caractères ACTIFS (qui pointent vers des éléments existants) : posent
+ *   l'attribut data-has-matches — la règle générique de src/index.css les
+ *   colorise alors en --alphabet-active du thème actif (Médiathèque = orange,
+ *   Comic Books = rose flash, futurs thèmes = accent principal var(--accent)).
+ *   Le thème « Geek0thek » (dark) est exclu : il intègre déjà sa propre
+ *   logique et n'est pas modifié.
  *
  * Props :
  *  - labels    : liste de libellés à filtrer (noms d'artistes / de séries)
@@ -93,6 +99,7 @@ export default function AlphabetFilterBar({ labels, value, onChange }) {
           type="button"
           disabled={!counts[letter]}
           aria-pressed={value === letter}
+          data-has-matches={counts[letter] ? 'true' : undefined}
           title={titleFor(letter)}
           onClick={() => onChange(value === letter ? null : letter)}
           className={buttonCls(letter)}

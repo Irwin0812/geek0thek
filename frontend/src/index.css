@@ -101,6 +101,26 @@
       focus:ring-2 focus:ring-gold-500/30;
   }
 
+    /* ------------------------------------------------------------------
+       BARRE ALPHABÉTIQUE (#, A–Z) — DISTINCTION DES CARACTÈRES ACTIFS :
+       les lettres qui pointent vers des éléments existants de la collection
+       (attribut data-has-matches posé par AlphabetFilterBar.jsx) sont
+       colorisées en --alphabet-active du thème actif. Valeur par défaut =
+       accent principal du thème (futurs thèmes : var(--accent)) ; chaque
+       thème scelle sa propre déclinaison dans son fichier src/themes/*.css
+       (Médiathèque = orange, Comic Books = rose flash).
+       ⚠️ PORTÉE CIBLÉE : la règle s'applique UNIQUEMENT aux thèmes « Médiathèque »
+       (library) et « Comic Books » (comic-books) ainsi qu'à TOUS les FUTURS thèmes.
+       Les thèmes existants « Geek0thek » (dark — intègre déjà cette logique),
+       « Disquaire » (vinyl), « Néon » (neon) et « Bande dessinée » (comic) sont
+       EXCLUS via :not() et ne sont PAS modifiés.
+       :not([aria-pressed='true']) → ne touche PAS la lettre sélectionnée
+       (son texte reste --accent-contrast sur fond accent). :enabled → les
+       lettres sans correspondance sont désactivées et restent en retrait. */
+    [data-theme]:not([data-theme='dark']):not([data-theme='vinyl']):not([data-theme='neon']):not([data-theme='comic']) .cb-alphabet button[data-has-matches='true']:not([aria-pressed='true']):enabled {
+      color: var(--alphabet-active, var(--accent));
+    }
+
    /* ------------------------------------------------------------------
       TITRES DE PAGES — STYLE COMICS US (Bangers / Impact) : majuscules,
       police Bangers + blanc, liseré noir épais (-webkit-text-stroke, paint-order

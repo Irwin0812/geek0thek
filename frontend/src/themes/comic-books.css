@@ -73,6 +73,10 @@
      Bordures épaisses appliquées via .card / .btn / .input ci-dessous. */
   --card-shadow: 5px 5px 0 0 #191105;
   --border-width: 3px;
+  /* Caractères ACTIFS de la barre alphabétique (#, A–Z) : ROSE FLASH —
+     punchy et contrasté sur le papier blanc de la barre (cf. règle générique
+     [data-theme] .cb-alphabet button[data-has-matches] de src/index.css). */
+  --alphabet-active: #ff2d95;
 }
 
 [data-theme='comic-books'] {

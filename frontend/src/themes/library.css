@@ -40,6 +40,10 @@ html[data-theme='library'] {
   --lib-coral: #ff7f66;
   --lib-moutarde: #e6a100;
   --lib-cyan: #00a8e8;
+  /* Caractères ACTIFS de la barre alphabétique (#, A–Z) : orange de la charte
+     (cf. règle générique [data-theme] .cb-alphabet button[data-has-matches]
+     de src/index.css). */
+  --alphabet-active: var(--lib-orange);
   /* Typographies du thème (polices LOCALES, cf. @font-face en tête de fichier) :
      ALTE HAAS GROTESK BOLD pour les TITRES / SOUS-TITRES de pages (Dashboard,
      Mes Disques, Mes BD, Mon Profil…) ET pour la BARRE DE MENU SUPÉRIEURE +
