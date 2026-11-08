@@ -21,19 +21,22 @@ import { api } from '../services/api.js'
  * par-dessus. Le <main> du layout (App.jsx) porte un padding-bottom
  * compensatoire (pb-20) pour que le contenu ne passe jamais sous la barre.
  *
- * BARRE À TROIS ZONES :
- *   - EXTRÊME GAUCHE : bouton « Soutenez le projet ! » (texte en gras + image
- *     locale du bouton PayPal /img/paypal.png, lien officiel du bouton de don
- *     hébergé PayPal, nouvel onglet). Toujours visible — jamais masqué après
- *     un don. Le texte est piloté par la variable CSS du thème actif
- *     (--accent-strong) : il s'accorde donc automatiquement aux 6 thèmes.
- *     L'image est redimensionnée (h-9 = 36px, w-auto) pour s'ajuster à la
- *     hauteur du footer et s'aligner harmonieusement à côté du texte, sans
- *     déformation.
- *   - CENTRE : mention de crédit (inchangée).
- *   - EXTRÊME DROITE : version de la webapp EXTRAITE DE GITHUB (shortSha du
- *     dernier commit de la branche par défaut, via GET /api/version — cf.
- *     utils/githubClient.js). Absente proprement si l'API GitHub est injoignable.
+ * BARRE À TROIS ZONES — GRILLE [1fr auto 1fr] (TOUS LES THÈMES) :
+ *   - EXTRÊME GAUCHE : « Soutenez le projet ! » suivi immédiatement de
+ *     l'image/bouton PayPal (/img/paypal.png, lien officiel du bouton de don
+ *     hébergé PayPal, nouvel onglet), alignés proprement sur la gauche.
+ *     Toujours visible — jamais masqué après un don. Le texte est piloté par
+ *     la variable CSS du thème actif (--accent-strong) : il s'accorde donc
+ *     automatiquement aux 6 thèmes. L'image est redimensionnée (h-9 = 36px,
+ *     w-auto) pour s'ajuster à la hauteur du footer sans déformation.
+ *   - CENTRE : mention de crédit « Geek0thek - Bibliothèque de collections
+ *     par GERARTS Irwin - 2026 », centrée MATHÉMATIQUEMENT au milieu du
+ *     footer (colonne auto de la grille, encadrée de deux colonnes 1fr
+ *     égales — le centre est exact quelle que soit la largeur des zones).
+ *   - EXTRÊME DROITE : libellé de version « Version: <shortSha> » (HEAD de la
+ *     branche par défaut via GET /api/version — cf. utils/githubClient.js),
+ *     positionné strictement collé à l'extrême droite. Absent proprement si
+ *     l'API GitHub est injoignable.
  */
 
 export default function Footer() {
@@ -66,13 +69,18 @@ export default function Footer() {
   // pour rester harmonisé dans les 6 thèmes.
   return (
     <footer className="cb-footer fixed bottom-0 left-0 right-0 z-30 border-t border-night-700/70 bg-night-950/85 backdrop-blur">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-x-3 gap-y-1 flex-wrap text-xs text-slate-400">
-        {/* EXTRÊME GAUCHE — bouton de soutien (PayPal). Toujours visible. */}
+      {/* GRILLE À TROIS ZONES [1fr auto 1fr] : les deux colonnes latérales
+          (1fr) ont TOUJOURS la même largeur → la colonne centrale (auto) est
+          centrée MATHÉMATIQUEMENT au milieu du footer, quelle que soit la
+          largeur des contenus gauche / droite. */}
+      <div className="max-w-6xl mx-auto px-4 py-3 grid grid-cols-[1fr_auto_1fr] items-center gap-x-4 text-xs text-slate-400">
+        {/* EXTRÊME GAUCHE — « Soutenez le projet ! » + bouton PayPal,
+            alignés proprement sur la gauche. Toujours visible. */}
         <a
           href="https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN"
           target="_blank"
           rel="noopener noreferrer"
-          className="cb-footer-donate inline-flex items-center gap-3 px-8 py-3 transition-all duration-200 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded-xl"
+          className="cb-footer-donate col-start-1 row-start-1 inline-flex items-center gap-3 transition-all duration-200 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded-xl"
         >
           <span
             className="font-bold text-base whitespace-nowrap"
@@ -92,8 +100,9 @@ export default function Footer() {
           />
         </a>
 
-        {/* CENTRE — mention de crédit (inchangée). */}
-        <div className="flex-1 min-w-[180px] text-center leading-relaxed">
+        {/* CENTRE — mention de crédit, centrée mathématiquement au milieu du
+            footer (colonne auto encadrée de deux colonnes 1fr égales). */}
+        <div className="col-start-2 row-start-1 text-center leading-relaxed whitespace-nowrap">
           Geek0thek - Bibliothèque de collections par{' '}
           <a href="mailto:webmaster@igerarts.be" className="text-slate-300 underline-offset-2 transition hover:text-gold-300 hover:underline">
             GERARTS Irwin
@@ -101,9 +110,10 @@ export default function Footer() {
           - 2026
         </div>
 
-        {/* EXTRÊME DROITE — version de la webapp extraite de GitHub. */}
+        {/* EXTRÊME DROITE — libellé de version, strictement collé à l'extrême
+            droite (colonne 1fr, aligné en fin de ligne). */}
         <span
-          className="font-bold text-sm whitespace-nowrap"
+          className="col-start-3 row-start-1 justify-self-end font-bold text-sm whitespace-nowrap"
           style={{ color: 'var(--accent-strong)' }}
           title="Version (commit GitHub)"
         >

@@ -42,6 +42,19 @@
   font-display: swap;
 }
 
+/* Police « Axera Round » : listes de données (lignes des collections),
+   sous-titres de tableaux, libellés de formulaires (modales d'import /
+   création) et badges de rôles / statuts du thème. La .ttf est servie par
+   le backend depuis ./uploads (volume local) sous /uploads/fonts/... —
+   même mécanisme que BD_Cartoon_Shout / Super Comic. */
+@font-face {
+  font-family: 'Axera Round';
+  src: url('/uploads/fonts/axera_round/Axera%20Round.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 [data-theme='comic'] {
   --bg-app: #f2d94e; /* jaune « splash page » en fond de page */
   --bg-surface: #e9cf3f;
@@ -348,51 +361,60 @@
 }
 
 /* ---- EN-TÊTE « Bonjour, xxx » (.comic-greeting) : JAUNE VIF + CONTOUR /
-   OMBRAGE BLANC + LÉGER DÉCALAGE CARTOON (ombre dure décalée en bas-droite).
-   Lettrage BD vibrant, contraste maximal quelle que soit la zone de
-   bg_bd.jpg tamisée derrière. */
+   OMBRAGE BLEU ROI (royal blue #4169E1) + LÉGER DÉCALAGE CARTOON (ombre dure
+   décalée en bas-droite). Lettrage BD vibrant, contraste maximal quelle que
+   soit la zone de bg_bd.jpg tamisée derrière. */
 [data-theme='comic'] .comic-greeting {
   color: var(--cb-mustard); /* jaune vif */
-  -webkit-text-stroke: 3px #ffffff; /* contour blanc épais */
+  -webkit-text-stroke: 3px #4169e1; /* contour bleu roi épais */
   paint-order: stroke fill; /* le texte reste au premier plan du tracé */
   text-shadow:
-    0 0 12px rgba(255, 255, 255, 0.6), /* ombrage blanc doux */
+    0 0 12px rgba(65, 105, 225, 0.7), /* ombrage bleu roi doux */
     4px 4px 0 var(--cb-ink); /* léger décalage / effet cartoon (ombre dure) */
 }
 /* Tracé plus fin sous md (BD_Cartoon_Shout est large — pas de dévorement des contre-dures). */
 @media (max-width: 768px) {
   [data-theme='comic'] .comic-greeting {
-    -webkit-text-stroke: 2px #ffffff;
+    -webkit-text-stroke: 2px #4169e1;
     text-shadow:
-      0 0 8px rgba(255, 255, 255, 0.55),
+      0 0 8px rgba(65, 105, 225, 0.65),
       3px 3px 0 var(--cb-ink);
   }
 }
 
 /* ---- TEXTES : TITRES PRINCIPAUX DES PAGES (.cb-page-title / .comic-page-title)
-   + TITRES DE GROUPE (.cb-group-title) : JAUNE VIF + CONTOUR / OMBRAGE BLANC +
-   LÉGER DÉCALAGE CARTOON — exactement le même style que l'en-tête « Bonjour,
-   xxx » (cf. .comic-greeting ci-dessus). (Ces accroches ne vivent JAMAIS dans
-   les tuiles : aucune tuile n'est modifiée.) */
+   + TITRES DE GROUPE (.cb-group-title) : JAUNE VIF + CONTOUR / OMBRAGE BLEU ROI
+   (royal blue #4169E1) + LÉGER DÉCALAGE CARTOON — exactement le même style que
+   l'en-tête « Bonjour, xxx » (cf. .comic-greeting ci-dessus). (Ces accroches ne
+   vivent JAMAIS dans les tuiles : aucune tuile n'est modifiée.) */
 [data-theme='comic'] .cb-page-title,
 [data-theme='comic'] .comic-page-title,
 [data-theme='comic'] .cb-group-title {
   color: var(--cb-mustard); /* jaune vif */
-  -webkit-text-stroke: 2.5px #ffffff; /* contour blanc */
+  -webkit-text-stroke: 2.5px #4169e1; /* contour bleu roi */
   paint-order: stroke fill;
   text-shadow:
-    0 0 10px rgba(255, 255, 255, 0.55), /* ombrage blanc doux */
+    0 0 10px rgba(65, 105, 225, 0.65), /* ombrage bleu roi doux */
     4px 4px 0 var(--cb-ink); /* léger décalage / effet cartoon (ombre dure) */
 }
 @media (max-width: 768px) {
   [data-theme='comic'] .cb-page-title,
   [data-theme='comic'] .comic-page-title,
   [data-theme='comic'] .cb-group-title {
-    -webkit-text-stroke: 2px #ffffff;
+    -webkit-text-stroke: 2px #4169e1;
     text-shadow:
-      0 0 7px rgba(255, 255, 255, 0.5),
+      0 0 7px rgba(65, 105, 225, 0.6),
       3px 3px 0 var(--cb-ink);
   }
+}
+
+/* ---- TAILLE DES GRANDS TITRES : BD_Cartoon_Shout est une police très large —
+   les titres principaux sur plusieurs lignes (« Mes Disques » / « Mes BD »…)
+   débordaient ou se désalignaient. Taille légèrement réduite (1.5rem au lieu
+   de 1.875rem) + casse conservée : aucun débordement, alignement propre. */
+[data-theme='comic'] .cb-page-title,
+[data-theme='comic'] .comic-page-title {
+  font-size: 1.5rem;
 }
 
 /* ---- BARRE DE NAVIGATION HAUTE (.cb-navbar) : NOIR PROFOND + bande vibrante.
@@ -458,4 +480,46 @@
 }
 [data-theme='comic'] .cb-footer a {
   color: var(--cb-mustard);
+}
+
+/* ============================================================
+   AXERA ROUND — LECTURE DES DONNÉES (thème « Bande dessinée ») :
+   police locale Axera Round (cf. @font-face en tête de fichier) pour
+   les éléments de données du thème, scellés sous [data-theme='comic'] :
+     - listes de données : lignes des collections (vue liste — ItemList.jsx)
+       + tableaux de gestion (ex. « Utilisateurs ») ;
+     - sous-titres de tableaux (lignes d'en-tête <thead> / <th>) ;
+     - libellés de formulaires (.label) — modales d'import / création
+       (Ajouter un disque / une BD, création de compte…) ;
+     - badges de rôles / statuts (.badge — admin/user, actif/désactivé,
+       collection publique/privée, genres, années…).
+   SCELLÉ sous [data-theme='comic'] : aucun autre thème n'est touché.
+   ============================================================ */
+
+/* Listes de données : lignes des collections (vue liste) + tableaux. */
+[data-theme='comic'] ul li article,
+[data-theme='comic'] ul li article span,
+[data-theme='comic'] ul li article p,
+[data-theme='comic'] ul li article h3,
+[data-theme='comic'] table,
+[data-theme='comic'] table td,
+[data-theme='comic'] table th {
+  font-family: 'Axera Round', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Sous-titres de tableaux : en-têtes de colonnes. */
+[data-theme='comic'] thead,
+[data-theme='comic'] thead th {
+  font-family: 'Axera Round', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Libellés de formulaires (modales d'import / création + pages). */
+[data-theme='comic'] .label {
+  font-family: 'Axera Round', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Badges de rôles / statuts (rôles admin/user, statuts actif/désactivé,
+   collection publique/privée, genres, années…). */
+[data-theme='comic'] .badge {
+  font-family: 'Axera Round', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }

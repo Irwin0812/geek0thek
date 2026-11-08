@@ -445,7 +445,10 @@ export default function AdminUsers() {
         <p className="text-sm text-rose-400">{loadError}</p>
       ) : (
         <div className="card overflow-x-auto">
-          <table className="w-full text-sm min-w-[760px]">
+          {/* min-w-[880px] : colonne d'actions élargie — le bouton « Modifier »
+              (bordure épaisse du thème BD) n'est plus jamais masqué / coupé à
+              droite ; le défilement horizontal prend le relais si besoin. */}
+          <table className="w-full text-sm min-w-[880px]">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wider text-slate-500 border-b border-night-600/60">
                 <th className="px-4 py-3">{t('adminUsers.colMember')}</th>
@@ -455,7 +458,10 @@ export default function AdminUsers() {
                 <th className="px-4 py-3">{t('adminUsers.colStatus')}</th>
                 <th className="px-4 py-3">{t('adminUsers.colVinyls')}</th>
                 <th className="px-4 py-3">{t('adminUsers.colComics')}</th>
-                <th className="px-4 py-3"></th>
+                {/* Colonne d'actions : largeur minimale garantie (min-w-[170px])
+                    + padding réduit (px-2) — « Modifier » / « Supprimer »
+                    entièrement visibles, jamais coupés sur le côté droit. */}
+                <th className="px-2 py-3 min-w-[170px] text-right"></th>
               </tr>
             </thead>
             <tbody>
@@ -491,12 +497,15 @@ export default function AdminUsers() {
                   </td>
                   <td className="px-4 py-3 text-slate-300">{u.vinylCount ?? '—'}</td>
                   <td className="px-4 py-3 text-slate-300">{u.comicCount ?? '—'}</td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                  {/* Colonne d'actions : padding réduit (px-2) + gap resserré —
+                      les deux boutons tiennent entièrement dans la colonne
+                      élargie (min-w-[170px] du <th>), jamais coupés à droite. */}
+                  <td className="px-2 py-3 text-right whitespace-nowrap">
                     {u.id !== me.id ? (
-                      <>
-                        <button className="btn-ghost !py-1 !px-2 mr-1" onClick={() => openEdit(u)}>{t('common.edit')}</button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button className="btn-ghost !py-1 !px-2" onClick={() => openEdit(u)}>{t('common.edit')}</button>
                         <button className="btn-danger !py-1 !px-2" onClick={() => setDeleteTarget(u)}>{t('common.delete')}</button>
-                      </>
+                      </div>
                     ) : (
                       <span className="text-xs text-slate-600">{t('adminUsers.yourAccount')}</span>
                     )}
