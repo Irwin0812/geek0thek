@@ -11,10 +11,13 @@
 
 /* ------------------------------------------------------------
    TYPOGRAPHIE LOCALE (@font-face) — EXCLUSIF AU THEME « BD » :
-     - BD_Cartoon_Shout -> UNIQUE police du thème, appliquée uniformément au
-       Dashboard et à toutes les pages : titres, sous-titres, menus et corps
-       de texte (variable --app-font + règles typographiques ci-dessous).
-    La .ttf est servie par le backend depuis ./uploads (volume local) sous
+     - BD_Cartoon_Shout -> TITRES des pages (h1 / h2 / sous-titres de section)
+       + corps de texte (variable --app-font sur le body).
+     - Super Comic      -> MENUS & NAVIGATION (barre haute, menus déroulants),
+       BOUTONS (dont « Ajouter un média » du Dashboard), FOOTER et TUILES
+       (écriture à l'intérieur de toutes les tuiles) — cf. règles
+       typographiques ci-dessous.
+    Les .ttf sont servies par le backend depuis ./uploads (volume local) sous
     /uploads/fonts/... — même mécanisme que le theme « Médiathèque »
     (cf. @font-face de library.css). Aucune règle ne touche les autres themes :
     tout est scellé sous [data-theme='comic'].
@@ -22,6 +25,18 @@
 @font-face {
   font-family: 'BD Cartoon Shout';
   src: url('/uploads/fonts/bd_cartoon_shout/BD_Cartoon_Shout.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Police « Super Comic » : menus / navigation, menus déroulants, boutons,
+   footer et tuiles du thème (cf. règles typographiques ci-dessous). La .ttf
+   est servie par le backend depuis ./uploads (volume local) sous
+   /uploads/fonts/... — même mécanisme que BD_Cartoon_Shout. */
+@font-face {
+  font-family: 'Super Comic';
+  src: url('/uploads/fonts/super_comic_3/Super%20Comic.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -85,19 +100,21 @@
 
 [data-theme='comic'] body {
   /* Photo de fond du thème (bg_bd.jpg) : pile lue du bas vers le haut —
-     (1) VOILE SOMBRE / TAMISÉ (linear-gradient noir ~52 %) qui assombrit et
-     tamise la photo pour une lisibilité PARFAITE du texte (encre noire des
-     corps + titres blancs .cb-page-title), (2) légère trame halftone (points)
-     très discrète, (3) la photo en cover/center. Le jaune --bg-app reste en
-     repli (background-color) si la photo n'est pas encore chargée. */
+     (1) VOILE SOMBRE / TAMISÉ (linear-gradient noir ~62 %) qui rend la photo
+      PARTIELLEMENT TRANSLUCIDE sur l'ensemble des pages pour une lisibilité
+      OPTIMALE du texte (encre noire des corps + titres jaunes .cb-page-title),
+     (2) légère trame halftone (points) très discrète, (3) la photo en
+      cover/center. Le jaune --bg-app reste en repli (background-color) si la
+      photo n'est pas encore chargée. */
   background-color: var(--bg-app);
   color: var(--text-secondary);
   font-family: var(--app-font);
   font-weight: var(--body-font-weight);
   letter-spacing: var(--body-letter-spacing);
   background-image:
-    /* voile sombre / tamisé : lisibilité parfaite du texte sur la photo */
-    linear-gradient(rgba(15, 10, 3, 0.52), rgba(15, 10, 3, 0.52)),
+    /* voile sombre / tamisé : photo PARTIELLEMENT TRANSLUCIDE — lisibilité
+       optimale du texte sur l'ensemble des pages */
+    linear-gradient(rgba(15, 10, 3, 0.62), rgba(15, 10, 3, 0.62)),
     /* légère trame halftone (points) pour le fond, très discrète */
     radial-gradient(rgba(25, 17, 5, 0.05) 1.2px, transparent 1.3px),
     url('/img/bg_bd.jpg');
@@ -110,16 +127,6 @@
   transition:
     background-color 0.25s ease,
     color 0.25s ease;
-}
-
-/* Message de bienvenue du Dashboard (« Bonjour, xxx ») : encre NOIRE posée à
-   même la photo tamisée — un halo CLAIR doux (text-shadow) garantit sa
-   lisibilité parfaite quelle que soit la zone de bg_bd.jpg qui passe derrière.
-   Inerte sous les autres thèmes (sélecteur scellé [data-theme='comic']). */
-[data-theme='comic'] .comic-greeting {
-  text-shadow:
-    0 1px 2px rgba(255, 253, 245, 0.9),
-    0 2px 8px rgba(255, 253, 245, 0.7);
 }
 
 [data-theme='comic'] ::selection {
@@ -238,29 +245,60 @@
     SCELLÉ sous [data-theme='comic'] : aucun autre thème n'est touché.
     ============================================================ */
 
-/* ---- 1) NAVBAR + FOOTER : BD_Cartoon_Shout (barres haute et basse) ---- */
+/* ---- 1) NAVBAR + FOOTER : SUPER COMIC (barres haute et basse) ---- */
 [data-theme='comic'] .cb-navbar,
 [data-theme='comic'] .cb-footer {
-  font-family: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Lettrage du nom de marque GEEK0THEK (logo) : BD_Cartoon_Shout. */
+/* Lettrage du nom de marque GEEK0THEK (logo) : SUPER COMIC. */
 [data-theme='comic'] .cb-navbar .cb-logo {
-  font-family: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Liens de la barre haute (desktop + mobile) : BD_Cartoon_Shout. */
+/* Liens de la barre haute (desktop + mobile) : SUPER COMIC. */
 [data-theme='comic'] .cb-navbar .cb-nav-link {
-  font-family: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Menus / sous-menus de la barre (panneaux flottants : profil, thème, langue,
    « Autres Collections », « Utilisateurs », « Bibliothèques partagées »…) :
-   BD_Cartoon_Shout — le lettrage de la barre s'étend à ses menus. */
+   SUPER COMIC — le lettrage de la barre s'étend à ses menus. */
 [data-theme='comic'] .cb-navbar .card a,
 [data-theme='comic'] .cb-navbar .card button,
 [data-theme='comic'] .cb-navbar .card p {
-  font-family: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ---- 1bis) MENUS DÉROULANTS + BOUTONS : SUPER COMIC ---- */
+/* Boutons de l'application (dont « Ajouter un média » du Dashboard) :
+   SUPER COMIC. Les variantes .btn-primary / .btn-ghost / .btn-danger héritent
+   des styles .btn via @apply (pas de classe .btn dans le DOM) → ciblées ici. */
+[data-theme='comic'] .btn,
+[data-theme='comic'] .btn-primary,
+[data-theme='comic'] .btn-ghost,
+[data-theme='comic'] .btn-danger {
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Contenu des menus déroulants (panneaux flottants [role='menu'] — ex. :
+   menu « Ajouter un média » du Dashboard) : SUPER COMIC. */
+[data-theme='comic'] [role='menu'],
+[data-theme='comic'] [role='menu'] a,
+[data-theme='comic'] [role='menu'] button,
+[data-theme='comic'] [role='menu'] p,
+[data-theme='comic'] [role='menu'] span {
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ---- 1ter) TUILES : SUPER COMIC (écriture à l'intérieur de toutes les tuiles) ---- */
+[data-theme='comic'] [data-card],
+[data-theme='comic'] [data-card] h3,
+[data-theme='comic'] [data-card] p,
+[data-theme='comic'] [data-card] span,
+[data-theme='comic'] [data-card] a,
+[data-theme='comic'] [data-card] button {
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* ---- 2) TITRES + PAGES : BD_Cartoon_Shout (Disques, BD, Profil, admin, futures collections) ---- */
@@ -309,67 +347,51 @@
   --cb-ink: #191105;       /* noir profond (encre du thème) */
 }
 
-/* ---- EN-TÊTE « Bonjour, xxx » (.comic-greeting) : JAUNE MOUTARDE + liseré
-   NOIR PROFOND (liseré encre) + OMBRAGE / CONTOUR BLANC + ombre dure bordeaux.
-   Remplace le simple halo clair d'origine : lettrage BD vibrant, contraste
-   maximal quelle que soit la zone de bg_bd.jpg tamisée derrière. */
+/* ---- EN-TÊTE « Bonjour, xxx » (.comic-greeting) : JAUNE VIF + CONTOUR /
+   OMBRAGE BLANC + LÉGER DÉCALAGE CARTOON (ombre dure décalée en bas-droite).
+   Lettrage BD vibrant, contraste maximal quelle que soit la zone de
+   bg_bd.jpg tamisée derrière. */
 [data-theme='comic'] .comic-greeting {
-  color: var(--cb-mustard);
-  -webkit-text-stroke: 3px var(--cb-ink);
-  paint-order: stroke fill;
+  color: var(--cb-mustard); /* jaune vif */
+  -webkit-text-stroke: 3px #ffffff; /* contour blanc épais */
+  paint-order: stroke fill; /* le texte reste au premier plan du tracé */
   text-shadow:
-    -2px -2px 0 #ffffff,
-     2px -2px 0 #ffffff,
-    -2px  2px 0 #ffffff,
-     2px  2px 0 #ffffff,
-     0    0   12px rgba(255, 255, 255, 0.55),
-     4px  4px  0 var(--cb-bordeaux);
+    0 0 12px rgba(255, 255, 255, 0.6), /* ombrage blanc doux */
+    4px 4px 0 var(--cb-ink); /* léger décalage / effet cartoon (ombre dure) */
 }
 /* Tracé plus fin sous md (BD_Cartoon_Shout est large — pas de dévorement des contre-dures). */
 @media (max-width: 768px) {
   [data-theme='comic'] .comic-greeting {
-    -webkit-text-stroke: 2px var(--cb-ink);
+    -webkit-text-stroke: 2px #ffffff;
     text-shadow:
-      -2px -2px 0 #ffffff,
-       2px -2px 0 #ffffff,
-      -2px  2px 0 #ffffff,
-       2px  2px 0 #ffffff,
-       0    0   8px rgba(255, 255, 255, 0.5),
-       3px  3px  0 var(--cb-bordeaux);
+      0 0 8px rgba(255, 255, 255, 0.55),
+      3px 3px 0 var(--cb-ink);
   }
 }
 
-/* ---- TEXTES : TITRES DE PAGES (.cb-page-title / .comic-page-title) + TITRES
-   DE GROUPE (.cb-group-title) : BLANC FRANC + liseré NOIR PROFOND + OMBRAGE /
-   CONTOUR BLANC + ombre dure bordeaux — même lettrage « case de BD » que
-   l'en-tête, un cran plus discret. (Ces accroches ne vivent JAMAIS dans les
-   tuiles : aucune tuile n'est modifiée.) */
+/* ---- TEXTES : TITRES PRINCIPAUX DES PAGES (.cb-page-title / .comic-page-title)
+   + TITRES DE GROUPE (.cb-group-title) : JAUNE VIF + CONTOUR / OMBRAGE BLANC +
+   LÉGER DÉCALAGE CARTOON — exactement le même style que l'en-tête « Bonjour,
+   xxx » (cf. .comic-greeting ci-dessus). (Ces accroches ne vivent JAMAIS dans
+   les tuiles : aucune tuile n'est modifiée.) */
 [data-theme='comic'] .cb-page-title,
 [data-theme='comic'] .comic-page-title,
 [data-theme='comic'] .cb-group-title {
-  color: #ffffff;
-  -webkit-text-stroke: 2.5px var(--cb-ink);
+  color: var(--cb-mustard); /* jaune vif */
+  -webkit-text-stroke: 2.5px #ffffff; /* contour blanc */
   paint-order: stroke fill;
   text-shadow:
-    -2px -2px 0 #ffffff,
-     2px -2px 0 #ffffff,
-    -2px  2px 0 #ffffff,
-     2px  2px 0 #ffffff,
-     0    0   10px rgba(255, 255, 255, 0.5),
-     4px  4px  0 var(--cb-bordeaux);
+    0 0 10px rgba(255, 255, 255, 0.55), /* ombrage blanc doux */
+    4px 4px 0 var(--cb-ink); /* léger décalage / effet cartoon (ombre dure) */
 }
 @media (max-width: 768px) {
   [data-theme='comic'] .cb-page-title,
   [data-theme='comic'] .comic-page-title,
   [data-theme='comic'] .cb-group-title {
-    -webkit-text-stroke: 2px var(--cb-ink);
+    -webkit-text-stroke: 2px #ffffff;
     text-shadow:
-      -2px -2px 0 #ffffff,
-       2px -2px 0 #ffffff,
-      -2px  2px 0 #ffffff,
-       2px  2px 0 #ffffff,
-       0    0   7px rgba(255, 255, 255, 0.45),
-       3px  3px  0 var(--cb-bordeaux);
+      0 0 7px rgba(255, 255, 255, 0.5),
+      3px 3px 0 var(--cb-ink);
   }
 }
 
