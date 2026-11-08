@@ -562,6 +562,18 @@ const MIGRATIONS = [
       'ALTER TABLE users ADD COLUMN IF NOT EXISTS last_password_reminder_at TIMESTAMPTZ;',
     ],
   },
+  // STATUT DE DONATEUR (soutien au projet) — colonne users.is_donor : TRUE dès
+  // qu'un don PayPal (paypal.me/geek0thek) est enregistré / validé pour le
+  // compte (POST /api/users/donation). Déclenche l'e-mail de MERCI personnalisé
+  // (cf. utils/emailService.js -> notifyDonationThankYou). NOT NULL DEFAULT
+  // FALSE : les comptes existants ne sont JAMAIS affectés. Idempotent :
+  // ADD COLUMN IF NOT EXISTS.
+  {
+    name: 'users.is-donor',
+    statements: [
+      'ALTER TABLE users ADD COLUMN IF NOT EXISTS is_donor BOOLEAN NOT NULL DEFAULT FALSE;',
+    ],
+  },
 ];
 
 /**

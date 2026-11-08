@@ -23,6 +23,7 @@ const {
   setupTotp,
   enableTotp,
   disableTotp,
+  recordDonation,
 } = require('../controllers/userController');
 const { authenticate, requireAdmin, requirePasswordChanged } = require('../middlewares/auth');
 const { uploadAvatar } = require('../middlewares/upload');
@@ -73,6 +74,14 @@ router.delete('/library-shares/:id', deleteLibraryShare);
 router.post('/totp/setup', setupTotp);
 router.post('/totp/enable', enableTotp);
 router.post('/totp/disable', disableTotp);
+
+// ------------------------------------------------------------
+// DON / SOUTIEN AU PROJET (PayPal) — enregistre le statut de donateur du
+// compte courant (users.is_donor = TRUE) et déclenche l'e-mail de MERCI
+// personnalisé (cf. controllers/userController.js -> recordDonation).
+// Déclaré AVANT toute route paramétrée /:id.
+// ------------------------------------------------------------
+router.post('/donation', recordDonation);
 
 router.get('/', requireAdmin, listUsers);
 router.post('/', requireAdmin, uploadAvatar.single('avatar'), createUser);

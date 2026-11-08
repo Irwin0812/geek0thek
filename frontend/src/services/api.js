@@ -128,6 +128,11 @@ export const api = {
     // { theme: 'dark' | 'library' | 'vinyl' | 'comic' | 'comic-books' | 'neon' }
     // ('pastel', ex-« Pastel », accepté et résolu vers 'neon' — cf. backend)
     patchTheme: (theme) => request('/users/profile/theme', { method: 'PATCH', body: { theme } }),
+    // DON / SOUTIEN AU PROJET (PayPal) : enregistre le statut de donateur du
+    // compte courant (users.is_donor = TRUE) et déclenche l'e-mail de MERCI.
+    // Idempotent : un compte déjà donateur ne reçoit pas un second e-mail.
+    // Body { userId } facultatif (admin uniquement, défaut : soi).
+    recordDonation: (payload) => request('/users/donation', { method: 'POST', body: payload || {} }),
     remove: (id) => request(`/users/${id}`, { method: 'DELETE' }),
   },
 

@@ -843,6 +843,28 @@ curl -s http://172.16.2.75/api/health   # -> { "status": "ok", "schema_ok": true
 
 ---
 
+## 💙 Soutenir le projet
+
+**Geek0thek est un projet conçu, développé et hébergé en solo, sur fonds propres.**
+L'hébergement (VM, base de données, stockage des couvertures), la maintenance et le
+développement continu sont entièrement pris en charge par l'auteur.
+
+Si cette médiathèque vous est utile et que vous souhaitez contribuer à sa pérennité,
+vous pouvez faire un **don libre** via PayPal :
+
+[![Donner avec PayPal](https://www.paypalobjects.com/images/logos/315x49.gif)](https://paypal.me/geek0thek)
+
+👉 **[Soutenez le projet — paypal.me/geek0thek](https://paypal.me/geek0thek)**
+
+- **Aucun montant minimum ni maximum** : chaque contribution, quelle qu'en soit la
+  taille, est la bienvenue et finance directement l'hébergement et le développement.
+- Le bouton **« Soutenez le projet »** est également disponible en permanence dans le
+  pied de page de l'application (il s'adapte au thème visuel actif).
+
+Merci pour votre soutien ! 🙏
+
+---
+
 ## Licence & Politique de contribution
 
 Ce logiciel est distribué sous licence **GNU Affero General Public License v3.0 (AGPLv3)**. 

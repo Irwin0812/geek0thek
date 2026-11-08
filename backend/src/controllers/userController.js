@@ -42,6 +42,9 @@ function mapUser(row) {
     // 2FA (Google Authenticator / TOTP) : TRUE si l'authentification à deux
     // facteurs est activée sur le compte (colonne users.totp_enabled).
     totpEnabled: row.totp_enabled === true,
+    // Statut de donateur (soutien au projet) : TRUE dès qu'un don PayPal est
+    // enregistré / validé pour le compte (POST /api/users/donation).
+    isDonor: row.is_donor === true,
     // Langue préférée (code ISO 639-1) : « fr » en dépit de toute valeur NULL
     // résiduelle (la colonne est NOT NULL DEFAULT 'fr' depuis la migration).
     language: row.language || 'fr',
@@ -64,7 +67,7 @@ function mapUser(row) {
 const BASE_SELECT = `
   SELECT u.id, u.login, u.role, u.first_name, u.last_name, u.email, u.phone,
          u.bio, u.is_public, u.share_vinyls, u.share_comics, u.is_active,
-         u.must_change_password, u.totp_enabled,
+         u.must_change_password, u.totp_enabled, u.is_donor,
          u.avatar_url, u.language, u.theme, u.gender, u.birth_date, u.address, u.country,
          u.created_at,
          (SELECT COUNT(*) FROM vinyls v WHERE v.user_id = u.id)::int AS vinyl_count,
@@ -1040,6 +1043,54 @@ async function disableTotp(req, res, next) {
   }
 }
 
+// ------------------------------------------------------------
+// DON / SOUTIEN AU PROJET (PayPal) — POST /api/users/donation.
+// Enregistre le statut de donateur du compte courant (users.is_donor = TRUE)
+// et déclenche l'e-mail de MERCI personnalisé (déclencheur n°5, cf.
+// utils/emailService.js -> notifyDonationThankYou). Le don lui-même est
+// effectué hors application sur https://paypal.me/geek0thek ; cet endpoint
+// sert à VALIDER / ENREGISTRER le statut de donateur du compte (bouton
+// « Soutenez le projet » du pied de page, ou validation manuelle par un
+// admin). Idempotent : un compte déjà donateur ne reçoit pas un second e-mail.
+// ------------------------------------------------------------
+
+/**
+ * POST /api/users/donation — enregistre le statut de donateur du compte
+ * courant (ou d'un autre compte pour un ADMIN) et envoie l'e-mail de MERCI.
+ * Body : { [userId] } — userId facultatif, admin uniquement (défaut : soi).
+ */
+async function recordDonation(req, res, next) {
+  try {
+    const body = req.body || {};
+    // Par défaut le compte courant ; un ADMIN peut valider le statut d'un autre.
+    const targetId =
+      req.user.role === 'admin' && body.userId ? Number(body.userId) : req.user.id;
+
+    const { rows } = await query('SELECT * FROM users WHERE id = $1', [targetId]);
+    const target = rows[0];
+    if (!target) return res.status(404).json({ error: 'Utilisateur introuvable.' });
+
+    // Idempotent : déjà donateur -> aucun nouvel e-mail, statut confirmé.
+    if (target.is_donor === true) {
+      return res.json({ isDonor: true, alreadyDonor: true });
+    }
+
+    await query('UPDATE users SET is_donor = TRUE WHERE id = $1', [targetId]);
+
+    // Déclencheur e-mail n°5 — DON / SOUTIEN AU PROJET : e-mail de MERCI
+    // personnalisé au donateur. Envoi NON bloquant (cf. emailService) : un
+    // échec d'envoi ne fait JAMAIS échouer l'enregistrement du statut.
+    emailService.notifyDonationThankYou({
+      to: target.email,
+      firstName: target.first_name,
+    }).catch(() => {});
+
+    return res.json({ isDonor: true, alreadyDonor: false });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 module.exports = {
   listUsers,
   listAllUsers,
@@ -1057,4 +1108,5 @@ module.exports = {
   setupTotp,
   enableTotp,
   disableTotp,
+  recordDonation,
 };

@@ -318,6 +318,41 @@ function notifyPasswordReminder({ to, firstName, login }) {
   });
 }
 
+// ------------------------------------------------------------
+// Déclencheur n°5 — DON / SOUTIEN AU PROJET.
+// Envoie au DONATEUR un e-mail de MERCI personnalisé dès que son statut de
+// donateur est enregistré / validé (POST /api/users/donation). Le projet est
+// conçu et hébergé en solo, sur fonds propres : le soutien couvre l'hébergement
+// et la maintenance. RÈGLE NON BLOQUANTE : un échec d'envoi ne fait JAMAIS
+// échouer l'enregistrement du don (cf. sendMail).
+// ------------------------------------------------------------
+/**
+ * @param {object} p
+ * @param {string} p.to         adresse e-mail du donateur
+ * @param {string} [p.firstName]
+ */
+function notifyDonationThankYou({ to, firstName }) {
+  const prenom = escapeHtml(firstName || '');
+  const salutation = prenom ? `Bonjour ${prenom}` : 'Bonjour';
+  const body = `
+    <p>${salutation},</p>
+    <p>Merci infiniment pour votre don à <strong>Geek0thek</strong>.</p>
+    <p>Ce projet est conçu et hébergé en solo, sur fonds propres : votre soutien finance directement l'hébergement, la maintenance et le développement de la médiathèque. Chaque contribution, quelle qu'en soit la taille, fait une vraie différence.</p>
+    <p>À très vite sur ${appLink('Geek0thek')} !</p>
+    <p style="color:#94a3b8;font-size:13px;">— L'équipe (enfin, moi) Geek0thek</p>`;
+  return sendMail({
+    to,
+    subject: 'Merci pour votre soutien à Geek0thek',
+    html: layout('Merci pour votre don !', body),
+    text:
+      `${salutation},\n\n` +
+      `Merci infiniment pour votre don à Geek0thek.\n\n` +
+      `Ce projet est conçu et hébergé en solo, sur fonds propres : votre soutien finance directement l'hébergement, la maintenance et le développement de la médiathèque. Chaque contribution, quelle qu'en soit la taille, fait une vraie différence.\n\n` +
+      `À très vite sur ${env.appUrl} !\n` +
+      `— L'équipe (enfin, moi) Geek0thek\n`,
+  });
+}
+
 module.exports = {
   isConfigured,
   sendMail,
@@ -325,4 +360,5 @@ module.exports = {
   notifyLibraryShared,
   notifyPasswordReset,
   notifyPasswordReminder,
+  notifyDonationThankYou,
 };
