@@ -11,13 +11,13 @@
 
 /* ------------------------------------------------------------
    TYPOGRAPHIE LOCALE (@font-face) — EXCLUSIF AU THEME « BD » :
-     - BD_Cartoon_Shout -> Navbar + Footer (barres haute / basse).
-     - Bigdex           -> Titres, menus, sous-menus et pages
-                          (Disques, BD, Profil, admin, futures collections).
-   Les .ttf sont servis par le backend depuis ./uploads (volume local) sous
-   /uploads/fonts/... — même mécanisme que le theme « Médiathèque »
-   (cf. @font-face de library.css). Aucune règle ne touche les autres themes
-   ni les tuiles : tout est scellé sous [data-theme='comic'].
+     - BD_Cartoon_Shout -> UNIQUE police du thème, appliquée uniformément au
+       Dashboard et à toutes les pages : titres, sous-titres, menus et corps
+       de texte (variable --app-font + règles typographiques ci-dessous).
+    La .ttf est servie par le backend depuis ./uploads (volume local) sous
+    /uploads/fonts/... — même mécanisme que le theme « Médiathèque »
+    (cf. @font-face de library.css). Aucune règle ne touche les autres themes :
+    tout est scellé sous [data-theme='comic'].
    ------------------------------------------------------------ */
 @font-face {
   font-family: 'BD Cartoon Shout';
@@ -27,18 +27,10 @@
   font-display: swap;
 }
 
-@font-face {
-  font-family: 'Bigdex';
-  src: url('/uploads/fonts/bigdex/Bigdex.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 [data-theme='comic'] {
   --bg-app: #f2d94e; /* jaune « splash page » en fond de page */
   --bg-surface: #e9cf3f;
-  --bg-elevated: #fffdf5; /* cartes / champs : papier crème */
+  --bg-elevated: #fffdf5; /* champs / surfaces papier : crème */
   --bg-raised: #f6eec2;
   --bg-hover: #efe19a;
   --border-subtle: #191105;
@@ -57,7 +49,7 @@
   --ring: rgba(29, 78, 216, 0.3);
   --shadow-color: #191105; /* ombre « case » : noir franc */
   --card-radius: 0.5rem;
-  --app-font: 'Trebuchet MS', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+  --app-font: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
   --body-font-weight: 500; /* corps texte renforcé : ton « BD » */
   --body-letter-spacing: 0.01em;
   --input-bg: #fffdf5;
@@ -75,9 +67,12 @@
   --danger-hover: #e11d48;
   --menu-pop-bg: #fffdf5;
   --menu-pop-shadow: #191105;
-  --card-bg: #fffdf5;
+  /* Cartes / tuiles / listes : ENCRE SOMBRE translucide (~80 %) + léger flou —
+     le voile atténue bg_bd.jpg derrière les blocs sans brouiller les textes
+     clairs (white / slate / gold) pensés pour un fond sombre. */
+  --card-bg: rgba(25, 17, 5, 0.8);
   --card-border: #191105;
-  --card-blur: 0px;
+  --card-blur: 8px; /* léger flou « verre » (backdrop-blur) derrière les cartes */
   /* Ombres décalées sans flou = esprit « case de BD ».
      Bordures épaisses appliquées via .card / .btn / .input ci-dessous. */
   --card-shadow: 5px 5px 0 0 #191105;
@@ -149,8 +144,9 @@
   box-shadow: 0 0 0 3px var(--ring);
 }
 
+/* Libellés : crème — lisibles sur les cartes encre translucide. */
 [data-theme='comic'] .label {
-  color: var(--text-muted);
+  color: #f6eec2;
   font-weight: 800; /* libellés en gras « titre de case » */
 }
 
@@ -193,13 +189,16 @@
   background: var(--danger-hover);
 }
 
-/* Cartes : papier crème, bordure noire marquée, ombre « case » */
+/* Cartes : ENCRE SOMBRE translucide + léger backdrop-blur — le voile atténue
+   bg_bd.jpg derrière les tuiles / listes / modales / menus tout en gardant
+   les textes clairs (white / slate / gold) parfaitement lisibles ; bordure
+   noire marquée et ombre « case » conservées. */
 [data-theme='comic'] .card {
   background: var(--card-bg);
   border: var(--border-width, 3px) solid var(--card-border);
   border-radius: var(--card-radius);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
   box-shadow: var(--card-shadow);
 }
 
@@ -210,8 +209,9 @@
   border-radius: 999px;
 }
 
+/* Icônes : claires — lisibles sur les cartes encre translucide. */
 [data-theme='comic'] .icon-btn {
-  color: var(--text-muted);
+  color: #cbd5e1;
   border: 2px solid transparent;
 }
 
@@ -232,14 +232,11 @@
 
 /* ============================================================
    TYPOGRAPHIE LOCALE — EXCLUSIF AU THEME « BD » (data-theme='comic')
-   Deux polices locales (@font-face en tête de fichier) :
-     - BD_Cartoon_Shout → Navbar + Footer (barres haute / basse).
-     - Bigdex           → Titres, menus, sous-menus et pages
-                          (Disques, BD, Profil, admin, futures collections).
-   SCELLÉ sous [data-theme='comic'] : aucun autre thème n'est touché.
-   Les TUILES (VinylCard / ComicCard / GroupCard…) ne sont PAS ciblées :
-   elles conservent leur lettrage d'origine.
-   ============================================================ */
+   UNE SEULE police locale (@font-face en tête de fichier) :
+     - BD_Cartoon_Shout → Dashboard + toutes les pages : titres, sous-titres,
+       menus et corps de texte (héritée via --app-font sur le body).
+    SCELLÉ sous [data-theme='comic'] : aucun autre thème n'est touché.
+    ============================================================ */
 
 /* ---- 1) NAVBAR + FOOTER : BD_Cartoon_Shout (barres haute et basse) ---- */
 [data-theme='comic'] .cb-navbar,
@@ -266,26 +263,177 @@
   font-family: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* ---- 2) TITRES + PAGES : Bigdex (Disques, BD, Profil, admin, futures collections) ---- */
+/* ---- 2) TITRES + PAGES : BD_Cartoon_Shout (Disques, BD, Profil, admin, futures collections) ---- */
 /* Titres de pages (h1 « Mes Disques » / « Mes BD » / « Utilisateurs » /
    « Mon profil » / titres des pages d'ajout…) + sous-titres de section. */
 [data-theme='comic'] .cb-page-title,
 [data-theme='comic'] .comic-page-title {
-  font-family: 'Bigdex', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Message de bienvenue du Dashboard (« Bonjour, xxx ») : Bigdex. */
+/* Message de bienvenue du Dashboard (« Bonjour, xxx ») : BD_Cartoon_Shout. */
 [data-theme='comic'] .comic-greeting {
-  font-family: 'Bigdex', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Titres de groupe niveau 2 (Artiste / Série) : Bigdex. */
+/* Titres de groupe niveau 2 (Artiste / Série) : BD_Cartoon_Shout. */
 [data-theme='comic'] .cb-group-title {
-  font-family: 'Bigdex', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Sous-titres de section du Dashboard (« Disques » / « Bandes dessinées ») :
-   Bigdex — cohérence avec les titres de pages. */
+   BD_Cartoon_Shout — cohérence avec les titres de pages. */
 [data-theme='comic'] main section h3 {
-  font-family: 'Bigdex', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ============================================================
+   OBJECTIF 3 — COULEURS & CONTRASTES VIBRANTS « BD »
+   En-tête (« Bonjour, xxx »), textes (titres de pages / groupes) et
+   barres de navigation haute/basse : teintes contrastées et vibrantes
+   de style BD — orange vif, jaune moutarde, bleu cyan, rouge bordeaux,
+   noir profond avec ombrage/contour blanc.
+   SCELLÉ sous [data-theme='comic'] : aucun autre thème n'est touché.
+   RÈGLE D'EXCLUSION STRICTE : les TUILES (.card[data-card] — VinylCard /
+   ComicCard / GroupCard) ne sont JAMAIS ciblées ici : structure, fonds
+   et aspects intacts (aucun sélecteur ci-dessous ne les atteint).
+   ============================================================ */
+
+/* Palette vibrante « BD » — définie à la RACINE du thème (héritage) pour
+   rester lisible depuis tous les éléments cibles ci-dessous. */
+[data-theme='comic'] {
+  --cb-orange: #ff7a1a;    /* orange vif */
+  --cb-mustard: #ffd21f;   /* jaune moutarde / or */
+  --cb-cyan: #22d3ee;      /* bleu cyan */
+  --cb-bordeaux: #8b1e3f;  /* rouge bordeaux */
+  --cb-ink: #191105;       /* noir profond (encre du thème) */
+}
+
+/* ---- EN-TÊTE « Bonjour, xxx » (.comic-greeting) : JAUNE MOUTARDE + liseré
+   NOIR PROFOND (liseré encre) + OMBRAGE / CONTOUR BLANC + ombre dure bordeaux.
+   Remplace le simple halo clair d'origine : lettrage BD vibrant, contraste
+   maximal quelle que soit la zone de bg_bd.jpg tamisée derrière. */
+[data-theme='comic'] .comic-greeting {
+  color: var(--cb-mustard);
+  -webkit-text-stroke: 3px var(--cb-ink);
+  paint-order: stroke fill;
+  text-shadow:
+    -2px -2px 0 #ffffff,
+     2px -2px 0 #ffffff,
+    -2px  2px 0 #ffffff,
+     2px  2px 0 #ffffff,
+     0    0   12px rgba(255, 255, 255, 0.55),
+     4px  4px  0 var(--cb-bordeaux);
+}
+/* Tracé plus fin sous md (BD_Cartoon_Shout est large — pas de dévorement des contre-dures). */
+@media (max-width: 768px) {
+  [data-theme='comic'] .comic-greeting {
+    -webkit-text-stroke: 2px var(--cb-ink);
+    text-shadow:
+      -2px -2px 0 #ffffff,
+       2px -2px 0 #ffffff,
+      -2px  2px 0 #ffffff,
+       2px  2px 0 #ffffff,
+       0    0   8px rgba(255, 255, 255, 0.5),
+       3px  3px  0 var(--cb-bordeaux);
+  }
+}
+
+/* ---- TEXTES : TITRES DE PAGES (.cb-page-title / .comic-page-title) + TITRES
+   DE GROUPE (.cb-group-title) : BLANC FRANC + liseré NOIR PROFOND + OMBRAGE /
+   CONTOUR BLANC + ombre dure bordeaux — même lettrage « case de BD » que
+   l'en-tête, un cran plus discret. (Ces accroches ne vivent JAMAIS dans les
+   tuiles : aucune tuile n'est modifiée.) */
+[data-theme='comic'] .cb-page-title,
+[data-theme='comic'] .comic-page-title,
+[data-theme='comic'] .cb-group-title {
+  color: #ffffff;
+  -webkit-text-stroke: 2.5px var(--cb-ink);
+  paint-order: stroke fill;
+  text-shadow:
+    -2px -2px 0 #ffffff,
+     2px -2px 0 #ffffff,
+    -2px  2px 0 #ffffff,
+     2px  2px 0 #ffffff,
+     0    0   10px rgba(255, 255, 255, 0.5),
+     4px  4px  0 var(--cb-bordeaux);
+}
+@media (max-width: 768px) {
+  [data-theme='comic'] .cb-page-title,
+  [data-theme='comic'] .comic-page-title,
+  [data-theme='comic'] .cb-group-title {
+    -webkit-text-stroke: 2px var(--cb-ink);
+    text-shadow:
+      -2px -2px 0 #ffffff,
+       2px -2px 0 #ffffff,
+      -2px  2px 0 #ffffff,
+       2px  2px 0 #ffffff,
+       0    0   7px rgba(255, 255, 255, 0.45),
+       3px  3px  0 var(--cb-bordeaux);
+  }
+}
+
+/* ---- BARRE DE NAVIGATION HAUTE (.cb-navbar) : NOIR PROFOND + bande vibrante.
+   Le fond opaque encre fait remonter les couleurs vives de la charte ; la
+   bande « masthead » (orange → moutarde → cyan → bordeaux) clôt la barre. */
+[data-theme='comic'] .cb-navbar {
+  background: var(--cb-ink);
+  border-bottom: none;
+}
+/* Bande bicolore « masthead » en bas de la barre : orange vif -> jaune
+   moutarde -> bleu cyan -> rouge bordeaux. */
+[data-theme='comic'] .cb-navbar::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -6px 0;
+  height: 6px;
+  z-index: 30;
+  background: linear-gradient(90deg, var(--cb-orange) 0%, var(--cb-mustard) 34%, var(--cb-cyan) 67%, var(--cb-bordeaux) 100%);
+}
+/* Panneau mobile de la barre haute (liste sous md:hidden) : même encre profonde. */
+[data-theme='comic'] .cb-navbar nav.md\:hidden {
+  background: var(--cb-ink);
+}
+
+/* Liens de la barre haute : BLANC ; survol BLEU CYAN ; état ACTIF = TAMPON
+   JAUNE MOUTARDE à liseré encre + OMBRAGE / CONTOUR BLANC (ombrage blanc). */
+[data-theme='comic'] .cb-nav-link {
+  color: #ffffff;
+}
+[data-theme='comic'] .cb-nav-link:hover {
+  background: rgba(34, 211, 238, 0.18);
+  color: var(--cb-cyan);
+}
+[data-theme='comic'] .cb-nav-link.bg-night-700 {
+  background: var(--cb-mustard);
+  color: var(--cb-ink);
+  border: 3px solid var(--cb-ink);
+  box-shadow:
+    0 0 0 2px #ffffff, /* ombrage / contour blanc */
+    3px 3px 0 var(--cb-ink);
+}
+
+/* Lettrage du nom de marque (logo) : BLANC + liseré encre ; le « 0THEK »
+   passe à l'ORANGE VIF de la charte. */
+[data-theme='comic'] .cb-logo {
+  color: #ffffff;
+  -webkit-text-stroke: 1.6px var(--cb-ink);
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 var(--cb-ink), -1px -1px 0 var(--cb-ink);
+}
+[data-theme='comic'] .cb-logo [class*='text-gold-400'] {
+  color: var(--cb-orange);
+}
+
+/* ---- BARRE DE NAVIGATION BASSE (.cb-footer) : ROUGE BORDEAUX, cadre de la
+   barre haute — texte blanc, mention de crédit en jaune moutarde. */
+[data-theme='comic'] .cb-footer {
+  background: var(--cb-bordeaux);
+  border-top: 4px solid var(--cb-ink);
+}
+[data-theme='comic'] .cb-footer div {
+  color: #ffffff;
+}
+[data-theme='comic'] .cb-footer a {
+  color: var(--cb-mustard);
 }
