@@ -937,6 +937,20 @@ html[data-theme='library'] {
   color: var(--lib-brun);
 }
 
+/* Prénom + nom des membres (text-slate-100 d'origine, quasi invisible sur le
+   papier clair) : BRUN de la charte lisible et contrasté. Ciblage explicite
+   de la classe d'origine (spécificité 0,3,1 > utilitaire .text-slate-100). */
+[data-theme='library'] .lib-shared td [class*='text-slate-100'] {
+  color: var(--lib-brun);
+}
+/* E-mail sous le nom (div text-slate-500 d'origine, gris froid) : encre
+   chaude atténuée du thème pour une lisibilité parfaite. Ciblage sur <div>
+   uniquement : le libellé « non autorisé » (span text-slate-500) CONSERVE sa
+   couleur d'origine (exception). */
+[data-theme='library'] .lib-shared td div[class*='text-slate-500'] {
+  color: var(--text-muted);
+}
+
 /* BOUTON D'ÉTAT « autorisé » : libellé + interrupteur en ORANGE de la charte.
    L'interrupteur porte role='switch' + aria-checked ; le libellé est son
    <span> voisin PRÉCÉDENT (DOM : <span> puis <button>) → ciblage via :has()
