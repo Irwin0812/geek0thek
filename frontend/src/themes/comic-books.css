@@ -488,6 +488,12 @@
   --cb-electric: #0055ff;      /* bleu électrique de base */
   --cb-electric-hi: #2d7dff;   /* surbrillance (survol) */
   --cb-electric-deep: #002fa6; /* ombrage bas de planche / pied de dégradé */
+  /* MARRON FONCÉ — texte descriptif / informatif des modales de détail. */
+  --cb-brown: #5c3a1e;
+  /* BLEU ROI — prénoms + noms des membres (Bibliothèques partagées). */
+  --cb-royal: #1d4ed8;
+  /* ROSE FLASH — bouton d'état « autorisé » (Bibliothèques partagées). */
+  --cb-flash-pink: #ff2d95;
 }
 
 [data-theme='comic-books'] .cb-navbar {
@@ -961,6 +967,70 @@
 [data-theme='comic-books'] .collection-badge {
   color: var(--cb-yellow) !important;
   --badge-outline: #191105 !important; /* encre NOIRE du thème (ombrage noir) */
+}
+
+/* ============================================================
+    MODALES DE DÉTAIL (ItemDetailModal — tuiles Disques / BD du Dashboard,
+    pages de collections et futures bibliothèques).
+    Tout le texte descriptif et informatif passe au MARRON FONCÉ
+    (--cb-brown #5c3a1e) sur le papier blanc de la carte. Le bouton principal
+    « Modifier » (.btn-primary) CONSERVE son style actuel (jaune splash / encre
+    noire, scellé plus haut) : aucune règle ne le touche. Ciblage [role='dialog']
+    : les modales sont les uniques éléments portant cet attribut → aucune
+    régression. Spécificité multi-classe (0,2,x) > utilitaires Tailwind .text-*. */
+[data-theme='comic-books'] [role='dialog'] h3 {
+  color: var(--cb-brown);
+}
+[data-theme='comic-books'] [role='dialog'] p,
+[data-theme='comic-books'] [role='dialog'] dd {
+  color: var(--cb-brown);
+}
+/* Libellés de métadonnées (dt) : marron foncé — hiérarchie conservée. */
+[data-theme='comic-books'] [role='dialog'] dt {
+  color: var(--cb-brown);
+}
+/* Titres de section (« DÉTAILS DU DISQUE », « TRACKLIST »…) : marron foncé. */
+[data-theme='comic-books'] [role='dialog'] h2,
+[data-theme='comic-books'] [role='dialog'] h4 {
+  color: var(--cb-brown);
+}
+/* Liens de référence (MusicBrainz / Discogs) : marron foncé, survol bleu roi. */
+[data-theme='comic-books'] [role='dialog'] a[class*='text-gold-300'] {
+  color: var(--cb-brown);
+}
+[data-theme='comic-books'] [role='dialog'] a[class*='text-gold-300']:hover {
+  color: var(--cb-royal);
+}
+/* EXCEPTION : placeholder « Aucune image » (span text-slate-500 sur le fond
+   ENCRE de la vignette) — non ciblé par les règles ci-dessus, son gris d'origine
+   y reste lisible. */
+
+/* ============================================================
+    PAGE « BIBLIOTHÈQUES PARTAGÉES » (SharedLibraries.jsx) — section
+    « Accès accordés à ma collection ».
+      * PRÉNOMS + NOMS des membres : BLEU ROI (--cb-royal #1d4ed8) lisible et
+        contrasté sur le papier blanc de la carte (au lieu du text-slate-100
+        d'origine, quasi invisible). Ciblage explicite de la classe d'origine.
+      * BOUTON D'ÉTAT « autorisé » : libellé + interrupteur en ROSE FLASH
+        (--cb-flash-pink #ff2d95) — au lieu de l'émeraude d'origine. Les états
+        « non autorisé » (aria-checked='false') ne sont JAMAIS touchés.
+    Ciblage par classe .lib-shared posée sur la racine de la page — inerte
+    ailleurs. ============================================================ */
+
+/* Prénom + nom des membres : BLEU ROI lisible et contrasté. */
+[data-theme='comic-books'] .lib-shared td [class*='text-slate-100'] {
+  color: var(--cb-royal);
+}
+
+/* BOUTON D'ÉTAT « autorisé » : interrupteur en ROSE FLASH. */
+[data-theme='comic-books'] .lib-shared button[role='switch'][aria-checked='true'] {
+  background-color: var(--cb-flash-pink);
+}
+/* Libellé « autorisé » (span text-emerald-300 d'origine, présent UNIQUEMENT à
+   l'état autorisé) : ROSE FLASH. L'état « non autorisé » (text-slate-500) n'est
+   JAMAIS touché. */
+[data-theme='comic-books'] .lib-shared span[class*='text-emerald-300'] {
+  color: var(--cb-flash-pink);
 }
 
 
