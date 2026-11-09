@@ -200,7 +200,6 @@ export default function SharedLibraries() {
       {/* --- Collections partagées avec moi (accès reçus) --- */}
       <section className="card p-4">
         <h2 className="font-bold text-white">{t('sharedLibraries.receivedTitle')}</h2>
-        <p className="mt-0.5 text-xs text-slate-500">{t('sharedLibraries.receivedHint')}</p>
 
         {(shares.sharedWithMe || []).length === 0 ? (
           <p className="mt-3 text-sm text-slate-500">{t('sharedLibraries.noReceived')}</p>
