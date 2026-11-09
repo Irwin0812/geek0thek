@@ -16,7 +16,8 @@
  *   <html data-theme="dark">        →  src/themes/dark.css        (défaut de l'appli)
  *   <html data-theme="library">     →  src/themes/library.css     (Médiathèque :
  *                                    photo bg-library.jpg sous voile clair)
- *   <html data-theme="vinyl">       →  src/themes/vinyl.css       (disquaire rétro)
+ *   <html data-theme="vinyl">       →  src/themes/vinyl.css       (disquaire rétro :
+ *                                    photo bg_disquaire.jpg sous voile sombre tamisé)
  *   <html data-theme="comic">       →  src/themes/comic.css       (bande dessinée)
  *   <html data-theme="comic-books"> →  src/themes/comic-books.css (Comic Books :
  *                                    photo bg_comics.jpg en fond principal)
@@ -59,7 +60,14 @@ export const THEMES = [
     // du voile (première teinte du fond perçue par l'œil).
     swatches: ['#ccd5e0', '#ffffff', '#92400e'],
   },
-  { id: 'vinyl', label: 'Disquaire', swatches: ['#1a1108', '#2c1f13', '#d18a3e'] },
+  {
+    id: 'vinyl',
+    label: 'Disquaire',
+    // Fond : photo bg_disquaire.jpg sous voile sombre tamisé « rétro années 80 » —
+    // échantillon = couleur du voile (première teinte du fond perçue par l'œil)
+    // + accents très vifs de la déclinaison années 80 (mauve flash / cyan flash).
+    swatches: ['#1a1108', '#e879f9', '#22d3ee'],
+  },
   { id: 'comic', label: 'Bande dessinée', swatches: ['#f2d94e', '#fffdf5', '#1d4ed8'] },
   {
     id: 'comic-books',

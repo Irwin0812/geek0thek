@@ -2,11 +2,45 @@
    Geek0thek — Thème « Disquaire »
    Ambiance chaleureuse et rétro : tons bois et cuir chauds,
    galette de disque, accent ambre cuivré, serif typographique.
+   Photo de fond locale public/img/bg_disquaire.jpg sous un voile
+   sombre tamisé (effet rétro années 80) qui atténue le contraste
+   brutal de l'image et garantit la lisibilité des textes.
+   DECLINAISON « ANNÉES 80 » (bloc en fin de fichier) : l'en-tête de
+   bienvenue (« Bonjour, xxx »), les MENUS et les BARRES DE NAVIGATION
+   (haute + basse) passent en teintes TRÈS VIVES (mauve flash / cyan
+   flash / jaune néon / blanc brillant) avec halos lumineux néon
+   (text-shadow / box-shadow) — scellé sous [data-theme='vinyl'].
+   Typographies LOCALES (@font-face en tête de fichier, servies par le
+   backend depuis /uploads/fonts) : BECKER BLACK NF pour la BARRE DE MENU
+   (Navbar) + le FOOTER ; DAY POSTER BLACK pour les MENUS, SOUS-MENUS,
+   TITRES et TEXTES PRINCIPAUX (Dashboard, Mes Disques, Mes BD, Mon Profil,
+   Utilisateurs… ET toutes les futures collections — corps de l'application).
    Même logique de variables que les thèmes sombre / moderne
    (cf. index couleurs de theme.js).
    ============================================================ */
 
+@font-face {
+  font-family: 'Becker Black NF';
+  src: url('/uploads/fonts/beckerblacknf/BECKBLN_.TTF') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Day Poster Black';
+  src: url('/uploads/fonts/day_poster_black/DAYPBL__.TTF') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 [data-theme='vinyl'] {
+  /* Chemin absolu de la photo du thème (fichier public/img/bg_disquaire.jpg,
+     servi sous /img par nginx / le build Vite / Vite dev). Déclaré sur
+     [data-theme='vinyl'] : seule cette règle du thème consomme la variable. */
+  --theme-bg-image: url('/img/bg_disquaire.jpg');
+
   --bg-app: #1a1108;
   --bg-surface: #231810;
   --bg-elevated: #2c1f13;
@@ -28,7 +62,15 @@
   --ring: rgba(209, 138, 62, 0.22);
   --shadow-color: rgba(0, 0, 0, 0.55);
   --card-radius: 0.75rem; /* angles plus carrés : vibe boîtier de disques */
-  --app-font: 'Georgia', 'Times New Roman', ui-serif, serif;
+  /* Typographies LOCALES du thème (cf. @font-face en tête de fichier) :
+     DAY POSTER BLACK pour les MENUS, SOUS-MENUS, TITRES et TEXTES PRINCIPAUX
+     (corps de l'application — Dashboard, Mes Disques, Mes BD, Mon Profil,
+     Utilisateurs… ET toutes les futures collections) ; BECKER BLACK NF pour la
+     BARRE DE MENU (Navbar) + le FOOTER. Les replis système garantissent une
+     lisibilité si les .TTF ne sont pas encore servis. */
+  --vinyl-font-body: 'Day Poster Black', 'Georgia', ui-serif, serif;
+  --vinyl-font-nav: 'Becker Black NF', 'Arial Black', Impact, sans-serif;
+  --app-font: var(--vinyl-font-body);
   --body-font-weight: 400;
   --body-letter-spacing: 0.01em;
   --input-bg: #2c1f13;
@@ -56,16 +98,30 @@
 }
 
 [data-theme='vinyl'] body {
-  background: var(--bg-app);
+  background-color: var(--bg-app);
   color: var(--text-secondary);
   font-family: var(--app-font);
   font-weight: var(--body-font-weight);
   letter-spacing: var(--body-letter-spacing);
+  /* Photo de fond du thème (bg_disquaire.jpg) : pile lue du bas vers le haut —
+     (1) fines stries « bois » verticales, très discrètes ;
+     (2) les deux halos ambiants chauds d'origine ;
+     (3) voile sombre tamisé « rétro années 80 » (~78 %) qui atténue le
+         contraste brutal de la photo et garantit une lisibilité parfaite des
+         éléments textuels — la photo reste visible comme fond brumeux ambre ;
+     (4) la photo elle-même, en cover + center. */
   background-image:
+    /* fines stries « bois » verticales, très discrètes */
+    repeating-linear-gradient(90deg, rgba(255, 235, 200, 0.012) 0 2px, transparent 2px 9px),
     radial-gradient(1100px 560px at 82% -10%, rgba(209, 138, 62, 0.1), transparent 60%),
     radial-gradient(900px 520px at -10% 110%, rgba(178, 111, 44, 0.08), transparent 60%),
-    /* fines stries « bois » verticales, très discrètes */
-    repeating-linear-gradient(90deg, rgba(255, 235, 200, 0.012) 0 2px, transparent 2px 9px);
+    linear-gradient(rgba(26, 17, 8, 0.78), rgba(26, 17, 8, 0.78)),
+    var(--theme-bg-image);
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  /* cover + center sur la photo : équivalent « bg-cover bg-center » ;
+     fixed = la photo reste immobile pendant le défilement (« bg-fixed »). */
+  background-size: auto, auto, auto, auto, cover;
+  background-position: center, center, center, 0 0, center;
   background-attachment: fixed;
   transition:
     background-color 0.25s ease,
@@ -158,4 +214,231 @@
 
 [data-theme='vinyl'] ::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
+}
+
+/* ============================================================
+   TYPOGRAPHIE — BARRE DE MENU (Navbar) + FOOTER : BECKER BLACK NF.
+   La barre haute (.cb-navbar) et le pied de page (.cb-footer) portent ces
+   classes d'accroche posées dans Navbar.jsx ; les règles ci-dessous sont
+   scellées sous [data-theme='vinyl'] → aucun autre thème n'est touché.
+   BECKER BLACK NF est une police DISPLAY (très condensée, majuscules
+   naturelles) : on la pose sur TOUT le lettrage de la barre (logo, liens,
+   nom + rôle de l'utilisateur, menu mobile) et du footer, avec un léger
+   espacement pour la lisibilité. Les menus / sous-menus DÉROULANTS de la
+   barre restent en DAY POSTER BLACK (police des menus, cf. corps ci-dessus).
+   ============================================================ */
+[data-theme='vinyl'] .cb-navbar {
+  font-family: var(--vinyl-font-nav);
+  letter-spacing: 0.03em;
+}
+
+/* EXCEPTION : les MENUS / SOUS-MENUS DÉROULANTS de la barre (panneaux
+   « Autres Collections » + menu utilisateur, cartes flottantes role='menu')
+   repassent en DAY POSTER BLACK — ce sont des menus, pas du lettrage de barre.
+   Ciblage [role='menu'] + .card : les panneaux déroulants sont les uniques
+   éléments portant ces marqueurs dans la barre → aucune régression. */
+[data-theme='vinyl'] .cb-navbar [role='menu'],
+[data-theme='vinyl'] .cb-navbar .card {
+  font-family: var(--vinyl-font-body);
+  letter-spacing: var(--body-letter-spacing);
+}
+
+/* Lettrage du nom GEEK0THEK : Becker Black NF, « 0THEK » en accent ambre. */
+[data-theme='vinyl'] .cb-navbar .cb-logo {
+  font-family: var(--vinyl-font-nav);
+  letter-spacing: 0.04em;
+}
+[data-theme='vinyl'] .cb-navbar .cb-logo [class*='text-gold-400'] {
+  color: var(--accent-strong);
+}
+
+/* Liens de navigation (desktop + mobile) : Becker Black NF, survol ambre. */
+[data-theme='vinyl'] .cb-nav-link {
+  font-family: var(--vinyl-font-nav);
+  letter-spacing: 0.03em;
+}
+[data-theme='vinyl'] .cb-nav-link:hover {
+  color: var(--accent-soft);
+}
+
+/* Nom + rôle de l'utilisateur (déclencheur du menu) : Becker Black NF. */
+[data-theme='vinyl'] .cb-navbar button[class*='hover:bg-night-800'] {
+  font-family: var(--vinyl-font-nav);
+  letter-spacing: 0.03em;
+}
+
+/* Menu mobile (liste sous la barre, md:hidden) : Becker Black NF. */
+[data-theme='vinyl'] .cb-navbar nav.md\:hidden {
+  font-family: var(--vinyl-font-nav);
+  letter-spacing: 0.03em;
+}
+
+/* FOOTER : Becker Black NF sur tout le lettrage du pied de page. */
+[data-theme='vinyl'] .cb-footer {
+  font-family: var(--vinyl-font-nav);
+  letter-spacing: 0.03em;
+}
+
+/* ============================================================
+   TYPOGRAPHIE — TITRES + TEXTES PRINCIPAUX : DAY POSTER BLACK.
+   Le corps de l'application (body) est déjà en DAY POSTER BLACK via
+   --app-font ; les règles ci-dessous scellent explicitement la police sur
+   les TITRES et TEXTES PRINCIPAUX, préconfigurés pour TOUS les types de
+   collections existants ET futures :
+     * .comic-greeting      — en-tête de bienvenue du Dashboard (« Bonjour, xxx ») ;
+     * .cb-page-title       — grands titres des pages de collection (Mes Disques /
+                               Mes BD / Utilisateurs / Mon Profil… + futures collections) ;
+     * .comic-page-title    — titres filles des pages (Nouveau disque, Mon profil…) ;
+     * .cb-group-title      — titres de groupe niveau 2 (Artiste / Série / Divers…).
+   DAY POSTER BLACK est une police DISPLAY très condensée : léger espacement
+   pour la lisibilité. Scellé sous [data-theme='vinyl'] → aucun autre thème
+   n'est touché. ============================================================ */
+[data-theme='vinyl'] .comic-greeting,
+[data-theme='vinyl'] .cb-page-title,
+[data-theme='vinyl'] .comic-page-title,
+[data-theme='vinyl'] .cb-group-title {
+  font-family: var(--vinyl-font-body);
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   DECLINAISON « ANNÉES 80 » — EN-TÊTE DE BIENVENUE, MENUS & BARRES
+   (scellée sous [data-theme='vinyl'] : AUCUN autre thème n'est touché)
+   Charte rétro années 80 : teintes TRÈS VIVES (mauve flash / cyan
+   flash / jaune néon / blanc brillant) + HALOS LUMINEUX néon
+   (text-shadow / box-shadow) pour faire ressortir les textes du fond,
+   avec une ombre portée sombre discrète qui garantit une lisibilité
+   PARFAITE sur la photo de fond. RÈGLE D'EXCLUSION STRICTE : les
+   TUILES ([data-card]) ne sont JAMAIS ciblées — structure, fonds et
+   aspects intacts (les titres de tuiles sont exclus des règles de
+   titres ci-dessous via :not(:where([data-card] *))).
+   ============================================================ */
+
+[data-theme='vinyl'] {
+  --vinyl-80-magenta: #e879f9; /* mauve flash */
+  --vinyl-80-cyan: #22d3ee;    /* bleu cyan flash */
+  --vinyl-80-yellow: #fde047;  /* jaune néon */
+  --vinyl-80-white: #ffffff;   /* blanc brillant */
+}
+
+/* ---- BARRE HAUTE : fond sombre translucide + liseré années 80 lumineux en bas ---- */
+[data-theme='vinyl'] .cb-navbar {
+  background: rgba(26, 17, 8, 0.84);
+  border-bottom: none;
+}
+[data-theme='vinyl'] .cb-navbar::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -3px 0;
+  height: 3px;
+  z-index: 30;
+  background: linear-gradient(90deg, var(--vinyl-80-magenta) 0%, var(--vinyl-80-cyan) 50%, var(--vinyl-80-yellow) 100%);
+  box-shadow: 0 0 10px rgba(232, 121, 249, 0.7), 0 0 22px rgba(34, 211, 238, 0.5);
+}
+
+/* ---- LIENS DE NAVIGATION : blanc brillant → cyan flash (survol) → jaune néon (actif) ---- */
+[data-theme='vinyl'] .cb-nav-link {
+  color: var(--vinyl-80-white);
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.5), 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+[data-theme='vinyl'] .cb-nav-link:hover {
+  background: rgba(34, 211, 238, 0.14);
+  color: var(--vinyl-80-cyan);
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.9), 0 0 22px rgba(34, 211, 238, 0.5), 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+[data-theme='vinyl'] .cb-nav-link.bg-night-700 {
+  background: rgba(253, 224, 71, 0.16);
+  color: var(--vinyl-80-yellow);
+  border: 1px solid rgba(253, 224, 71, 0.55);
+  box-shadow: 0 0 14px rgba(253, 224, 71, 0.5), inset 0 0 10px rgba(253, 224, 71, 0.22);
+  text-shadow: 0 0 10px rgba(253, 224, 71, 0.9), 0 0 22px rgba(253, 224, 71, 0.5), 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* ---- LOGO : GEEK blanc brillant + « 0THEK » jaune néon, halos magenta/jaune ---- */
+[data-theme='vinyl'] .cb-logo {
+  color: var(--vinyl-80-white);
+  text-shadow: 0 0 10px rgba(232, 121, 249, 0.8), 0 0 26px rgba(232, 121, 249, 0.4), 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+[data-theme='vinyl'] .cb-logo [class*='text-gold-400'] {
+  color: var(--vinyl-80-yellow);
+  text-shadow: 0 0 10px rgba(253, 224, 71, 0.9), 0 0 26px rgba(253, 224, 71, 0.5), 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* ---- NOM + RÔLE DE L'UTILISATEUR (déclencheur du menu) : blanc brillant → cyan flash ---- */
+[data-theme='vinyl'] .cb-navbar button[class*='hover:bg-night-800'] {
+  color: var(--vinyl-80-white);
+}
+[data-theme='vinyl'] .cb-navbar button[class*='hover:bg-night-800'] span {
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.5), 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+[data-theme='vinyl'] .cb-navbar button[class*='hover:bg-night-800']:hover span {
+  color: var(--vinyl-80-cyan);
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.9), 0 0 22px rgba(34, 211, 238, 0.5), 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* ---- MENUS DÉROULANTS DE LA BARRE : blanc brillant + survol cyan flash ---- */
+[data-theme='vinyl'] .cb-navbar .card a,
+[data-theme='vinyl'] .cb-navbar .card button,
+[data-theme='vinyl'] .cb-navbar .card p {
+  color: var(--vinyl-80-white);
+}
+[data-theme='vinyl'] .cb-navbar .card a:hover,
+[data-theme='vinyl'] .cb-navbar .card button:hover:not(.bg-gold-400) {
+  background: rgba(34, 211, 238, 0.14);
+  color: var(--vinyl-80-cyan);
+}
+/* Élément ACTIF (thème / langue) : fond jaune néon + encre sombre lisible */
+[data-theme='vinyl'] .cb-navbar .card button.bg-gold-400 {
+  background: var(--vinyl-80-yellow);
+  color: #1a1108;
+}
+/* Valeur courante (thème actif / langue) : cyan flash */
+[data-theme='vinyl'] .cb-navbar .card span[class*='text-cyan-300'] {
+  color: var(--vinyl-80-cyan);
+}
+
+/* ---- BARRE MOBILE (liste sous la barre) : même lettrage années 80 ---- */
+[data-theme='vinyl'] .cb-navbar nav.md\:hidden {
+  background: rgba(26, 17, 8, 0.92);
+}
+
+/* ---- BARRE BASSE : fond sombre translucide + liseré années 80 lumineux en haut ---- */
+[data-theme='vinyl'] .cb-footer {
+  background: rgba(26, 17, 8, 0.86);
+  border-top: none;
+}
+[data-theme='vinyl'] .cb-footer::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--vinyl-80-yellow) 0%, var(--vinyl-80-cyan) 50%, var(--vinyl-80-magenta) 100%);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.6), 0 0 22px rgba(232, 121, 249, 0.4);
+}
+[data-theme='vinyl'] .cb-footer div {
+  color: var(--vinyl-80-white);
+}
+[data-theme='vinyl'] .cb-footer a {
+  color: var(--vinyl-80-cyan);
+}
+
+/* ---- TITRES DE SECTIONS (h1/h2/h3 du contenu) : blanc brillant + halo discret —
+     EXCLUS les TUILES ([data-card]) : leurs titres conservent leur lettrage d'origine. ---- */
+[data-theme='vinyl'] main :is(h1, h2, h3):not(:where([data-card] *)) {
+  color: var(--vinyl-80-white);
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.55), 0 0 24px rgba(232, 121, 249, 0.35), 0 1px 4px rgba(0, 0, 0, 0.7);
+}
+
+/* ---- EN-TÊTE « Bonjour, xxx » : blanc brillant + halos magenta/cyan (spécificité
+     0,2,1 > règle de titres ci-dessus : le lettrage dédié l'emporte). ---- */
+[data-theme='vinyl'] main .comic-greeting {
+  color: var(--vinyl-80-white);
+  text-shadow: 0 0 12px rgba(232, 121, 249, 0.85), 0 0 30px rgba(34, 211, 238, 0.5), 0 2px 6px rgba(0, 0, 0, 0.7);
+}
+
+/* ---- TITRES DE PAGES : blanc brillant + halos cyan/magenta (spécificité 0,2,1). ---- */
+[data-theme='vinyl'] main .cb-page-title,
+[data-theme='vinyl'] main .comic-page-title {
+  color: var(--vinyl-80-white);
+  text-shadow: 0 0 12px rgba(34, 211, 238, 0.8), 0 0 28px rgba(232, 121, 249, 0.5), 0 2px 6px rgba(0, 0, 0, 0.7);
 }
