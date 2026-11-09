@@ -126,7 +126,6 @@ export default function SharedLibraries() {
       <section className="card overflow-x-auto">
         <div className="px-4 pt-4">
           <h2 className="font-bold text-white">{t('sharedLibraries.grantedTitle')}</h2>
-          <p className="mt-0.5 text-xs text-slate-500">{t('sharedLibraries.grantedHint')}</p>
         </div>
 
         {loadError ? (
