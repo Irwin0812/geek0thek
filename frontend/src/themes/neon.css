@@ -7,7 +7,7 @@
    play lumineux (cf. src/components/ThemeIcon.jsx).
 
    TYPOGRAPHIE LOCALE (@font-face) — EXCLUSIF AU THÈME « NÉON » :
-     - EP STELLARI DISPLAY -> UNIQUE police de la NAVBAR + du FOOTER
+     - NEUOPOL -> UNIQUE police de la NAVBAR + du FOOTER
        (barres haute et basse, logo, liens, menus/sous-menus de la barre).
      - AXERA ROUND         -> UNIQUE police des MENUS, SOUS-MENUS, TITRES
        et TEXTES PRINCIPAUX des pages (Dashboard, Disques, BD, Profil,
@@ -19,12 +19,12 @@
    sont exclues de la police Axera Round (cf. bloc ci-dessous).
    ============================================================ */
 
-/* Police « EP Stellari Display » : UNIQUE police de la navbar + footer du
-   thème « Néon ». La .ttf est servie par le backend depuis ./uploads
+/* Police « Neuropol » : UNIQUE police de la navbar + footer du
+   thème « Néon ». La .otf est servie par le backend depuis ./uploads
    (volume local) sous /uploads/fonts/... */
 @font-face {
-  font-family: 'EP Stellari Display';
-  src: url('/uploads/fonts/ep_stellari_display/ep-stellari-display.ttf') format('truetype');
+  font-family: 'Neuropol';
+  src: url('/uploads/fonts/neuropol/Neuropol.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -65,10 +65,10 @@
   --card-radius: 0.9rem;
   /* Typographies du thème (polices LOCALES, cf. @font-face en tête de fichier) :
      AXERA ROUND pour les MENUS / SOUS-MENUS / TITRES / TEXTES PRINCIPAUX des
-     pages (héritée par le corps via --app-font) ; EP STELLARI DISPLAY pour la
+     pages (héritée par le corps via --app-font) ; NEUOPOL pour la
      NAVBAR + le FOOTER. Les replis système garantissent une lisibilité si un
      .ttf n'est pas encore servi. */
-  --neon-font-nav: 'EP Stellari Display', 'Segoe UI', system-ui, ui-sans-serif, sans-serif;
+  --neon-font-nav: 'Neuropol', 'Segoe UI', system-ui, ui-sans-serif, sans-serif;
   --app-font: 'Axera Round', 'Segoe UI', system-ui, ui-sans-serif, sans-serif;
   --body-font-weight: 400;
   --body-letter-spacing: 0.01em;
@@ -223,7 +223,7 @@
 /* ============================================================
    TYPOGRAPHIE — EXCLUSIVE AU THÈME « NÉON » (scellée sous
    [data-theme='neon'], aucun autre thème n'est touché).
-   - EP STELLARI DISPLAY : NAVBAR + FOOTER (barres haute et basse,
+   - NEUOPOL : NAVBAR + FOOTER (barres haute et basse,
      logo, liens, menus / sous-menus de la barre).
    - AXERA ROUND : MENUS, SOUS-MENUS, TITRES et TEXTES PRINCIPAUX des
      pages (Dashboard, Disques, BD, Profil, Admin, futures collections)
@@ -232,32 +232,32 @@
    la police Axera Round : elles conservent leur lettrage d'origine.
    ============================================================ */
 
-/* ---- 1) NAVBAR + FOOTER : EP STELLARI DISPLAY (barres haute et basse) ---- */
+/* ---- 1) NAVBAR + FOOTER : NEUOPOL (barres haute et basse) ---- */
 [data-theme='neon'] .cb-navbar,
 [data-theme='neon'] .cb-footer {
   font-family: var(--neon-font-nav);
 }
 
-/* Lettrage du nom de marque GEEK0THEK (logo) : EP STELLARI DISPLAY. */
+/* Lettrage du nom de marque GEEK0THEK (logo) : NEUOPOL. */
 [data-theme='neon'] .cb-navbar .cb-logo {
   font-family: var(--neon-font-nav);
 }
 
-/* Liens de la barre haute (desktop + mobile) : EP STELLARI DISPLAY. */
+/* Liens de la barre haute (desktop + mobile) : NEUOPOL. */
 [data-theme='neon'] .cb-navbar .cb-nav-link {
   font-family: var(--neon-font-nav);
 }
 
 /* Menus / sous-menus de la barre (panneaux flottants : profil, thème, langue,
    « Autres Collections », « Utilisateurs », « Bibliothèques partagées »…) :
-   EP STELLARI DISPLAY — le lettrage de la barre s'étend à ses menus. */
+   NEUOPOL — le lettrage de la barre s'étend à ses menus. */
 [data-theme='neon'] .cb-navbar .card a,
 [data-theme='neon'] .cb-navbar .card button,
 [data-theme='neon'] .cb-navbar .card p {
   font-family: var(--neon-font-nav);
 }
 
-/* Pied de page : EP STELLARI DISPLAY (libellés + version). */
+/* Pied de page : NEUOPOL (libellés + version). */
 [data-theme='neon'] .cb-footer div,
 [data-theme='neon'] .cb-footer a,
 [data-theme='neon'] .cb-footer span {
