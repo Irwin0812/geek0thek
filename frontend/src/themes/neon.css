@@ -63,12 +63,28 @@
   font-family: var(--app-font);
   font-weight: var(--body-font-weight);
   letter-spacing: var(--body-letter-spacing);
-  /* halos néon : cyan (haut-droite), fuchsia (bas-gauche), indigo (marge) */
+  /* Photo de fond du thème (bg_neon.jpg) : pile lue du bas vers le haut —
+     (1) VOILE SOMBRE / TAMISÉ (linear-gradient nuit ~72 %) qui rend la photo
+      PARTIELLEMENT TRANSLUCIDE sur l'ensemble des pages pour une lisibilité
+      PARFAITE des textes clairs, (2) halos néon : cyan (haut-droite),
+      fuchsia (bas-gauche), indigo (marge), (3) la photo en cover/center.
+     Le --bg-app reste en repli (background-color) si la photo n'est pas
+     encore chargée. */
   background-image:
+    /* voile sombre / tamisé : photo PARTIELLEMENT TRANSLUCIDE — lisibilité
+       parfaite du texte sur l'ensemble des pages */
+    linear-gradient(rgba(6, 10, 19, 0.72), rgba(6, 10, 19, 0.72)),
+    /* halos néon : cyan (haut-droite), fuchsia (bas-gauche), indigo (marge) */
     radial-gradient(1000px 520px at 85% -10%, rgba(34, 211, 238, 0.16), transparent 60%),
     radial-gradient(850px 500px at -10% 110%, rgba(232, 121, 249, 0.13), transparent 60%),
-    radial-gradient(700px 400px at 105% 60%, rgba(99, 102, 241, 0.13), transparent 60%);
-  background-attachment: fixed;
+    radial-gradient(700px 400px at 105% 60%, rgba(99, 102, 241, 0.13), transparent 60%),
+    url('/img/bg_neon.jpg');
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  /* cover + center sur la photo : équivalent « bg-cover bg-center » ;
+     fixed = la photo reste immobile pendant le défilement (« bg-fixed »). */
+  background-size: auto, auto, auto, auto, cover;
+  background-position: center, center, center, center, center;
+  background-attachment: fixed, fixed, fixed, fixed, fixed;
   transition:
     background-color 0.25s ease,
     color 0.25s ease;
