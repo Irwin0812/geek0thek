@@ -114,7 +114,6 @@ export default function SharedLibraries() {
       <header>
         {/* cb-page-title : lettrage « case de BD » sous le thème Comic Books. */}
         <h1 className="cb-page-title text-2xl font-extrabold text-white">{t('sharedLibraries.title')}</h1>
-        <p className="mt-1 text-sm text-slate-400">{t('sharedLibraries.subtitle')}</p>
       </header>
 
       {toast && (
