@@ -12,7 +12,7 @@ natif, UI soignée, stockage local des couvertures.
 | Stockage images | Dossier local `./uploads` monté dans le conteneur backend (sous-dossiers `vinyls/` et `comics/`) |
 | APIs vinyles | **MusicBrainz** + **Cover Art Archive** (sans clé API) **+ Discogs** (jeton `DISCOGS_TOKEN` requis) — import par **code-barres (EAN/UPC)** |
 | APIs BD | **Google Books** + **Open Library** (pré-remplissage automatique par **ISBN**, sans clé API) |
-| Déploiement | **Docker Compose** — cible **Debian 12**, IP `172.16.2.75`, reverse-proxy friendly |
+| Déploiement | **Docker Compose** (cible **Debian 12**, IP `172.16.2.75`) ou **installation locale native sous Windows** (Node.js + PostgreSQL) — reverse-proxy friendly |
 
 Fonctionnalités clés :
 
@@ -367,6 +367,208 @@ première création** du volume `./data` : le schéma complet (tables `users`,
 bcrypt, drapeau `must_change_password = FALSE`).
 
 L'application est alors joignable à l'URL **`http://172.16.2.75`**.
+
+---
+
+## 🪟 Installation locale sous Windows (mode natif — sans Docker)
+
+Cette section décrit l'installation **native** de l'application sur une machine
+Windows : Node.js et PostgreSQL tournent directement sur la machine, sans
+conteneurs ni Docker. Le projet est un monorepo en deux dossiers (`backend/`
+et `frontend/`) ; chaque dossier possède son propre `package.json`.
+
+### Prérequis techniques
+
+| Logiciel | Version | Rôle |
+|---|---|---|
+| **Node.js** | **LTS 20.x ou 22.x** (≥ 20, recommandé : dernière LTS) + npm inclus | Runtime du backend Express et du frontend Vite/React |
+| **PostgreSQL** | **16.x** (Windows x64, installateur officiel EDB) | Base de données locale |
+| **Git for Windows** | récent | Clonage du dépôt et mises à jour (`git pull`) |
+
+Vérifications dans un **PowerShell** ou **cmd.exe** :
+
+```powershell
+node --version    # v20.x / v22.x
+npm --version     # 10.x
+psql --version    # PostgreSQL 16.x (après l'installation)
+git --version
+```
+
+> **PostgreSQL sur Windows** : téléchargez le bundle officiel
+> <https://www.postgresql.org/download/windows/> (ex. `postgresql-16.x-x64.exe`).
+> L'installateur installe le service Windows « PostgreSQL 16 » (démarrage
+> automatique) et propose d'installer **pgAdmin** (optionnel). Notez le mot de
+> passe du superutilisateur `postgres` demandé pendant l'installation : il
+> servira à créer la base et l'utilisateur ci-dessous.
+
+### Étape 1 — Récupération du projet
+
+```powershell
+# Depuis le dossier de travail de votre choix (ex. C:\dev)
+cd C:\dev
+git clone <depot-git> geek0thek     # ou copier l'arborescence complète du dépôt
+cd geek0thek
+```
+
+Le projet est ensuite local dans `C:\dev\geek0thek` (ou le chemin de votre
+choix) :
+
+```text
+geek0thek/
+├── .env.example        # template des variables d'environnement
+├── database/init.sql   # schéma + seed admin
+├── uploads/            # couvertures (créé automatiquement au 1er démarrage)
+├── backend/            # API Express (package.json)
+└── frontend/           # React + Vite (package.json)
+```
+
+### Étape 2 — Configuration de la base de données PostgreSQL
+
+Ouvrez **psql** en superutilisateur (`postgres`) : depuis le menu Démarrer,
+lancez **« psql »** (ou `C:\Program Files\PostgreSQL\16\bin\psql.exe -U postgres`),
+puis saisissez le mot de passe `postgres` défini à l'installation.
+
+Créez l'utilisateur et la base de données :
+
+```sql
+CREATE USER vinyl WITH PASSWORD 'V4ult!Postgres2026';
+CREATE DATABASE geek0thek OWNER vinyl;
+\q
+```
+
+Puis exécutez le script d'initialisation (schéma complet : tables `users`,
+`vinyls`, `comics`, vues publiques + **seed de l'admin `admin` / `admin`**) :
+
+```powershell
+psql -U postgres -d geek0thek -f "C:\dev\geek0thek\database\init.sql"
+```
+
+Vérification :
+
+```powershell
+psql -U vinyl -d geek0thek -c "\dt"
+# -> tables : users, vinyls, comics (+ vues public_vinyls / public_comics)
+```
+
+> **Windows + psql** : si `psql` n'est pas dans le `PATH`, préfixez les
+> commandes par `"C:\Program Files\PostgreSQL\16\bin\psql.exe"`.
+> Le mot de passe de l'utilisateur `vinyl` peut être personnalisé — il doit
+> simplement correspondre à `DB_PASSWORD` dans `.env` (étape 3).
+
+### Étape 3 — Configuration des variables d'environnement
+
+Copiez le template `.env.example` vers `.env` **à la racine du projet** :
+
+```powershell
+cd C:\dev\geek0thek
+copy .env.example .env
+```
+
+Puis adaptez `.env` pour le mode natif Windows (les valeurs ci-dessous sont les
+défauts attendus par le backend) :
+
+```env
+# --- Base de données PostgreSQL (locale, machine hôte) ----------
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=vinyl
+DB_PASSWORD=V4ult!Postgres2026
+DB_NAME=geek0thek
+
+# --- Backend (API Express) --------------------------------------
+PORT=8080
+NODE_ENV=development
+# OBLIGATOIRE : générer une longue chaîne aléatoire, ex. :
+#   node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+JWT_SECRET=votre-secret-aleatoire-long-ici
+CORS_ORIGIN=http://localhost:5173
+
+# --- Stockage des jaquettes (dossier local du projet) -----------
+UPLOAD_DIR=C:\dev\geek0thek\uploads
+MAX_UPLOAD_MB=10
+
+# --- URL publique de l'application (liens des e-mails) ----------
+APP_URL=http://localhost:5173
+```
+
+> **Notes** :
+> - Le backend lit `.env` à la **racine du dépôt** (`geek0thek/.env`) — c'est
+>   le même fichier que pour Docker, il n'y a donc qu'un seul `.env` à gérer.
+> - `DB_HOST=localhost` remplace l'hôte interne Docker `db`.
+> - `CORS_ORIGIN=http://localhost:5173` correspond au port du serveur de
+>   développement Vite (le proxy `/api` et `/uploads` est géré par Vite, voir
+>   `frontend/vite.config.js`).
+> - Les variables d'API externes (`DISCOGS_TOKEN`, `LASTFM_API_KEY`,
+>   `GOOGLE_BOOKS_API_KEY`, SMTP…) restent optionnelles : sans elles, les
+>   fonctions correspondantes sont simplement désactivées (voir sections
+>   dédiées plus haut).
+
+### Étape 4 — Installation des dépendances & lancement
+
+Le projet est un monorepo : installez les dépendances du **backend** puis du
+**frontend** (deux terminaux distincts, ou deux onglets PowerShell).
+
+```powershell
+# Terminal 1 — Backend (API Express sur http://localhost:8080)
+cd C:\dev\geek0thek\backend
+npm install
+npm run dev        # mode développement : node --watch (rechargement auto)
+# ou en production :
+npm start          # node src/server.js
+```
+
+```powershell
+# Terminal 2 — Frontend (Vite sur http://localhost:5173)
+cd C:\dev\geek0thek\frontend
+npm install
+npm run dev        # mode développement : serveur Vite + proxy /api & /uploads -> :8080
+```
+
+L'application est alors joignable à l'URL **`http://localhost:5173`** —
+connectez-vous avec le compte seedé **`admin` / `admin`**.
+
+> **Build de production du frontend** (optionnel) :
+> `npm run build` dans `frontend/` génère `frontend/dist/` ; le backend Express
+> peut ensuite servir ce dossier statiquement, ou tout serveur web (nginx, IIS…)
+> peut le servir avec un proxy `/api` → `http://localhost:8080`.
+
+### Commandes utiles (mode natif Windows)
+
+```powershell
+# Arrêter : Ctrl+C dans chaque terminal (backend puis frontend)
+
+# Vérifier la santé de l'API (base incluse)
+curl http://localhost:8080/api/health
+# -> { "status": "ok", "schema_ok": true }
+
+# Se connecter à la base
+psql -U vinyl -d geek0thek
+
+# Sauvegarde / restauration de la base
+pg_dump -U vinyl -Fc geek0thek > backup-2026.dump
+pg_restore -U vinyl -d geek0thek --clean < backup-2026.dump
+
+# Re-démarrer proprement la base (⚠️ EFFACE les données)
+psql -U postgres -c "DROP DATABASE geek0thek;"
+psql -U postgres -c "CREATE DATABASE geek0thek OWNER vinyl;"
+psql -U vinyl -d geek0thek -f database\init.sql
+
+# Mise à jour du code
+git pull
+cd backend && npm install && cd ..\frontend && npm install
+```
+
+> **Dépannage rapide (Windows)** :
+> - `ECONNREFUSED 127.0.0.1:5432` → le service Windows « PostgreSQL 16 » n'est
+>   pas démarré (`services.msc` → démarrer le service) ou le port a changé.
+> - `password authentication failed for user "vinyl"` → `DB_PASSWORD` dans
+>   `.env` ne correspond pas au mot de passe créé à l'étape 2.
+> - `EADDRINUSE :::8080` (ou `:5173`) → un autre processus occupe le port :
+>   changer `PORT` dans `.env` (backend) ou `server.port` dans
+>   `frontend/vite.config.js`.
+> - `sharp` / `bcryptjs` : aucune compilation native requise sur Windows
+>   (prébuilds fournies) ; en cas d'erreur d'installation, `npm cache clean --force`
+>   puis `npm install` à nouveau.
 
 ---
 
