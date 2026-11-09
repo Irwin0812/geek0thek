@@ -845,3 +845,16 @@ html[data-theme='library'] {
 [data-theme='library'] .lib-coll h2 + p {
   color: var(--text-secondary);
 }
+
+/* ── H) TABLEAU DE GESTION DES UTILISATEURS — lisibilité des données.
+    Les cellules de données (Pseudo / Disques / BD, texte d'origine
+    text-slate-300 pensé pour le fond sombre) sont trop claires sur le papier
+    blanc de la carte : ré-ancrage au BRUN de la charte (var(--lib-brun)) pour
+    un contraste fort et lisible. Ciblage par classe .admin-users-table (posée
+    dans AdminUsers.jsx) + position de colonne (nth-child) : ne touche QUE le
+    tableau des utilisateurs, jamais les autres pages. */
+[data-theme='library'] .admin-users-table td:nth-child(1),
+[data-theme='library'] .admin-users-table td:nth-child(5),
+[data-theme='library'] .admin-users-table td:nth-child(6) {
+  color: var(--lib-brun);
+}

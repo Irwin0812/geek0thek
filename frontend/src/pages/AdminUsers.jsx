@@ -452,7 +452,7 @@ export default function AdminUsers() {
               l'intérieur du conteneur, jamais rejeté/coupé sur le bord droit.
               min-w-[960px] : sur mobile, le défilement horizontal prend le relais
               (colonnes lisibles). */}
-          <table className="w-full text-sm min-w-[960px] table-fixed">
+          <table className="admin-users-table w-full text-sm min-w-[960px] table-fixed">
             {/* Largeurs de colonnes (table-layout: fixed) — la somme fait 100 %
                 de la largeur du tableau (= largeur du conteneur, w-full). La
                 colonne « Actions » (29 %) est assez large pour que « Modifier » +
