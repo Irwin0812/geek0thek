@@ -21,22 +21,17 @@ import { api } from '../services/api.js'
  * par-dessus. Le <main> du layout (App.jsx) porte un padding-bottom
  * compensatoire (pb-20) pour que le contenu ne passe jamais sous la barre.
  *
- * BARRE À TROIS ZONES — GRILLE [1fr auto 1fr] (TOUS LES THÈMES) :
- *   - EXTRÊME GAUCHE : « Soutenez le projet ! » suivi immédiatement de
- *     l'image/bouton PayPal (/img/paypal.png, lien officiel du bouton de don
- *     hébergé PayPal, nouvel onglet), alignés proprement sur la gauche.
- *     Toujours visible — jamais masqué après un don. Le texte est piloté par
- *     la variable CSS du thème actif (--accent-strong) : il s'accorde donc
- *     automatiquement aux 6 thèmes. L'image est redimensionnée (h-9 = 36px,
- *     w-auto) pour s'ajuster à la hauteur du footer sans déformation.
- *   - CENTRE : mention de crédit « Geek0thek - Bibliothèque de collections
- *     par GERARTS Irwin - 2026 », centrée MATHÉMATIQUEMENT au milieu du
- *     footer (colonne auto de la grille, encadrée de deux colonnes 1fr
- *     égales — le centre est exact quelle que soit la largeur des zones).
- *   - EXTRÊME DROITE : libellé de version « Version: <shortSha> » (HEAD de la
- *     branche par défaut via GET /api/version — cf. utils/githubClient.js),
- *     positionné strictement collé à l'extrême droite. Absent proprement si
- *     l'API GitHub est injoignable.
+ * GRILLE RIGIDE À 3 COLONNES STRICTES (grid grid-cols-3 items-center w-full px-4) :
+ *   - COLONNE 1 (gauche — justify-self-start / text-left) : « Soutenez le
+ *     projet ! » (gras, couleur du thème actif via --accent-strong ; jaune
+ *     moutarde pour le thème BD via comic.css) suivi immédiatement de
+ *     l'image/bouton PayPal (/img/paypal.png). Aucun élément ne déborde.
+ *   - COLONNE 2 (centre exact — justify-self-center / text-center) :
+ *     UNIQUEMENT la mention « Geek0thek - Bibliothèque de collections par
+ *     GERARTS Irwin - 2026 », parfaitement centrée au milieu de l'écran.
+ *   - COLONNE 3 (droite — justify-self-end / text-right) : UNIQUEMENT le
+ *     libellé de version « Version: <shortSha> » (jaune pour le thème BD),
+ *     collé strictement à l'extrême droite.
  */
 
 export default function Footer() {
@@ -62,25 +57,24 @@ export default function Footer() {
     }
   }, [])
 
-  // cb-footer : accroche charte « Comic Books » (thèmes/comic-books.css) —
-  // pied de page rouge comic qui s'accorde à la barre haute. Inerte ailleurs.
-  // Les thèmes « Médiathèque » / « Comic Books » recolorent .cb-footer div / a ;
-  // le texte du bouton PayPal utilise la variable --accent-strong (inline)
-  // pour rester harmonisé dans les 6 thèmes.
+  // cb-footer : accroche charte « Comic Books » (thèmes/comic.css) — pied de
+  // page bordeaux qui s'accorde à la barre haute. Inerte ailleurs. Les thèmes
+  // « Médiathèque » / « Comic Books » recolorent .cb-footer div / a ; les
+  // libellés « Soutenez le projet ! » et « Version: <sha> » utilisent la
+  // variable --accent-strong (inline), forcée en jaune moutarde par comic.css.
   return (
     <footer className="cb-footer fixed bottom-0 left-0 right-0 z-30 border-t border-night-700/70 bg-night-950/85 backdrop-blur">
-      {/* GRILLE À TROIS ZONES [1fr auto 1fr] : les deux colonnes latérales
-          (1fr) ont TOUJOURS la même largeur → la colonne centrale (auto) est
-          centrée MATHÉMATIQUEMENT au milieu du footer, quelle que soit la
-          largeur des contenus gauche / droite. */}
-      <div className="max-w-6xl mx-auto px-4 py-3 grid grid-cols-[1fr_auto_1fr] items-center gap-x-4 text-xs text-slate-400">
-        {/* EXTRÊME GAUCHE — « Soutenez le projet ! » + bouton PayPal,
-            alignés proprement sur la gauche. Toujours visible. */}
+      {/* GRILLE RIGIDE À 3 COLONNES STRICTES : chaque colonne occupe exactement
+          1/3 de la largeur (grid-cols-3) — le centre est mathématiquement au
+          milieu de l'écran, aucun chevauchement possible. */}
+      <div className="w-full px-4 py-3 grid grid-cols-3 items-center text-xs text-slate-400">
+        {/* COLONNE 1 — GAUCHE : « Soutenez le projet ! » + bouton PayPal,
+            alignés strictement à gauche. Toujours visible. */}
         <a
           href="https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN"
           target="_blank"
           rel="noopener noreferrer"
-          className="cb-footer-donate col-start-1 row-start-1 inline-flex items-center gap-3 transition-all duration-200 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded-xl"
+          className="cb-footer-donate justify-self-start text-left inline-flex items-center gap-3 min-w-0 transition-all duration-200 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded-xl"
         >
           <span
             className="font-bold text-base whitespace-nowrap"
@@ -89,9 +83,8 @@ export default function Footer() {
             Soutenez le projet !
           </span>
           {/* Image locale du bouton PayPal : hauteur ajustée (h-9 = 36px) pour
-              s'ajuster à la hauteur du footer et s'aligner harmonieusement à
-              côté du texte, largeur proportionnelle (w-auto) — jamais de
-              déformation. */}
+              s'ajuster à la hauteur du footer, largeur proportionnelle
+              (w-auto) — jamais de déformation. */}
           <img
             src="/img/paypal.png"
             alt="Bouton de don PayPal"
@@ -100,9 +93,9 @@ export default function Footer() {
           />
         </a>
 
-        {/* CENTRE — mention de crédit, centrée mathématiquement au milieu du
-            footer (colonne auto encadrée de deux colonnes 1fr égales). */}
-        <div className="col-start-2 row-start-1 text-center leading-relaxed whitespace-nowrap">
+        {/* COLONNE 2 — CENTRE EXACT : mention de crédit UNIQUEMENT, centrée au
+            milieu de l'écran. */}
+        <div className="justify-self-center text-center leading-relaxed whitespace-nowrap">
           Geek0thek - Bibliothèque de collections par{' '}
           <a href="mailto:webmaster@igerarts.be" className="text-slate-300 underline-offset-2 transition hover:text-gold-300 hover:underline">
             GERARTS Irwin
@@ -110,10 +103,10 @@ export default function Footer() {
           - 2026
         </div>
 
-        {/* EXTRÊME DROITE — libellé de version, strictement collé à l'extrême
-            droite (colonne 1fr, aligné en fin de ligne). */}
+        {/* COLONNE 3 — DROITE : libellé de version UNIQUEMENT, collé strictement
+            à l'extrême droite. */}
         <span
-          className="cb-footer-version col-start-3 row-start-1 justify-self-end font-bold text-sm whitespace-nowrap"
+          className="cb-footer-version justify-self-end text-right font-bold text-sm whitespace-nowrap"
           style={{ color: 'var(--accent-strong)' }}
           title="Version (commit GitHub)"
         >
