@@ -11,29 +11,18 @@
 
 /* ------------------------------------------------------------
    TYPOGRAPHIE LOCALE (@font-face) — EXCLUSIF AU THEME « BD » :
-     - BD_Cartoon_Shout -> TITRES des pages (h1 / h2 / sous-titres de section)
-       + corps de texte (variable --app-font sur le body).
-     - Super Comic      -> MENUS & NAVIGATION (barre haute, menus déroulants),
-       BOUTONS (dont « Ajouter un média » du Dashboard), FOOTER et TUILES
-       (écriture à l'intérieur de toutes les tuiles) — cf. règles
-       typographiques ci-dessous.
-    Les .ttf sont servies par le backend depuis ./uploads (volume local) sous
+     - Super Comic -> UNIQUE police du thème, appliquée de force à 100 % des
+       textes (titres, sous-titres, menus, tableaux, boutons, modales, tuiles
+       et footer) via la règle globale [data-theme='comic'] * ci-dessous +
+       héritage depuis --app-font sur le body.
+    La .ttf est servie par le backend depuis ./uploads (volume local) sous
     /uploads/fonts/... — même mécanisme que le theme « Médiathèque »
     (cf. @font-face de library.css). Aucune règle ne touche les autres themes :
     tout est scellé sous [data-theme='comic'].
    ------------------------------------------------------------ */
-@font-face {
-  font-family: 'BD Cartoon Shout';
-  src: url('/uploads/fonts/bd_cartoon_shout/BD_Cartoon_Shout.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Police « Super Comic » : menus / navigation, menus déroulants, boutons,
-   footer et tuiles du thème (cf. règles typographiques ci-dessous). La .ttf
+/* Police « Super Comic » : UNIQUE police du thème « Bande Dessinée ». La .ttf
    est servie par le backend depuis ./uploads (volume local) sous
-   /uploads/fonts/... — même mécanisme que BD_Cartoon_Shout. */
+   /uploads/fonts/... — même mécanisme que le theme « Médiathèque ». */
 @font-face {
   font-family: 'Super Comic';
   src: url('/uploads/fonts/super_comic_3/Super%20Comic.ttf') format('truetype');
@@ -64,7 +53,7 @@
   --ring: rgba(29, 78, 216, 0.3);
   --shadow-color: #191105; /* ombre « case » : noir franc */
   --card-radius: 0.5rem;
-  --app-font: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  --app-font: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
   --body-font-weight: 500; /* corps texte renforcé : ton « BD » */
   --body-letter-spacing: 0.01em;
   --input-bg: #fffdf5;
@@ -240,10 +229,23 @@
 /* ============================================================
    TYPOGRAPHIE LOCALE — EXCLUSIF AU THEME « BD » (data-theme='comic')
    UNE SEULE police locale (@font-face en tête de fichier) :
-     - BD_Cartoon_Shout → Dashboard + toutes les pages : titres, sous-titres,
-       menus et corps de texte (héritée via --app-font sur le body).
+     - Super Comic → UNIQUE police du thème, appliquée de force à 100 % des
+       textes (titres, sous-titres, menus, tableaux, boutons, modales, tuiles
+       et footer) — cf. règle globale ci-dessous + héritage via --app-font
+       sur le body.
     SCELLÉ sous [data-theme='comic'] : aucun autre thème n'est touché.
     ============================================================ */
+
+/* ---- 0) RÈGLE GLOBALE : SUPER COMIC À 100 % DES TEXTES DU THÈME ----
+   Application de force à TOUS les éléments du conteneur du thème (racine
+   [data-theme='comic'] = <html>) : aucun texte ne peut échapper à la règle,
+   y compris les éléments sans classe (modales, tableaux, listes, portails
+   React) — !important requis pour l'emporter sur les styles inline et les
+   classes utilitaires. Les caractères accentués français (é, è, à, ê, ç…)
+   sont couverts par la .ttf (cmap vérifiée). */
+[data-theme='comic'] * {
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif !important;
+}
 
 /* ---- 1) NAVBAR + FOOTER : SUPER COMIC (barres haute et basse) ---- */
 [data-theme='comic'] .cb-navbar,
@@ -301,28 +303,28 @@
   font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* ---- 2) TITRES + PAGES : BD_Cartoon_Shout (Disques, BD, Profil, admin, futures collections) ---- */
+/* ---- 2) TITRES + PAGES : SUPER COMIC (Disques, BD, Profil, admin, futures collections) ---- */
 /* Titres de pages (h1 « Mes Disques » / « Mes BD » / « Utilisateurs » /
    « Mon profil » / titres des pages d'ajout…) + sous-titres de section. */
 [data-theme='comic'] .cb-page-title,
 [data-theme='comic'] .comic-page-title {
-  font-family: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Message de bienvenue du Dashboard (« Bonjour, xxx ») : BD_Cartoon_Shout. */
+/* Message de bienvenue du Dashboard (« Bonjour, xxx ») : SUPER COMIC. */
 [data-theme='comic'] .comic-greeting {
-  font-family: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Titres de groupe niveau 2 (Artiste / Série) : BD_Cartoon_Shout. */
+/* Titres de groupe niveau 2 (Artiste / Série) : SUPER COMIC. */
 [data-theme='comic'] .cb-group-title {
-  font-family: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Sous-titres de section du Dashboard (« Disques » / « Bandes dessinées ») :
-   BD_Cartoon_Shout — cohérence avec les titres de pages. */
+   SUPER COMIC — cohérence avec les titres de pages. */
 [data-theme='comic'] main section h3 {
-  font-family: 'BD Cartoon Shout', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Super Comic', 'Trebuchet MS', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* ============================================================
