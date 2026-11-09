@@ -445,12 +445,28 @@ export default function AdminUsers() {
         <p className="text-sm text-rose-400">{loadError}</p>
       ) : (
         <div className="card overflow-x-auto">
-          {/* min-w-[960px] : colonne d'actions élargie (min-w-[210px]) — les
-              boutons « Modifier » / « Supprimer » (bordure épaisse 3px + ombre
-              décalée du thème BD) tiennent entièrement dans la colonne, jamais
-              coupés à droite ; le défilement horizontal prend le relais si
-              besoin. w-full : la table s'étire sur tout le conteneur. */}
-          <table className="w-full text-sm min-w-[960px]">
+          {/* table-fixed + w-full : la largeur du tableau est EXACTEMENT celle
+              du conteneur (jamais plus large que la carte) — les colonnes sont
+              réparties selon les largeurs du <colgroup>, donc le bouton « Modifier »
+              de la dernière colonne reste TOUJOURS entièrement visible à
+              l'intérieur du conteneur, jamais rejeté/coupé sur le bord droit.
+              min-w-[960px] : sur mobile, le défilement horizontal prend le relais
+              (colonnes lisibles). */}
+          <table className="w-full text-sm min-w-[960px] table-fixed">
+            {/* Largeurs de colonnes (table-layout: fixed) — la somme fait 100 %
+                de la largeur du tableau (= largeur du conteneur, w-full). La
+                colonne « Actions » (23 %) est assez large pour que « Modifier » +
+                « Supprimer » tiennent entièrement dans leur cellule. */}
+            <colgroup>
+              <col style={{ width: '22%' }} />
+              <col style={{ width: '11%' }} />
+              <col style={{ width: '9%' }} />
+              <col style={{ width: '11%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '7%' }} />
+              <col style={{ width: '7%' }} />
+              <col style={{ width: '23%' }} />
+            </colgroup>
             <thead>
               <tr className="text-left text-xs uppercase tracking-wider text-slate-500 border-b border-night-600/60">
                 <th className="px-4 py-3">{t('adminUsers.colMember')}</th>
