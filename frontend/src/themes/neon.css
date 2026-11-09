@@ -5,7 +5,41 @@
    variables que les autres thèmes.
    Note : l'icône du thème dans le menu « Thème » est le bouton
    play lumineux (cf. src/components/ThemeIcon.jsx).
+
+   TYPOGRAPHIE LOCALE (@font-face) — EXCLUSIF AU THÈME « NÉON » :
+     - EP STELLARI DISPLAY -> UNIQUE police de la NAVBAR + du FOOTER
+       (barres haute et basse, logo, liens, menus/sous-menus de la barre).
+     - AXERA ROUND         -> UNIQUE police des MENUS, SOUS-MENUS, TITRES
+       et TEXTES PRINCIPAUX des pages (Dashboard, Disques, BD, Profil,
+       Admin, futures collections) — corps de texte via --app-font.
+   Les .ttf sont servies par le backend depuis ./uploads (volume local)
+   sous /uploads/fonts/... — même mécanisme que les thèmes « Médiathèque »
+   et « Bande dessinée ». Aucune règle ne touche les autres thèmes : tout
+   est scellé sous [data-theme='neon']. Les TUILES (cartes Disques / BD)
+   sont exclues de la police Axera Round (cf. bloc ci-dessous).
    ============================================================ */
+
+/* Police « EP Stellari Display » : UNIQUE police de la navbar + footer du
+   thème « Néon ». La .ttf est servie par le backend depuis ./uploads
+   (volume local) sous /uploads/fonts/... */
+@font-face {
+  font-family: 'EP Stellari Display';
+  src: url('/uploads/fonts/ep_stellari_display/ep-stellari-display.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Police « Axera Round » : UNIQUE police des menus, sous-menus, titres et
+   textes principaux du thème « Néon ». La .ttf est servie par le backend
+   depuis ./uploads (volume local) sous /uploads/fonts/... */
+@font-face {
+  font-family: 'Axera Round';
+  src: url('/uploads/fonts/axera_round/Axera%20Round.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 [data-theme='neon'] {
   --bg-app: #060a13; /* nuit profonde */
@@ -29,7 +63,13 @@
   --ring: rgba(217, 76, 240, 0.35);
   --shadow-color: rgba(6, 10, 19, 0.5);
   --card-radius: 0.9rem;
-  --app-font: 'Segoe UI', system-ui, ui-sans-serif, sans-serif;
+  /* Typographies du thème (polices LOCALES, cf. @font-face en tête de fichier) :
+     AXERA ROUND pour les MENUS / SOUS-MENUS / TITRES / TEXTES PRINCIPAUX des
+     pages (héritée par le corps via --app-font) ; EP STELLARI DISPLAY pour la
+     NAVBAR + le FOOTER. Les replis système garantissent une lisibilité si un
+     .ttf n'est pas encore servi. */
+  --neon-font-nav: 'EP Stellari Display', 'Segoe UI', system-ui, ui-sans-serif, sans-serif;
+  --app-font: 'Axera Round', 'Segoe UI', system-ui, ui-sans-serif, sans-serif;
   --body-font-weight: 400;
   --body-letter-spacing: 0.01em;
   --input-bg: #121d31;
@@ -112,12 +152,12 @@
 
 [data-theme='neon'] .label {
   color: var(--text-muted);
-  font-family: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--app-font);
 }
 
 [data-theme='neon'] .btn {
   --tw-ring-offset: transparent;
-  font-family: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--app-font);
 }
 
 [data-theme='neon'] .btn-primary {
@@ -178,4 +218,62 @@
 
 [data-theme='neon'] ::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
+}
+
+/* ============================================================
+   TYPOGRAPHIE — EXCLUSIVE AU THÈME « NÉON » (scellée sous
+   [data-theme='neon'], aucun autre thème n'est touché).
+   - EP STELLARI DISPLAY : NAVBAR + FOOTER (barres haute et basse,
+     logo, liens, menus / sous-menus de la barre).
+   - AXERA ROUND : MENUS, SOUS-MENUS, TITRES et TEXTES PRINCIPAUX des
+     pages (Dashboard, Disques, BD, Profil, Admin, futures collections)
+     — corps de texte hérité via --app-font sur le body.
+   Les TUILES (cartes Disques / BD : article[data-card]) sont EXCLUES de
+   la police Axera Round : elles conservent leur lettrage d'origine.
+   ============================================================ */
+
+/* ---- 1) NAVBAR + FOOTER : EP STELLARI DISPLAY (barres haute et basse) ---- */
+[data-theme='neon'] .cb-navbar,
+[data-theme='neon'] .cb-footer {
+  font-family: var(--neon-font-nav);
+}
+
+/* Lettrage du nom de marque GEEK0THEK (logo) : EP STELLARI DISPLAY. */
+[data-theme='neon'] .cb-navbar .cb-logo {
+  font-family: var(--neon-font-nav);
+}
+
+/* Liens de la barre haute (desktop + mobile) : EP STELLARI DISPLAY. */
+[data-theme='neon'] .cb-navbar .cb-nav-link {
+  font-family: var(--neon-font-nav);
+}
+
+/* Menus / sous-menus de la barre (panneaux flottants : profil, thème, langue,
+   « Autres Collections », « Utilisateurs », « Bibliothèques partagées »…) :
+   EP STELLARI DISPLAY — le lettrage de la barre s'étend à ses menus. */
+[data-theme='neon'] .cb-navbar .card a,
+[data-theme='neon'] .cb-navbar .card button,
+[data-theme='neon'] .cb-navbar .card p {
+  font-family: var(--neon-font-nav);
+}
+
+/* Pied de page : EP STELLARI DISPLAY (libellés + version). */
+[data-theme='neon'] .cb-footer div,
+[data-theme='neon'] .cb-footer a,
+[data-theme='neon'] .cb-footer span {
+  font-family: var(--neon-font-nav);
+}
+
+/* ---- 2) TITRES DE PAGES : AXERA ROUND (hérités du corps via --app-font,
+   ré-ancrés ici pour l'emporter sur tout lettrage d'origine) ---- */
+[data-theme='neon'] .cb-page-title,
+[data-theme='neon'] .comic-page-title,
+[data-theme='neon'] .comic-greeting {
+  font-family: var(--app-font);
+}
+
+/* ---- 3) TUILES (cartes Disques / BD) : EXCLUES d'Axera Round —
+   lettrage d'origine conservé (spécificité 0,1,2 > 0,1,1 du corps). */
+[data-theme='neon'] [data-card] {
+  font-family: 'Segoe UI', system-ui, ui-sans-serif, sans-serif;
 }
