@@ -496,6 +496,52 @@ html[data-theme='library'] {
   color: var(--lib-bordeaux);
 }
 
+/* ── D2) MODALE DE DÉTAIL DES TUILES (ItemDetailModal ouverte depuis les
+    tuiles Disques / BD du Dashboard, et futures bibliothèques) — même
+    traitement que la modale des pages de collections : tout le texte
+    descriptif et informatif passe au BRUN de la charte sur le papier clair
+    de la carte (le texte d'origine text-white / text-slate-*, pensé pour le
+    fond sombre, y serait illisible). Le bouton principal « Modifier »
+    (.btn-primary) CONSERVE son orange de la charte : aucune règle ne le
+    touche. Ciblage [role='dialog'] sous .lib-dash : les modales sont les
+    uniques éléments portant cet attribut dans le Dashboard → aucune
+    régression. */
+[data-theme='library'] .lib-dash [role='dialog'] h3 {
+  color: var(--text-primary);
+}
+[data-theme='library'] .lib-dash [role='dialog'] p,
+[data-theme='library'] .lib-dash [role='dialog'] dd {
+  color: var(--text-secondary);
+}
+/* Libellés de métadonnées (dt) : encre atténuée — hiérarchie conservée. */
+[data-theme='library'] .lib-dash [role='dialog'] dt {
+  color: var(--text-muted);
+}
+/* Titres de section (« DÉTAILS DU DISQUE », « TRACKLIST »…) : BRUN de la
+   charte (tout le texte informatif du modal est marron). */
+[data-theme='library'] .lib-dash [role='dialog'] h2,
+[data-theme='library'] .lib-dash [role='dialog'] h4 {
+  color: var(--lib-brun);
+}
+/* Liens de référence (MusicBrainz / Discogs) : BRUN de la charte, survol
+   orange. */
+[data-theme='library'] .lib-dash [role='dialog'] a[class*='text-gold-300'] {
+  color: var(--lib-brun);
+}
+[data-theme='library'] .lib-dash [role='dialog'] a[class*='text-gold-300']:hover {
+  color: var(--lib-orange);
+}
+/* Placeholder « Aucune image » : encre atténuée (au lieu du gris froid). */
+[data-theme='library'] .lib-dash [role='dialog'] div[class*='text-slate-500'] {
+  color: var(--text-muted);
+}
+/* Badges « Édition spéciale » / « Livre dédicacé » : conservés en couleur
+   (fond or/orange SOLIDE + texte ENCRE) — lisible sur papier. */
+[data-theme='library'] .lib-dash [role='dialog'] .badge[class*='bg-gold-500'],
+[data-theme='library'] .lib-dash [role='dialog'] .badge[class*='bg-orange-500'] {
+  color: var(--lib-noir);
+}
+
 /* ============================================================
     PAGES DE COLLECTIONS (« Mes Disques » / « Mes Bandes Dessinées ») —
     HARMONISATION COMPLÈTE À LA CHARTE « MÉDIATHÈQUE ».
@@ -768,7 +814,10 @@ html[data-theme='library'] {
     la carte est déjà en papier clair (règle .card ci-dessus) ; le texte
     codé pour l'ancien fond sombre y serait illisible : ré-ancrage à l'encre
     chaude. Ciblage [role='dialog'] : les modales sont les UNIQUES éléments
-    portant cet attribut dans la page (les tuiles / lignes n'en portent pas). */
+    portant cet attribut dans la page (les tuiles / lignes n'en portent pas).
+    Tout le texte descriptif et informatif du modal passe au BRUN de la
+    charte (marron) ; le bouton principal « Modifier » (.btn-primary)
+    CONSERVE son orange de la charte : aucune règle ne le touche. */
 [data-theme='library'] .lib-coll [role='dialog'] h3 {
   color: var(--text-primary);
 }
@@ -780,18 +829,23 @@ html[data-theme='library'] {
 [data-theme='library'] .lib-coll [role='dialog'] dt {
   color: var(--text-muted);
 }
-/* Titres de section (« DÉTAILS DU DISQUE », « TRACKLIST »…) : moutarde
-   soutenu (au lieu de l'or froid, illisible sur papier). */
+/* Titres de section (« DÉTAILS DU DISQUE », « TRACKLIST »…) : BRUN de la
+   charte (tout le texte informatif du modal est marron). */
 [data-theme='library'] .lib-coll [role='dialog'] h2,
 [data-theme='library'] .lib-coll [role='dialog'] h4 {
-  color: #b57e00;
+  color: var(--lib-brun);
 }
-/* Liens de référence (MusicBrainz / Discogs) : moutarde soutenu. */
+/* Liens de référence (MusicBrainz / Discogs) : BRUN de la charte, survol
+   orange. */
 [data-theme='library'] .lib-coll [role='dialog'] a[class*='text-gold-300'] {
-  color: #b57e00;
+  color: var(--lib-brun);
 }
 [data-theme='library'] .lib-coll [role='dialog'] a[class*='text-gold-300']:hover {
   color: var(--lib-orange);
+}
+/* Placeholder « Aucune image » : encre atténuée (au lieu du gris froid). */
+[data-theme='library'] .lib-coll [role='dialog'] div[class*='text-slate-500'] {
+  color: var(--text-muted);
 }
 /* Badges « Édition spéciale » / « Livre dédicacé » du modal : conservés en
    couleur (fond or/orange SOLIDE + texte ENCRE) — lisible sur papier. */
@@ -857,4 +911,40 @@ html[data-theme='library'] {
 [data-theme='library'] .admin-users-table td:nth-child(5),
 [data-theme='library'] .admin-users-table td:nth-child(6) {
   color: var(--lib-brun);
+}
+
+/* ============================================================
+    PAGE « BIBLIOTHÈQUES PARTAGÉES » (SharedLibraries.jsx) — section
+    « Accès accordés à ma collection ».
+    Le texte GÉNÉRAL de la page passe au BRUN de la charte (marron) sur le
+    papier clair des cartes. EXCEPTIONS CONSERVÉES :
+      * INTITULÉS DE COLONNE (<th>) : style/couleur d'origine conservés ;
+      * BOUTONS D'ÉTAT « non autorisé » : style/couleur d'origine conservés
+        (libellé gris + interrupteur bg-night-600) ;
+    EXCEPTION MODIFIÉE :
+      * BOUTON D'ÉTAT « autorisé » : le libellé ET l'interrupteur passent en
+        ORANGE de la charte (au lieu de l'émeraude d'origine).
+    Ciblage par classe .lib-shared posée sur la racine de la page
+    (SharedLibraries.jsx) — inerte ailleurs. ============================================================ */
+
+/* Texte général de la page : brun de la charte (titre, sous-titre, libellés,
+   cellules de données, états vides). Les <th> sont exclus (conservés). */
+[data-theme='library'] .lib-shared h1,
+[data-theme='library'] .lib-shared h2,
+[data-theme='library'] .lib-shared p,
+[data-theme='library'] .lib-shared td,
+[data-theme='library'] .lib-shared li {
+  color: var(--lib-brun);
+}
+
+/* BOUTON D'ÉTAT « autorisé » : libellé + interrupteur en ORANGE de la charte.
+   L'interrupteur porte role='switch' + aria-checked ; le libellé est son
+   <span> voisin PRÉCÉDENT (DOM : <span> puis <button>) → ciblage via :has()
+   sur le conteneur flex. Les états « non autorisé » (aria-checked='false')
+   ne sont JAMAIS touchés. */
+[data-theme='library'] .lib-shared button[role='switch'][aria-checked='true'] {
+  background-color: var(--lib-orange);
+}
+[data-theme='library'] .lib-shared div:has(> button[role='switch'][aria-checked='true']) > span {
+  color: var(--lib-orange);
 }

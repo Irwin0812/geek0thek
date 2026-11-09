@@ -108,7 +108,9 @@ export default function SharedLibraries() {
   const others = users.filter((u) => u.id !== me.id)
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+    // `lib-shared` : ancre CSS du thème « Médiathèque » (src/themes/library.css,
+    // bloc « Accès accordés à ma collection ») — inerte sous les autres thèmes.
+    <div className="lib-shared max-w-5xl mx-auto px-4 py-8 space-y-6">
       <header>
         {/* cb-page-title : lettrage « case de BD » sous le thème Comic Books. */}
         <h1 className="cb-page-title text-2xl font-extrabold text-white">{t('sharedLibraries.title')}</h1>
