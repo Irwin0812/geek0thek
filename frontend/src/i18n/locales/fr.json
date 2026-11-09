@@ -309,7 +309,7 @@
     "creating": "Création…",
     "toastCreated": "Compte {{login}} créé.",
     "colMember": "Membre",
-    "colLogin": "Login",
+    "colLogin": "Pseudo",
     "colRole": "Rôle",
     "colCollection": "Collection",
     "colStatus": "Statut",

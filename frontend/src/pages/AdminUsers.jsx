@@ -455,21 +455,19 @@ export default function AdminUsers() {
           <table className="w-full text-sm min-w-[960px] table-fixed">
             {/* Largeurs de colonnes (table-layout: fixed) — la somme fait 100 %
                 de la largeur du tableau (= largeur du conteneur, w-full). La
-                colonne « Actions » (23 %) est assez large pour que « Modifier » +
+                colonne « Actions » (29 %) est assez large pour que « Modifier » +
                 « Supprimer » tiennent entièrement dans leur cellule. */}
             <colgroup>
-              <col style={{ width: '22%' }} />
-              <col style={{ width: '11%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '13%' }} />
               <col style={{ width: '9%' }} />
-              <col style={{ width: '11%' }} />
-              <col style={{ width: '10%' }} />
-              <col style={{ width: '7%' }} />
-              <col style={{ width: '7%' }} />
-              <col style={{ width: '23%' }} />
+              <col style={{ width: '9%' }} />
+              <col style={{ width: '29%' }} />
             </colgroup>
             <thead>
               <tr className="text-left text-xs uppercase tracking-wider text-slate-500 border-b border-night-600/60">
-                <th className="px-4 py-3">{t('adminUsers.colMember')}</th>
                 <th className="px-4 py-3">{t('adminUsers.colLogin')}</th>
                 <th className="px-4 py-3">{t('adminUsers.colRole')}</th>
                 <th className="px-4 py-3">{t('adminUsers.colCollection')}</th>
@@ -486,18 +484,6 @@ export default function AdminUsers() {
             <tbody>
               {users.map((u) => (
                 <tr key={u.id} className={`border-b border-night-700/50 hover:bg-night-700/20${u.isActive ? '' : ' opacity-60'}`}>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar user={u} size={36} />
-                      <div>
-                        <div className="font-semibold text-slate-100">
-                          {u.firstName} {u.lastName}
-                          {u.id === me.id && <span className="ml-2 text-xs text-slate-500">{t('adminUsers.you')}</span>}
-                        </div>
-                        <div className="text-xs text-slate-500">{u.email}{u.phone ? ` · ${u.phone}` : ''}</div>
-                      </div>
-                    </div>
-                  </td>
                   <td className="px-4 py-3 font-mono text-slate-300">{u.login}</td>
                   <td className="px-4 py-3">
                     <span className={`badge ${u.role === 'admin' ? 'bg-gold-500/15 text-gold-300 border border-gold-500/30' : 'bg-night-700 text-slate-400'}`}>
