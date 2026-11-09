@@ -35,12 +35,16 @@
   font-display: swap;
 }
 
-[data-theme='vinyl'] {
-  /* Chemin absolu de la photo du thème (fichier public/img/bg_disquaire.jpg,
-     servi sous /img par nginx / le build Vite / Vite dev). Déclaré sur
-     [data-theme='vinyl'] : seule cette règle du thème consomme la variable. */
+/* Photo de fond du thème : déclarée sur html[data-theme='vinyl'] (spécificité
+   0,1,1) pour l'emporter sur le :root du thème « Comic Books » (0,1,0), importé
+   après dans main.jsx — sans cela bg_comics.jpg (fond BD étoiles/cercles jaunes)
+   écraserait bg_disquaire.jpg. Fichier public/img/bg_disquaire.jpg, servi sous
+   /img par nginx / le build Vite / Vite dev. */
+html[data-theme='vinyl'] {
   --theme-bg-image: url('/img/bg_disquaire.jpg');
+}
 
+[data-theme='vinyl'] {
   --bg-app: #1a1108;
   --bg-surface: #231810;
   --bg-elevated: #2c1f13;
