@@ -460,11 +460,11 @@ export default function AdminUsers() {
                 <th className="px-4 py-3">{t('adminUsers.colStatus')}</th>
                 <th className="px-4 py-3">{t('adminUsers.colVinyls')}</th>
                 <th className="px-4 py-3">{t('adminUsers.colComics')}</th>
-                {/* Colonne d'actions : largeur minimale garantie (min-w-[210px])
-                    + padding réduit (px-2) — « Modifier » / « Supprimer »
+                {/* Colonne d'actions : en-tête « Actions » + largeur minimale
+                    garantie (min-w-[210px]) — « Modifier » / « Supprimer »
                     (bordure épaisse 3px + ombre du thème BD) entièrement
                     visibles, jamais coupés sur le côté droit. */}
-                <th className="px-2 py-3 min-w-[210px] text-right"></th>
+                <th className="px-6 py-3 min-w-[210px] text-right">{t('adminUsers.colActions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -500,10 +500,11 @@ export default function AdminUsers() {
                   </td>
                   <td className="px-4 py-3 text-slate-300">{u.vinylCount ?? '—'}</td>
                   <td className="px-4 py-3 text-slate-300">{u.comicCount ?? '—'}</td>
-                  {/* Colonne d'actions : padding réduit (px-2) + gap resserré —
-                      les deux boutons tiennent entièrement dans la colonne
-                      élargie (min-w-[210px] du <th>), jamais coupés à droite. */}
-                  <td className="px-2 py-3 text-right whitespace-nowrap">
+                  {/* Colonne d'actions : padding latéral suffisant (px-6) +
+                      gap resserré — les deux boutons tiennent entièrement dans
+                      la colonne élargie (min-w-[210px] du <th>), jamais coupés
+                      à droite par le conteneur du tableau. */}
+                  <td className="px-6 py-3 text-right whitespace-nowrap">
                     {u.id !== me.id ? (
                       <div className="flex items-center justify-end gap-1.5">
                         <button className="btn-ghost !py-1 !px-2" onClick={() => openEdit(u)}>{t('common.edit')}</button>
