@@ -13,6 +13,11 @@
 -- conservent leur type borné.
 -- Idempotente : ALTER COLUMN TYPE TEXT sur une colonne déjà TEXT est un
 -- no-op sans effet.
+-- NB : les vues public_vinyls / public_comics (SELECT v.* / c.*) portent
+-- une dépendance sur CHAQUE colonne de vinyls/comics (et sur
+-- users.first_name/last_name) : PostgreSQL refuse alors l'ALTER TYPE. On
+-- les retire d'abord et on les recrée à l'identique à la fin (même pattern
+-- que la migration « vinyls.added-date »).
 -- NB : cette même migration est également appliquée automatiquement au
 -- démarrage de l'API (backend/src/config/db.js, tableau MIGRATIONS :
 -- « schema.widen-text-columns »). Ce script sert à l'application manuelle
@@ -21,6 +26,12 @@
 -- Usage :
 --   psql "$DATABASE_URL" -f database/migrations/014_widen_text_columns.sql
 -- ============================================================
+
+BEGIN;
+
+-- Retrait des vues publiques (dépendance sur chaque colonne de vinyls/comics)
+DROP VIEW IF EXISTS public_vinyls;
+DROP VIEW IF EXISTS public_comics;
 
 -- users — profil
 ALTER TABLE users ALTER COLUMN last_name TYPE TEXT;
@@ -51,3 +62,19 @@ ALTER TABLE artists ALTER COLUMN genre TYPE TEXT;
 -- series — entité série
 ALTER TABLE series ALTER COLUMN name TYPE TEXT;
 ALTER TABLE series ALTER COLUMN norm_name TYPE TEXT;
+
+-- Recrée les vues publiques (mêmes corps qu'init.sql) : leurs dépendances
+-- sont cette fois établies sur le schéma élargi.
+CREATE OR REPLACE VIEW public_vinyls AS
+SELECT v.*, u.first_name, u.last_name
+FROM vinyls v
+JOIN users u ON u.id = v.user_id
+WHERE u.is_public = TRUE AND u.share_vinyls = TRUE;
+
+CREATE OR REPLACE VIEW public_comics AS
+SELECT c.*, u.first_name, u.last_name
+FROM comics c
+JOIN users u ON u.id = c.user_id
+WHERE u.is_public = TRUE AND u.share_comics = TRUE;
+
+COMMIT;
