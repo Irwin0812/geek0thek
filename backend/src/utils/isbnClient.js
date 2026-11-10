@@ -373,12 +373,12 @@ async function fetchFromOpenLibrary(cleanedIsbn) {
 
   return {
     isbn: cleanedIsbn,
-    title: clip(title, 250),
-    series: clip(series, 250),
+    title: clip(title, 512),
+    series: clip(series, 512),
     tome_number: clip(tomeNumber, 50),
-    authors: clip(authors, 250),
-    illustrators: clip(illustrators, 250),
-    publisher: clip(publishers, 250),
+    authors: clip(authors, 512),
+    illustrators: clip(illustrators, 512),
+    publisher: clip(publishers, 512),
     release_date: normalizeReleaseDate(book.publish_date),
     genre: normalizeGenre(subjectNames) || DEFAULT_GENRE,
     synopsis: typeof book.notes === 'string' ? book.notes.replace(/\s+/g, ' ').trim() : '',
@@ -634,12 +634,12 @@ function toComicPrefillFromOpenLibraryDoc(doc) {
 
   return {
     isbn: pickedIsbn,
-    title: clip(title, 250),
-    series: clip(series, 250),
+    title: clip(title, 512),
+    series: clip(series, 512),
     tome_number: clip(tome, 50),
-    authors: clip(authors, 250),
-    illustrators: clip(illustrators, 250),
-    publisher: clip(publishers, 250),
+    authors: clip(authors, 512),
+    illustrators: clip(illustrators, 512),
+    publisher: clip(publishers, 512),
     release_date: normalizeReleaseDate(doc.first_publish_year),
     genre: normalizeGenre(subjectNames) || DEFAULT_GENRE,
     synopsis: typeof doc.description === 'string' ? doc.description.replace(/\s+/g, ' ').trim() : '',
@@ -912,7 +912,7 @@ const GENRE_MAP = [
  * nettoyage du bruit (préfixe « series: », notices linguistiques), mapping
  * de subjects courants, déduplication insensible à la casse, limite au
  * nombre max de catégories et à une longueur totale bornée
- * (colonne genre VARCHAR(255)).
+ * (colonne genre TEXT).
  */
 function normalizeGenre(categories, max = 3) {
   // Open Library renvoie parfois `subjects`/`categories` en UNE seule chaîne
@@ -947,7 +947,7 @@ function normalizeGenre(categories, max = 3) {
   let joined = '';
   for (const g of unique) {
     const next = joined ? `${joined}, ${g}` : g;
-    if (next.length > 150) break;
+    if (next.length > 500) break;
     joined = next;
   }
   return joined;
@@ -1435,12 +1435,12 @@ function toComicPrefillFromGoogle(parsed, isbnValue) {
 
   return {
     isbn: String(isbnValue || parsed.isbn || ''),
-    title: clip(parsed.title, 250),
-    series: clip(series, 250),
+    title: clip(parsed.title, 512),
+    series: clip(series, 512),
     tome_number: clip(tomeNumber, 50),
-    authors: clip(authors, 250),
-    illustrators: clip(illustrators, 250),
-    publisher: clip(parsed.publisher, 250),
+    authors: clip(authors, 512),
+    illustrators: clip(illustrators, 512),
+    publisher: clip(parsed.publisher, 512),
     release_date: normalizeReleaseDate(parsed.publishedDate),
     genre: normalizeGenre(parsed.categories) || DEFAULT_GENRE,
     synopsis: parsed.description || '',

@@ -902,8 +902,8 @@ vinyls     (id, user_id FK->users ON DELETE CASCADE, cover_url TEXT NOT NULL,
             created_at, updated_at)
 
 comics     (id, user_id FK->users ON DELETE CASCADE, cover_url TEXT,
-            title VARCHAR(255) NOT NULL, series VARCHAR(255), tome_number,
-            authors VARCHAR(255) NOT NULL, illustrators, publisher NOT NULL,
+            title TEXT NOT NULL, series TEXT, tome_number,
+            authors TEXT NOT NULL, illustrators, publisher NOT NULL,
             release_date, genre, isbn UNIQUE, synopsis,
             condition (défaut 'Bon état'), is_special_edition BOOL,
             created_at, updated_at)
@@ -921,12 +921,12 @@ Triggers `updated_at` automatiques sur les trois tables.
 | `id` | `BIGSERIAL` | PK | Identifiant unique du vinyle |
 | `user_id` | `BIGINT` | FK→`users(id)` `ON DELETE CASCADE`, NOT NULL | Propriétaire de la fiche |
 | `cover_url` | `TEXT` | NOT NULL | Jaquette : `/uploads/vinyls/…` (locale) ou URL distante |
-| `artist` | `VARCHAR(255)` | NOT NULL | Artiste (principal) |
-| `title` | `VARCHAR(255)` | NOT NULL | Titre de l'album / single |
+| `artist` | `TEXT` | NOT NULL | Artiste (principal) |
+| `title` | `TEXT` | NOT NULL | Titre de l'album / single |
 | `track_count` | `INTEGER` | `>= 0`, défaut `0` | Nombre de titres |
 | `tracklist` | `TEXT` | — | Liste des titres (1 titre par ligne) |
-| `genre` | `VARCHAR(120)` | — | Genre musical |
-| `label` | `VARCHAR(255)` | — | Label discographique |
+| `genre` | `TEXT` | — | Genre musical |
+| `label` | `TEXT` | — | Label discographique |
 | `release_date` | `DATE` | — | Date de parution |
 | `barcode` | `VARCHAR(64)` | UNIQUE | Code-barres EAN/UPC (clé d'import) |
 | `mbid` | `VARCHAR(40)` | — | MBID MusicBrainz (UUID de la release) |

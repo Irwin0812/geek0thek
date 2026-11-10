@@ -11,15 +11,15 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS users (
     id             BIGSERIAL PRIMARY KEY,
-    last_name      VARCHAR(120) NOT NULL,
-    first_name     VARCHAR(120) NOT NULL,
+    last_name      TEXT         NOT NULL,
+    first_name     TEXT         NOT NULL,
     email          VARCHAR(255) NOT NULL UNIQUE,
     login          VARCHAR(80)  NOT NULL UNIQUE,
     password_hash  VARCHAR(255) NOT NULL,
     role           VARCHAR(20)  NOT NULL DEFAULT 'user'
                    CHECK (role IN ('admin', 'user')),
     phone          VARCHAR(50),
-    bio            VARCHAR(500),
+    bio            TEXT,
     -- Visibilité de la collection : publique ou privée (choix utilisateur)
     is_public      BOOLEAN      NOT NULL DEFAULT TRUE,
     -- Activation / désactivation du compte (gérée par les administrateurs)
@@ -44,8 +44,8 @@ CREATE TABLE IF NOT EXISTS users (
     theme          VARCHAR(50)  NOT NULL DEFAULT 'dark',
     gender         VARCHAR(1)   CHECK (gender IN ('H', 'F', 'O')),  -- H / F / O (Autre)
     birth_date     DATE,
-    address        VARCHAR(255),
-    country        VARCHAR(120),
+    address        TEXT,
+    country        TEXT,
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT now(),
     updated_at     TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
@@ -60,12 +60,12 @@ CREATE TABLE IF NOT EXISTS vinyls (
     user_id       BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     -- Chaîne d'accès locale (/uploads/xxx.ext) ou URL distante (http...)
     cover_url     TEXT        NOT NULL,
-    artist        VARCHAR(255) NOT NULL,
-    title         VARCHAR(255) NOT NULL,
+    artist        TEXT         NOT NULL,
+    title         TEXT         NOT NULL,
     track_count   INTEGER     NOT NULL DEFAULT 0 CHECK (track_count >= 0),
     tracklist     TEXT,                 -- liste des titres (1 titre par ligne)
-    genre         VARCHAR(120),
-    label         VARCHAR(255),
+    genre         TEXT,
+    label         TEXT,
     release_date  DATE,
     barcode       VARCHAR(64) UNIQUE,
     -- Identifiant MusicBrainz (release MBID, UUID) de la parution
@@ -148,14 +148,14 @@ CREATE TABLE IF NOT EXISTS comics (
     user_id       BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     -- Chaîne d'accès locale (/uploads/comics/xxx.ext) ou URL distante (http...)
     cover_url     TEXT,
-    title         VARCHAR(255) NOT NULL,
-    series        VARCHAR(255),
+    title         TEXT         NOT NULL,
+    series        TEXT,
     tome_number   VARCHAR(50),
-    authors       VARCHAR(255) NOT NULL,
-    illustrators  VARCHAR(255),
-    publisher     VARCHAR(255) NOT NULL,
+    authors       TEXT         NOT NULL,
+    illustrators  TEXT,
+    publisher     TEXT         NOT NULL,
     release_date  VARCHAR(50),
-    genre         VARCHAR(255),
+    genre         TEXT,
     isbn          VARCHAR(20) UNIQUE,
     synopsis      TEXT,
     -- ENTITÉ SÉRIE (image / logo) : id de l'entité series (dédupliquée par
@@ -223,10 +223,10 @@ WHERE u.is_public = TRUE AND u.share_comics = TRUE;
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS artists (
     id          BIGSERIAL PRIMARY KEY,
-    name        VARCHAR(255) NOT NULL,
-    norm_name   VARCHAR(255) NOT NULL,
+    name        TEXT         NOT NULL,
+    norm_name   TEXT         NOT NULL,
     image_url   TEXT,                      -- « /uploads/artists/… » ou « /img/no_group.jpg »
-    genre       VARCHAR(120),              -- genre musical par défaut (propagé depuis un disque de l'artiste)
+    genre       TEXT,                      -- genre musical par défaut (propagé depuis un disque de l'artiste)
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT artists_norm_name_unique UNIQUE (norm_name)
@@ -249,8 +249,8 @@ CREATE TRIGGER trg_artists_updated_at
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS series (
     id          BIGSERIAL PRIMARY KEY,
-    name        VARCHAR(255) NOT NULL,
-    norm_name   VARCHAR(255) NOT NULL,
+    name        TEXT         NOT NULL,
+    norm_name   TEXT         NOT NULL,
     image_url   TEXT,                      -- « /uploads/series/… » ou « /img/no_title.jpg »
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),

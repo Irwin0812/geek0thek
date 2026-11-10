@@ -76,8 +76,8 @@ const MIGRATIONS = [
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(1);`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date DATE;`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS address VARCHAR(255);`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS country VARCHAR(120);`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT;`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS country TEXT;`,
       // (Re)définit la contrainte de sexe avec OR REPLACE : indolore si absente
       `ALTER TABLE users DROP CONSTRAINT IF EXISTS users_gender_check;`,
       `ALTER TABLE users ADD CONSTRAINT users_gender_check CHECK (gender IN ('H', 'F', 'O'));`,
@@ -265,8 +265,8 @@ const MIGRATIONS = [
     statements: [
       `CREATE TABLE IF NOT EXISTS artists (
          id BIGSERIAL PRIMARY KEY,
-         name VARCHAR(255) NOT NULL,
-         norm_name VARCHAR(255) NOT NULL,
+         name TEXT NOT NULL,
+         norm_name TEXT NOT NULL,
          image_url TEXT,
          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
          updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -285,8 +285,8 @@ const MIGRATIONS = [
       // img/no_group.jpg.
       `DO $$
        DECLARE
-         v_artist VARCHAR(255);
-         v_norm   VARCHAR(255);
+         v_artist TEXT;
+         v_norm   TEXT;
        BEGIN
          FOR v_artist IN
            SELECT DISTINCT artist FROM vinyls WHERE btrim(artist) <> ''
@@ -335,8 +335,8 @@ const MIGRATIONS = [
     statements: [
       `CREATE TABLE IF NOT EXISTS series (
          id BIGSERIAL PRIMARY KEY,
-         name VARCHAR(255) NOT NULL,
-         norm_name VARCHAR(255) NOT NULL,
+         name TEXT NOT NULL,
+         norm_name TEXT NOT NULL,
          image_url TEXT,
          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
          updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -354,8 +354,8 @@ const MIGRATIONS = [
       // img/no_title.jpg.
       `DO $$
        DECLARE
-         v_series VARCHAR(255);
-         v_norm   VARCHAR(255);
+         v_series TEXT;
+         v_norm   TEXT;
        BEGIN
          FOR v_series IN
            SELECT DISTINCT series FROM comics WHERE btrim(series) <> '' AND series IS NOT NULL
@@ -463,13 +463,13 @@ const MIGRATIONS = [
   // Artiste comme référence IMMUEBLE des FUTURS albums de cet artiste : les
   // disques suivants reçoivent automatiquement ce genre (le genre renvoyé par
   // l'API / le formulaire est ignoré) — SANS jamais retoucher les disques déjà
-  // enregistrés (chacun garde son propre genre). Colonne VARCHAR(120) (même
-  // largeur que vinyls.genre), NULL si jamais défini.
+  // enregistrés (chacun garde son propre genre). Colonne TEXT (même
+  // type que vinyls.genre), NULL si jamais défini.
   // Idempotent : ADD COLUMN IF NOT EXISTS.
   {
     name: 'artists.genre',
     statements: [
-      'ALTER TABLE artists ADD COLUMN IF NOT EXISTS genre VARCHAR(120);',
+      'ALTER TABLE artists ADD COLUMN IF NOT EXISTS genre TEXT;',
     ],
   },
   // SÉCURITÉ À LA PREMIÈRE CONNEXION (onboarding) — drapeau
@@ -609,6 +609,49 @@ const MIGRATIONS = [
     name: 'users.is-donor',
     statements: [
       'ALTER TABLE users ADD COLUMN IF NOT EXISTS is_donor BOOLEAN NOT NULL DEFAULT FALSE;',
+    ],
+  },
+  // ÉLARGISSEMENT DES COLONNES TEXTE LIBRE — les valeurs renvoyées par les
+  // API externes (MusicBrainz / Discogs / Last.fm / Google Books / Open
+  // Library) et saisies librement dépassent régulièrement VARCHAR(120/255) :
+  // « value too long for type character varying(120) » sur vinyls.genre,
+  // vinyls.label, comics.publisher, etc. Toutes les colonnes de TEXTE LIBRE
+  // (noms, titres, genres, labels, éditeurs, auteurs, adresses…) sont
+  // converties en TEXT — élargissement sans perte : les index btree et les
+  // contraintes UNIQUE (artists/series norm_name) restent valides, aucune
+  // donnée n'est modifiée. Les colonnes à VOCABULAIRE FERMÉ (role, language,
+  // theme, gender, disc_type, color, condition, scope, barcode, mbid, isbn,
+  // tome_number, phone, email, login) conservent leur type borné.
+  // Idempotent : ALTER COLUMN TYPE TEXT sur une colonne déjà TEXT est un
+  // no-op sans effet.
+  {
+    name: 'schema.widen-text-columns',
+    statements: [
+      // users — profil
+      'ALTER TABLE users ALTER COLUMN last_name TYPE TEXT;',
+      'ALTER TABLE users ALTER COLUMN first_name TYPE TEXT;',
+      'ALTER TABLE users ALTER COLUMN bio TYPE TEXT;',
+      'ALTER TABLE users ALTER COLUMN address TYPE TEXT;',
+      'ALTER TABLE users ALTER COLUMN country TYPE TEXT;',
+      // vinyls — disques
+      'ALTER TABLE vinyls ALTER COLUMN artist TYPE TEXT;',
+      'ALTER TABLE vinyls ALTER COLUMN title TYPE TEXT;',
+      'ALTER TABLE vinyls ALTER COLUMN genre TYPE TEXT;',
+      'ALTER TABLE vinyls ALTER COLUMN label TYPE TEXT;',
+      // comics — BD
+      'ALTER TABLE comics ALTER COLUMN title TYPE TEXT;',
+      'ALTER TABLE comics ALTER COLUMN series TYPE TEXT;',
+      'ALTER TABLE comics ALTER COLUMN authors TYPE TEXT;',
+      'ALTER TABLE comics ALTER COLUMN illustrators TYPE TEXT;',
+      'ALTER TABLE comics ALTER COLUMN publisher TYPE TEXT;',
+      'ALTER TABLE comics ALTER COLUMN genre TYPE TEXT;',
+      // artists — entité artiste
+      'ALTER TABLE artists ALTER COLUMN name TYPE TEXT;',
+      'ALTER TABLE artists ALTER COLUMN norm_name TYPE TEXT;',
+      'ALTER TABLE artists ALTER COLUMN genre TYPE TEXT;',
+      // series — entité série
+      'ALTER TABLE series ALTER COLUMN name TYPE TEXT;',
+      'ALTER TABLE series ALTER COLUMN norm_name TYPE TEXT;',
     ],
   },
 ];
