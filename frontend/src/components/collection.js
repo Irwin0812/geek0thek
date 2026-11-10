@@ -66,14 +66,42 @@ function byReleaseAsc(a, b) {
   return da.localeCompare(db)
 }
 
+/* Normalise un chemin d'image pour COMPARAISON (miroir de normalizeStoredCoverPath
+   du backend) : détache le préfixe d'origine (https://site/…) et force le préfixe
+   « /uploads/ » sur les chemins locaux legacy (« /comics/… » -> « /uploads/comics/… »).
+   Sert à la détection de contamination croisée série/couverture ci-dessous. */
+function canonicalImagePath(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  let p = raw.replace(/^https?:\/\/[^/]+/i, '')
+  if (p.startsWith('/uploads/')) return p
+  if (p.startsWith('/')) {
+    const rel = p.slice(1).split('/').filter(Boolean).join('/')
+    return rel ? `/uploads/${rel}` : p
+  }
+  return p
+}
+
 /* Image / logo DÉDIÉ à une SÉRIE : 1re image « seriesImage » NON par défaut
    trouvée parmi les tomes du groupe (les tomes partagent la même image de
    série — comics.series_image portée par le backend). null si aucun tome ne
-   porte une vraie image dédiée -> la tuile retombe sur la première couverture. */
+   porte une vraie image dédiée -> la tuile retombe sur la première couverture.
+   GARDE CROISÉE : une ligne legacy peut porter en series_image la couverture
+   d'UN AUTRE tome (la garde DTO par ligne ne compare qu'à SA PROPRE cover_url,
+   donc cette valeur traverse l'API) ; elle est traitée ici comme « absence » —
+   jamais une jaquette de tome sur la tuile de série. */
 function seriesImageOf(items) {
-  const withImage = items.find(
-    (i) => i.seriesImageUrl && String(i.seriesImageUrl).trim() !== DEFAULT_SERIES_IMAGE
+  const covers = new Set(
+    items.map((i) => canonicalImagePath(i.coverUrl)).filter(Boolean)
   )
+  const withImage = items.find((i) => {
+    const raw = String(i.seriesImageUrl || '').trim()
+    if (!raw || raw === DEFAULT_SERIES_IMAGE) return false
+    // Contamination croisée : cette « image de série » est en réalité la
+    // couverture d'un tome du groupe -> absence (repli img/no_title.jpg).
+    if (covers.has(canonicalImagePath(raw))) return false
+    return true
+  })
   return withImage ? withImage.seriesImageUrl : null
 }
 

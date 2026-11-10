@@ -385,6 +385,43 @@ const MIGRATIONS = [
        WHERE u.is_public = TRUE AND u.share_comics = TRUE;`,
     ],
   },
+   // RÉPARATION IDÉMPOTENTE — DISSOCIATION TOTALE image de SÉRIE ↔ couverture
+   // du TOME. Des versions antérieures de l'appli pouvaient écrire dans
+   // comics.series_image (ou series.image_url) la couverture d'UN AUTRE tome :
+   // la garde DTO par ligne (seriesImageUrlOf) ne compare qu'à SA PROPRE
+   // cover_url, donc cette contamination CROISÉE traversait l'API et s'affichait
+   // sur la tuile de série (une jaquette de tome posée en image de série). Cette
+   // migration purge, une seule fois, toute ligne dont series_image / image_url
+   // correspond à la cover_url d'UNE DES BD (même ou autre — préfixe d'origine
+   // mis à part) : l'image de série redevient strictement indépendante de la
+   // couverture du tome. Idempotente (aucun match au 2e passage).
+  {
+    name: 'comics.series-image-cover-contamination',
+    statements: [
+      `UPDATE comics AS c
+       SET series_image = NULL
+       WHERE c.series_image IS NOT NULL
+         AND btrim(c.series_image) <> ''
+         AND EXISTS (
+           SELECT 1 FROM comics o
+           WHERE o.cover_url IS NOT NULL
+             AND btrim(o.cover_url) <> ''
+             AND regexp_replace(btrim(c.series_image), '^https?://[^/]+', '', 'g')
+               = regexp_replace(btrim(o.cover_url), '^https?://[^/]+', '', 'g')
+         );`,
+      `UPDATE series AS s
+       SET image_url = NULL
+       WHERE s.image_url IS NOT NULL
+         AND btrim(s.image_url) <> ''
+         AND EXISTS (
+           SELECT 1 FROM comics o
+           WHERE o.cover_url IS NOT NULL
+             AND btrim(o.cover_url) <> ''
+             AND regexp_replace(btrim(s.image_url), '^https?://[^/]+', '', 'g')
+               = regexp_replace(btrim(o.cover_url), '^https?://[^/]+', '', 'g')
+         );`,
+    ],
+  },
    // TYPE DE DISQUE du formulaire « Ajouter / Modifier un disque » (1er
    // élément de la rangée des options) : « Vinyle » / « Compact », défaut
    // « Vinyle » — remplace l'ancienne option « Disque Vinyle ». Colonne
