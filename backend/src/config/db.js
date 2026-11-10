@@ -624,55 +624,55 @@ const MIGRATIONS = [
   // tome_number, phone, email, login) conservent leur type borné.
   // Idempotent : ALTER COLUMN TYPE TEXT sur une colonne déjà TEXT est un
   // no-op sans effet.
-  {
-    name: 'schema.widen-text-columns',
-    statements: [
-      // Les vues public_vinyls / public_comics (SELECT v.* / c.*) portent
-      // une dépendance sur CHAQUE colonne de vinyls/comics (et sur
-      // users.first_name/last_name) : PostgreSQL refuse alors l'ALTER TYPE.
-      // On les retire d'abord et on les recrée à l'identique à la fin
-      // (même pattern que la migration « vinyls.added-date »).
-      'DROP VIEW IF EXISTS public_vinyls;',
-      'DROP VIEW IF EXISTS public_comics;',
-      // users — profil
-      'ALTER TABLE users ALTER COLUMN last_name TYPE TEXT;',
-      'ALTER TABLE users ALTER COLUMN first_name TYPE TEXT;',
-      'ALTER TABLE users ALTER COLUMN bio TYPE TEXT;',
-      'ALTER TABLE users ALTER COLUMN address TYPE TEXT;',
-      'ALTER TABLE users ALTER COLUMN country TYPE TEXT;',
-      // vinyls — disques
-      'ALTER TABLE vinyls ALTER COLUMN artist TYPE TEXT;',
-      'ALTER TABLE vinyls ALTER COLUMN title TYPE TEXT;',
-      'ALTER TABLE vinyls ALTER COLUMN genre TYPE TEXT;',
-      'ALTER TABLE vinyls ALTER COLUMN label TYPE TEXT;',
-      // comics — BD
-      'ALTER TABLE comics ALTER COLUMN title TYPE TEXT;',
-      'ALTER TABLE comics ALTER COLUMN series TYPE TEXT;',
-      'ALTER TABLE comics ALTER COLUMN authors TYPE TEXT;',
-      'ALTER TABLE comics ALTER COLUMN illustrators TYPE TEXT;',
-      'ALTER TABLE comics ALTER COLUMN publisher TYPE TEXT;',
-      'ALTER TABLE comics ALTER COLUMN genre TYPE TEXT;',
-      // artists — entité artiste
-      'ALTER TABLE artists ALTER COLUMN name TYPE TEXT;',
-      'ALTER TABLE artists ALTER COLUMN norm_name TYPE TEXT;',
-      'ALTER TABLE artists ALTER COLUMN genre TYPE TEXT;',
-      // series — entité série
-      'ALTER TABLE series ALTER COLUMN name TYPE TEXT;',
-      'ALTER TABLE series ALTER COLUMN norm_name TYPE TEXT;',
-      // Recrée les vues publiques (mêmes corps qu'init.sql) : leurs
-      // dépendances sont cette fois établies sur le schéma élargi.
-      `CREATE OR REPLACE VIEW public_vinyls AS
-       SELECT v.*, u.first_name, u.last_name
-       FROM vinyls v
-       JOIN users u ON u.id = v.user_id
-       WHERE u.is_public = TRUE AND u.share_vinyls = TRUE;`
-      `CREATE OR REPLACE VIEW public_comics AS
-       SELECT c.*, u.first_name, u.last_name
-       FROM comics c
-       JOIN users u ON u.id = c.user_id
-       WHERE u.is_public = TRUE AND u.share_comics = TRUE;`
-    ],
-  },
+   {
+     name: 'schema.widen-text-columns',
+     statements: [
+       // Les vues public_vinyls / public_comics (SELECT v.* / c.*) portent
+       // une dépendance sur CHAQUE colonne de vinyls/comics (et sur
+       // users.first_name/last_name) : PostgreSQL refuse alors l'ALTER TYPE.
+       // On les retire d'abord et on les recrée à l'identique à la fin
+       // (même pattern que la migration « vinyls.added-date »).
+       'DROP VIEW IF EXISTS public_vinyls;',
+       'DROP VIEW IF EXISTS public_comics;',
+       // users — profil
+       'ALTER TABLE users ALTER COLUMN last_name TYPE TEXT;',
+       'ALTER TABLE users ALTER COLUMN first_name TYPE TEXT;',
+       'ALTER TABLE users ALTER COLUMN bio TYPE TEXT;',
+       'ALTER TABLE users ALTER COLUMN address TYPE TEXT;',
+       'ALTER TABLE users ALTER COLUMN country TYPE TEXT;',
+       // vinyls — disques
+       'ALTER TABLE vinyls ALTER COLUMN artist TYPE TEXT;',
+       'ALTER TABLE vinyls ALTER COLUMN title TYPE TEXT;',
+       'ALTER TABLE vinyls ALTER COLUMN genre TYPE TEXT;',
+       'ALTER TABLE vinyls ALTER COLUMN label TYPE TEXT;',
+       // comics — BD
+       'ALTER TABLE comics ALTER COLUMN title TYPE TEXT;',
+       'ALTER TABLE comics ALTER COLUMN series TYPE TEXT;',
+       'ALTER TABLE comics ALTER COLUMN authors TYPE TEXT;',
+       'ALTER TABLE comics ALTER COLUMN illustrators TYPE TEXT;',
+       'ALTER TABLE comics ALTER COLUMN publisher TYPE TEXT;',
+       'ALTER TABLE comics ALTER COLUMN genre TYPE TEXT;',
+       // artists — entité artiste
+       'ALTER TABLE artists ALTER COLUMN name TYPE TEXT;',
+       'ALTER TABLE artists ALTER COLUMN norm_name TYPE TEXT;',
+       'ALTER TABLE artists ALTER COLUMN genre TYPE TEXT;',
+       // series — entité série
+       'ALTER TABLE series ALTER COLUMN name TYPE TEXT;',
+       'ALTER TABLE series ALTER COLUMN norm_name TYPE TEXT;',
+       // Recrée les vues publiques (mêmes corps qu'init.sql) : leurs
+       // dépendances sont cette fois établies sur le schéma élargi.
+       `CREATE OR REPLACE VIEW public_vinyls AS
+        SELECT v.*, u.first_name, u.last_name
+        FROM vinyls v
+        JOIN users u ON u.id = v.user_id
+        WHERE u.is_public = TRUE AND u.share_vinyls = TRUE;`,
+       `CREATE OR REPLACE VIEW public_comics AS
+        SELECT c.*, u.first_name, u.last_name
+        FROM comics c
+        JOIN users u ON u.id = c.user_id
+        WHERE u.is_public = TRUE AND u.share_comics = TRUE;`,
+     ],
+   },
 ];
 
 /**
