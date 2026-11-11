@@ -12,8 +12,8 @@ services:
     container_name: geek0thek-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-vinyl}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-V4ult!Postgres2026}
+      POSTGRES_USER: ${POSTGRES_USER:-youruser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-youpasswd}
       POSTGRES_DB: ${POSTGRES_DB:-geek0thek}
     volumes:
       # Persistance locale des données PostgreSQL
@@ -47,8 +47,8 @@ services:
       PORT: ${PORT:-8080}
       DB_HOST: ${DB_HOST:-db}
       DB_PORT: ${DB_PORT:-5432}
-      DB_USER: ${POSTGRES_USER:-vinyl}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-V4ult!Postgres2026}
+      DB_USER: ${POSTGRES_USER:-youruser}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-youpasswd}
       DB_NAME: ${POSTGRES_DB:-geek0thek}
       JWT_SECRET: ${JWT_SECRET:-REMPLACER_PAR_UN_SECRET_ALEATOIRE_LONG}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
