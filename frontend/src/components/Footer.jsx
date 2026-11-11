@@ -30,14 +30,16 @@ import { api } from '../services/api.js'
  *     UNIQUEMENT la mention « Geek0thek - Bibliothèque de collections par
  *     GERARTS Irwin - 2026 », parfaitement centrée au milieu de l'écran.
  *   - COLONNE 3 (droite — justify-self-end / text-right) : UNIQUEMENT le
- *     libellé de version « Version: <shortSha> » (jaune pour le thème BD),
- *     collé strictement à l'extrême droite.
+ *     libellé de version « Version: <tag release> » (jaune pour le thème BD),
+ *     collé strictement à l'extrême droite. Masqué COMPLÈTEMENT tant qu'aucune
+ *     Release GitHub officielle n'est publiée (« No releases published »).
  */
 
 export default function Footer() {
-  // Version de la webapp extraite de GitHub (shortSha du HEAD de la branche
-  // par défaut). Une seule requête au montage ; jamais d'erreur affichée :
-  // si l'API GitHub est injoignable / quota atteint, le champ reste vide.
+  // Version de la webapp = tag de la dernière Release GitHub officielle
+  // (ex. « v1.0.0 »). Une seule requête au montage ; jamais d'erreur affichée :
+  // si aucune release n'est publiée, ou si l'API GitHub est injoignable /
+  // quota atteint, le libellé « Version: … » reste totalement masqué.
   const [version, setVersion] = useState('')
 
   useEffect(() => {
@@ -45,8 +47,8 @@ export default function Footer() {
     api
       .version()
       .then((data) => {
-        if (!cancelled && data && data.github && data.github.shortSha) {
-          setVersion(data.github.shortSha)
+        if (!cancelled && data && data.release && data.release.tag) {
+          setVersion(data.release.tag)
         }
       })
       .catch(() => {
@@ -60,7 +62,7 @@ export default function Footer() {
   // cb-footer : accroche charte « Comic Books » (thèmes/comic.css) — pied de
   // page bordeaux qui s'accorde à la barre haute. Inerte ailleurs. Les thèmes
   // « Médiathèque » / « Comic Books » recolorent .cb-footer div / a ; les
-  // libellés « Soutenez le projet ! » et « Version: <sha> » utilisent la
+  // libellés « Soutenez le projet ! » et « Version: <tag release> » utilisent la
   // variable --accent-strong (inline), forcée en jaune moutarde par comic.css.
   return (
     <footer className="cb-footer fixed bottom-0 left-0 right-0 z-30 border-t border-night-700/70 bg-night-950/85 backdrop-blur">
@@ -108,7 +110,7 @@ export default function Footer() {
         <span
           className="cb-footer-version justify-self-end text-right font-bold text-sm whitespace-nowrap"
           style={{ color: 'var(--accent-strong)' }}
-          title="Version (commit GitHub)"
+          title="Version (release GitHub)"
         >
           {version ? `Version: ${version}` : ''}
         </span>

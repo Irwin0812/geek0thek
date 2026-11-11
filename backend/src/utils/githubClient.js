@@ -137,16 +137,42 @@ async function getGitHubHead() {
 }
 
 /**
+ * Dernière Release officielle du dépôt GitHub (tag, ex. « v1.0.0 »).
+ * Renvoie { tag } ou null si AUCUNE release n'est publiée (404 — état
+ * « No releases published »), l'API est injoignable ou le quota est atteint :
+ * le footer masque alors complètement le libellé « Version: … ».
+ */
+async function getLatestRelease() {
+  const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'Geek0thek' };
+  if (env.github.token) headers.Authorization = `Bearer ${env.github.token}`;
+
+  try {
+    const res = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/releases/latest`, { headers });
+    if (!res.ok) return null; // 404 = aucune release publiée
+    const release = await res.json();
+    if (!release || !release.tag_name) return null;
+    return { tag: release.tag_name };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Statut de mise à jour : compare le commit déployé au HEAD GitHub.
  *   - updateAvailable : TRUE uniquement si les deux SHA sont connus et DIFFÉRENTS.
  *   - status : 'ok' (comparaison possible) | 'unknown' (impossible — bouton masqué).
+ *   - release : { tag } de la dernière Release GitHub officielle, ou null si
+ *     aucune release publiée (le footer masque alors le libellé de version).
  */
 async function getUpdateStatus() {
-  const deployed = getDeployedCommit();
-  const remote = await getGitHubHead();
+  const [deployed, remote, release] = await Promise.all([
+    Promise.resolve(getDeployedCommit()),
+    getGitHubHead(),
+    getLatestRelease(),
+  ]);
 
   if (!deployed || !remote) {
-    return { status: 'unknown', updateAvailable: false, deployed: null, github: null };
+    return { status: 'unknown', updateAvailable: false, deployed: null, github: null, release };
   }
 
   return {
@@ -154,6 +180,7 @@ async function getUpdateStatus() {
     updateAvailable: deployed.sha !== remote.sha,
     deployed: { sha: deployed.sha, shortSha: deployed.sha.slice(0, 7), branch: deployed.branch },
     github: { sha: remote.sha, shortSha: remote.sha.slice(0, 7), branch: remote.branch, message: remote.message },
+    release,
   };
 }
 

@@ -474,7 +474,7 @@
   color: var(--cb-mustard);
 }
 
-/* ---- FOOTER : textes « Soutenez le projet ! » + « Version: <sha> » en JAUNE
+/* ---- FOOTER : textes « Soutenez le projet ! » + « Version: <tag release> » en JAUNE
    VIF (moutarde) — EXCLUSIF AU THÈME « Bande dessinée ». Ces deux libellés
    portent un style inline color: var(--accent-strong) (bleu) dans Footer.jsx ;
    le !important est indispensable pour l'emporter sur le style inline. Le
