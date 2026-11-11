@@ -151,3 +151,18 @@ export function themeSwatches(theme) {
   const entry = THEMES.find((th) => th.id === theme) || THEMES[0]
   return entry.swatches
 }
+
+/**
+ * Efface la préférence locale (localStorage) et réapplique le thème par
+ * défaut « dark » (Geek0thek). Appelé à la DÉCONNEXION : la préférence
+ * persistée en base (users.theme) reste la source de vérité — au prochain
+ * login, c'est le DERNIER thème choisi par l'utilisateur qui s'applique
+ * (renvoyé par /auth/login, /auth/verify-totp et /users/me), jamais le
+ * thème d'un autre compte resté en cache local.
+ */
+export function clearThemePreference() {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem(THEME_STORAGE_KEY)
+  }
+  return switchTheme(DEFAULT_THEME)
+}

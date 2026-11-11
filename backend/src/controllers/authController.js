@@ -14,6 +14,19 @@ const { validatePassword } = require('../utils/password');
 const { verifyTotp } = require('../utils/totp');
 const emailService = require('../utils/emailService');
 
+// Thème visuel préféré : mêmes clés que la colonne users.theme (cf.
+// userController.js, tableau THEMES) — « dark » est le défaut de l'application.
+// Les alias obsolètes (« light », « cartoon », « pastel ») sont résolus vers
+// leur remplaçante avant tout retour au frontend.
+const THEMES = ['dark', 'library', 'vinyl', 'comic', 'comic-books', 'neon'];
+const LEGACY_THEME_ALIASES = { light: 'library', cartoon: 'comic-books', pastel: 'neon' };
+
+/** Réécrit une clé de thème obsolète en sa remplaçante (ex. « light » → « library »). */
+function migrateTheme(theme) {
+  const key = String(theme || '').trim().toLowerCase();
+  return LEGACY_THEME_ALIASES[key] || key;
+}
+
 function publicUser(row) {
   return {
     id: row.id,
@@ -32,6 +45,13 @@ function publicUser(row) {
     // Langue préférée (code ISO 639-1) : « fr » en dépit de toute valeur NULL
     // résiduelle (la colonne est NOT NULL DEFAULT 'fr' depuis la migration).
     language: row.language || 'fr',
+    // Thème visuel préféré (cf. THEMES) : « dark » en dépit de toute valeur
+    // NULL résiduelle (la colonne est NOT NULL DEFAULT 'dark' depuis la
+    // migration users.theme). L'ex-clé « light » (thème « Moderne », renommé
+    // « Médiathèque ») est résolue vers « library ». Retourne le DERNIER thème
+    // choisi par l'utilisateur (persisté dans users.theme) — jamais forcé au
+    // défaut : c'est ce champ que le frontend applique à la connexion.
+    theme: THEMES.includes(migrateTheme(row.theme)) ? migrateTheme(row.theme) : 'dark',
     // 2FA (Google Authenticator / TOTP) : TRUE si l'utilisateur a activé
     // l'authentification à deux facteurs (colonne users.totp_enabled).
     totpEnabled: row.totp_enabled === true,

@@ -24,7 +24,7 @@ import Profile from './pages/Profile.jsx'
 import SharedLibraries from './pages/SharedLibraries.jsx'
 import SharedCollection from './pages/SharedCollection.jsx'
 import { DisplayProvider } from './services/display.jsx'
-import { switchTheme } from './services/theme.js'
+import { clearThemePreference, switchTheme } from './services/theme.js'
 import Footer from './components/Footer.jsx'
 import TopButton from './components/TopButton.jsx'
 import UpdateButton from './components/UpdateButton.jsx'
@@ -127,6 +127,13 @@ export default function App() {
       },
       logout: () => {
         clearSession()
+        // La préférence de thème persistée en base (users.theme) reste la
+        // source de vérité : on efface le cache local et on repart du thème
+        // par défaut « dark » (Geek0thek). Au prochain login, c'est le DERNIER
+        // thème choisi par l'utilisateur qui s'applique (renvoyé par
+        // /auth/login — cf. switchTheme(logged.theme) dans login() ci-dessus),
+        // jamais celui d'un autre compte resté en localStorage.
+        clearThemePreference()
         setUser(null)
       },
     }),
