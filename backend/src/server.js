@@ -85,6 +85,151 @@ app.use(
   })
 );
 
+// ------------------------------------------------------------
+// PROXY D'IMAGE (MÊME ORIGINE) — GET /api/image-proxy?url=<URL distante>
+//
+// Récupère côté SERVEUR une image distante (jaquette Discogs / Open Library /
+// Last.fm / Google Books…) et la renvoie depuis CETTE origine. Le front-end
+// pointe ses <img src> vers ce proxy au lieu de l'URL tierce directe, ce qui
+// supprime à la fois :
+//   • le MIXED CONTENT : une image http:// affichée sur un site https:// est
+//     bloquée par le navigateur ; servie via le proxy (même origine, https),
+//     elle passe ;
+//   • les blocages CORS / HOTLINKING des CDN tiers qui refusent d'être chargés
+//     directement dans un <img> depuis une autre origine.
+//
+// Sécurité :
+//   • seuls http/https sont acceptés (pas de file://, gopher://…) ;
+//   • GUARD SSRF : les hôtes privés / boucle locale / link-local sont refusés
+//     (y compris après chaque saut de redirection — on suit manuellement les
+//     redirects en re-validant chaque cible) ;
+//   • la réponse doit être un Content-Type image/* ;
+//   • taille plafonnée (15 Mo) + timeout (20 s).
+// ------------------------------------------------------------
+const IMAGE_PROXY_MAX_BYTES = 15 * 1024 * 1024; // 15 Mo
+const IMAGE_PROXY_TIMEOUT_MS = 20000;
+const IMAGE_PROXY_MAX_REDIRECTS = 5;
+
+/** Hôte à refuser (boucle locale, RFC1918, link-local, .local/.internal). */
+function isBlockedImageHost(hostname) {
+  const host = String(hostname || '').toLowerCase();
+  if (!host) return true;
+  if (host === 'localhost' || host === '0.0.0.0' || host === '[::1]') return true;
+  if (host.endsWith('.local') || host.endsWith('.internal')) return true;
+  if (/^127\./.test(host)) return true;
+  if (/^10\./.test(host)) return true;
+  if (/^192\.168\./.test(host)) return true;
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(host)) return true; // 172.16.0.0/12
+  if (/^169\.254\./.test(host)) return true;
+  if (/^::1$/.test(host) || /^fe80:/i.test(host)) return true;
+  return false;
+}
+
+app.get('/api/image-proxy', async (req, res) => {
+  const target = String(req.query.url || '').trim();
+  let parsed;
+  try {
+    parsed = new URL(target);
+  } catch {
+    return res.status(400).json({ error: "URL d'image invalide." });
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return res.status(400).json({ error: 'Protocole non supporté (http/https uniquement).' });
+  }
+  if (isBlockedImageHost(parsed.hostname)) {
+    return res.status(400).json({ error: "Hôte d'image non autorisé." });
+  }
+
+  // Suivi MANUEL des redirections : chaque cible est re-validée (anti-SSRF —
+  // un CDN ne doit pas pouvoir rediriger vers un hôte interne).
+  let current = parsed;
+  for (let hop = 0; hop < IMAGE_PROXY_MAX_REDIRECTS; hop++) {
+    let upstream;
+    try {
+      upstream = await fetch(current.toString(), {
+        headers: { 'User-Agent': 'Geek0thek/1.0.0 (image proxy)', Accept: 'image/*' },
+        signal: AbortSignal.timeout(IMAGE_PROXY_TIMEOUT_MS),
+        redirect: 'manual',
+      });
+    } catch (err) {
+      return res.status(502).json({ error: `Image distante injoignable (${err.message}).` });
+    }
+
+    // Redirection ? On valide la cible puis on reboucle.
+    if ([301, 302, 303, 307, 308].includes(upstream.status)) {
+      const location = upstream.headers.get('location');
+      try { await upstream.body?.cancel(); } catch {}
+      if (!location) {
+        return res.status(502).json({ error: 'Redirection distante sans cible.' });
+      }
+      let next;
+      try {
+        next = new URL(location, current);
+      } catch {
+        return res.status(502).json({ error: 'Redirection distante invalide.' });
+      }
+      if (next.protocol !== 'http:' && next.protocol !== 'https:') {
+        return res.status(400).json({ error: 'Protocole de redirection non supporté.' });
+      }
+      if (isBlockedImageHost(next.hostname)) {
+        return res.status(400).json({ error: "Hôte de redirection non autorisé." });
+      }
+      current = next;
+      continue;
+    }
+
+    // Réponse finale.
+    if (!upstream.ok) {
+      try { await upstream.body?.cancel(); } catch {}
+      const status = upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502;
+      return res.status(status).json({ error: `Image distante indisponible (HTTP ${upstream.status}).` });
+    }
+
+    const contentType = (upstream.headers.get('content-type') || 'image/jpeg')
+      .split(';')[0].trim().toLowerCase();
+    if (!contentType.startsWith('image/')) {
+      try { await upstream.body?.cancel(); } catch {}
+      return res.status(502).json({ error: "La réponse distante n'est pas une image." });
+    }
+
+    const contentLength = Number(upstream.headers.get('content-length') || 0);
+    if (contentLength > IMAGE_PROXY_MAX_BYTES) {
+      try { await upstream.body?.cancel(); } catch {}
+      return res.status(413).json({ error: 'Image distante trop volumineuse.' });
+    }
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    let received = 0;
+    try {
+      const reader = upstream.body.getReader();
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        received += value.length;
+        if (received > IMAGE_PROXY_MAX_BYTES) {
+          res.destroy();
+          return;
+        }
+        if (!res.write(Buffer.from(value))) {
+          // Backpressure : on attend le drain avant d'écrire la suite.
+          await new Promise((r) => res.once('drain', r));
+        }
+      }
+    } catch (err) {
+      try { await upstream.body?.cancel(); } catch {}
+      if (!res.headersSent) return res.status(502).json({ error: 'Échec du transfert de l’image.' });
+      return;
+    }
+    return res.end();
+  }
+
+  // Trop de redirections.
+  return res.status(502).json({ error: 'Trop de redirections sur l\'image distante.' });
+});
+
 // Sonde de santé (utilisée par le healthcheck Docker)
 app.get('/api/health', async (req, res) => {
   try {

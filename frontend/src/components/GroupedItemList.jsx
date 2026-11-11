@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState, memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import ItemList from './ItemList.jsx'
 import { resolveGroupImage } from './collection.js'
+import { toDisplayImageUrl } from '../services/imageUrl.js'
 
 /**
  * Vue « Liste » hiérarchique en accordéons — regroupe les éléments par
@@ -139,7 +140,7 @@ const GroupRow = memo(function GroupRow({ type, group, open, onToggle, actions, 
           >
             {imageSrc ? (
               <img
-                src={imageSrc}
+                src={toDisplayImageUrl(imageSrc)}
                 alt=""
                 loading="lazy"
                 className="h-full w-full object-cover"

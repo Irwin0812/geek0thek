@@ -10,6 +10,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n/i18n.js'
 import { api } from '../services/api.js'
+import { toDisplayImageUrl } from '../services/imageUrl.js'
 import IsbnModal from '../components/IsbnModal.jsx'
 
 // « DATE D'AJOUT » du jour (temps local), format AAAA-MM-JJ strict :
@@ -53,18 +54,16 @@ const EMPTY = {
   isSigned: false,
 }
 
-// Normalise le chemin de couverture renvoyé par le backend :
-//  - une URL distante est conservée telle quelle (http/https) ;
-//  - un chemin local (ex. "/uploads/comics/cover-xxx.jpg") est préfixé par
-//    l'origine pour être servi par le proxy -> backend :express.static sert
-//    le volume ./uploads sous /uploads, donc l'URL complète doit pointer sur
-//    l'origine du site et non sur un chemin relatif (sinon l'image s'affiche
-//    cassée ou disparaît après une modification).
+// Normalise une valeur « image » pour l'affichage (<img src>) — délégué au
+// helper centralisé services/imageUrl.js :
+//  - un chemin local (ex. "/uploads/comics/cover-xxx.jpg") est renvoyé RELATIF
+//    (résolu contre l'origine courante — jamais de hôte codé en dur) ;
+//  - une URL distante (http/https) passe par le proxy d'image du backend
+//    (MÊME ORIGINE) pour éviter le Mixed Content et les blocages CORS /
+//    hotlinking des CDN tiers.
+// Renvoie '' (et non null) pour préserver le contrat historique de l'état.
 function toDisplayCover(coverUrl) {
-  const s = String(coverUrl || '').trim()
-  if (!s) return ''
-  if (/^https?:\/\//i.test(s)) return s
-  return `${window.location.origin}${s}`
+  return toDisplayImageUrl(coverUrl) || ''
 }
 
 // Clé de comparaison entre deux adresses d'images désignant la MÊME ressource :
@@ -308,7 +307,10 @@ export default function AddComic() {
     // Suppression EXPLICITE armée : l'aperçu retombe immédiatement sur le
     // placeholder « Aucune couverture » — jamais de repli sur une URL ou la
     // valeur en base (cover_url -> NULL au submit via remove_cover=true).
-    if (!removeCover && remoteUrl) return /^https?:\/\//.test(remoteUrl) ? remoteUrl : null
+    // URL distante saisie (Discogs / Open Library / Last.fm…) : routée via le
+    // proxy d'image du backend (MÊME ORIGINE) — jamais l'URL tierce en direct,
+    // bloquée en Mixed Content (http:// sur https://) ou par CORS / hotlinking.
+    if (!removeCover && remoteUrl) return /^https?:\/\//.test(remoteUrl) ? toDisplayImageUrl(remoteUrl) : null
     if (isEdit && !removeCover && existingCover) return toDisplayCover(existingCover)
     return null
   }, [file, remoteUrl, existingCover, removeCover, isEdit])
@@ -327,8 +329,9 @@ export default function AddComic() {
   // stockée en base, jamais la jaquette du volume.
   const seriesPreview = useMemo(() => {
     if (seriesFile) return URL.createObjectURL(seriesFile)
-    // URL distante SAISIE : aperçu immédiat (doit être http/https).
-    if (!removeSeriesImage && seriesRemoteUrl) return /^https?:\/\//.test(seriesRemoteUrl) ? seriesRemoteUrl : null
+    // URL distante SAISIE : aperçu immédiat via le proxy d'image du backend
+    // (MÊME ORIGINE — anti Mixed Content / CORS), jamais l'URL tierce en direct.
+    if (!removeSeriesImage && seriesRemoteUrl) return /^https?:\/\//.test(seriesRemoteUrl) ? toDisplayImageUrl(seriesRemoteUrl) : null
     if (isEdit && existingSeriesImage && !removeSeriesImage) {
       return sameAsCover(existingSeriesImage, existingCover) ? IMG_NO_TITLE : toDisplayCover(existingSeriesImage)
     }

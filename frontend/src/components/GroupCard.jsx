@@ -9,8 +9,9 @@ import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FallbackCover as ComicFallback } from './ComicCard.jsx'
 import { FallbackCover as VinylFallback } from './VinylCard.jsx'
-import { coverAspect, resolveCoverUrl } from './cards.js'
+import { coverAspect } from './cards.js'
 import { resolveGroupImage } from './collection.js'
+import { toDisplayImageUrl } from '../services/imageUrl.js'
 
 /**
  * Tuile de regroupement (niveau 1) : une série de BD ou un artiste de disques.
@@ -88,12 +89,11 @@ function GroupCard({
   const imageSrc = resolveGroupImage(isVinyl ? 'artist' : 'series', dedicatedImage)
   // `coverUrl` (couverture d'ALBUM / de TOME) est volontairement JAMAIS utilisé
   // ici — aucun fallback vers une jaquette individuelle.
+  // Résolution centralisée (services/imageUrl.js) : chemin local relatif
+  // (jamais de hôte codé en dur) + URL distante via proxy même origine.
   const resolvedCover = useMemo(
-    () =>
-      imageSrc && !isVinyl && !imageSrc.startsWith('http')
-        ? `${window.location.origin}${imageSrc}`
-        : resolveCoverUrl(isVinyl ? 'vinyl' : 'comic', imageSrc),
-    [imageSrc, isVinyl]
+    () => toDisplayImageUrl(imageSrc),
+    [imageSrc]
   )
 
   return (

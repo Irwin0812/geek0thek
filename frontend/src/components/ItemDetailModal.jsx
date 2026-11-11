@@ -19,6 +19,7 @@
  */
 
 import { useTranslation } from 'react-i18next'
+import { toDisplayImageUrl } from '../services/imageUrl.js'
 
 /** Formate une date (ISO « AAAA-MM-JJ » de comics.added_date ou ISO8601) en jj/mm/aaaa. */
 function addDateFr(value) {
@@ -33,11 +34,10 @@ export default function ItemDetailModal({ type, item, onClose, onEdit }) {
   if (!item) return null
 
   const isVinyl = type === 'vinyl'
-  const cover = item.coverUrl
-    ? isVinyl || item.coverUrl.startsWith('http')
-      ? item.coverUrl
-      : `${window.location.origin}${item.coverUrl}`
-    : null
+  // Résolution centralisée (services/imageUrl.js) : chemin local relatif
+  // (jamais de hôte codé en dur) + URL distante via proxy même origine
+  // (anti Mixed Content / CORS).
+  const cover = toDisplayImageUrl(item.coverUrl)
 
   // « MusicBrainz » / « Discogs » = noms propres, non traduits.
   const rows = isVinyl

@@ -13,6 +13,7 @@ import { api } from '../services/api.js'
 import BarcodeModal from '../components/BarcodeModal.jsx'
 import { CheckIcon } from '../components/icons.jsx'
 import { useDismiss } from '../components/hooks.js'
+import { toDisplayImageUrl } from '../services/imageUrl.js'
 
 // « DATE D'AJOUT » du jour (temps local), format AAAA-MM-JJ strict :
 // valeur par défaut du champ lors de la création d'un nouveau disque.
@@ -286,10 +287,13 @@ export default function AddVinyl() {
     // placeholder « Aucune jaquette » — jamais de repli sur une URL ou la
     // valeur en base.
     if (!removeCover && remoteUrl && !/^\//.test(remoteUrl)) {
-      // aperçu local sans CORS : on tente directement, sinon fallback
-      return remoteUrl
+      // aperçu d'une URL DISTANTE (Discogs / Open Library / Last.fm…) : routée
+      // via le proxy d'image du backend (MÊME ORIGINE) — jamais l'URL tierce en
+      // direct, qui serait bloquée en Mixed Content (http:// sur un site https://)
+      // ou par les restrictions CORS / hotlinking des CDN.
+      return toDisplayImageUrl(remoteUrl)
     }
-    if (isEdit && !removeCover) return existingCover
+    if (isEdit && !removeCover) return toDisplayImageUrl(existingCover)
     return null
   }, [file, remoteUrl, existingCover, removeCover, isEdit])
 
@@ -311,7 +315,7 @@ export default function AddVinyl() {
     // dédiée conservable en base -> img/no_group.jpg (le même visuel que sur
     // les tuiles « Mes Disques » — jamais la jaquette d'album).
     const raw = isEdit && !removeArtistImage ? conservableArtistImage(existingArtistImage, existingCover) : ''
-    if (raw) return raw
+    if (raw) return toDisplayImageUrl(raw)
     return IMG_NO_GROUP
   }, [artistFile, isEdit, existingArtistImage, removeArtistImage, existingCover])
 

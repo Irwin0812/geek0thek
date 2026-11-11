@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
+import { toDisplayImageUrl } from '../services/imageUrl.js'
 
 /**
  * Boîte de dialogue « Importer un Disque (#EAN/Mots clés) » : DEUX modes de
@@ -328,7 +329,10 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
           <div className="mt-5 flex gap-4">
             <div className="w-28 h-28 shrink-0 rounded-lg overflow-hidden bg-night-900 border border-night-600">
               {result.cover_image ? (
-                <img src={result.cover_image} alt={t('barcodeModal.sleevePreview')} className="w-full h-full object-cover" />
+                // URL distante (Discogs / Last.fm / MusicBrainz) routée via le
+                // proxy d'image du backend (MÊME ORIGINE) — anti Mixed Content
+                // (http:// sur https://) et anti blocage CORS / hotlinking.
+                <img src={toDisplayImageUrl(result.cover_image)} alt={t('barcodeModal.sleevePreview')} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full grid place-items-center text-slate-600 text-xs">{t('common.noImage')}</div>
               )}

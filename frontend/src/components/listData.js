@@ -14,6 +14,7 @@
  * heuristiques transparentes (sous-titres mentionnés dans les notes,
  * « validé » = identifiant vérifié présent, etc.).
  */
+import { toDisplayImageUrl } from '../services/imageUrl.js'
 
 /** Année (4 chiffres) extraite d'une date de sortie de n'importe quel format. */
 export function releaseYear(item) {
@@ -74,12 +75,14 @@ export function itemBadges(type, item, t) {
 }
 
 /**
- * Résout l'URL de mini-visuel selon les règles de chaque collection :
- * BD locales → préfixer l'origine ; disques / URLs distantes → tel quel.
+ * Résout l'URL de mini-visuel pour l'affichage (<img src>).
+ *
+ * Centralisé dans services/imageUrl.js : chemins LOCAUX renvoyés RELATIFS
+ * (résolus contre l'origine courante — jamais de hôte codé en dur) et URL
+ * DISTANTES routées via le proxy d'image du backend (même origine) pour éviter
+ * le Mixed Content et les blocages CORS / hotlinking. Le paramètre `type` est
+ * conservé pour la compatibilité des appels mais n'influence plus la résolution.
  */
 export function resolveImageUrl(type, coverUrl) {
-  if (!coverUrl || typeof coverUrl !== 'string' || !coverUrl) return null
-  if (coverUrl.startsWith('http')) return coverUrl
-  if (type === 'comic') return `${window.location.origin}${coverUrl}`
-  return coverUrl
+  return toDisplayImageUrl(coverUrl)
 }

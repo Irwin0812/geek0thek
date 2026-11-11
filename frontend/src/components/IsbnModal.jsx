@@ -8,6 +8,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
+import { toDisplayImageUrl } from '../services/imageUrl.js'
 
 // Libellés des sources (une fiche peut être la fusion des deux quand
 // Google Books est incomplet et qu'Open Library a complété les vides).
@@ -276,7 +277,10 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
                   >
                     <span className="w-10 h-14 shrink-0 overflow-hidden rounded border border-night-600 bg-night-900">
                       {item.cover_image ? (
-                        <img src={item.cover_image} alt="" loading="lazy" className="w-full h-full object-cover" />
+                        // URL distante (Google Books / Open Library) routée via
+                        // le proxy d'image du backend (MÊME ORIGINE) — anti Mixed
+                        // Content (http:// sur https://) et anti CORS / hotlinking.
+                        <img src={toDisplayImageUrl(item.cover_image)} alt="" loading="lazy" className="w-full h-full object-cover" />
                       ) : null}
                     </span>
                     <span className="min-w-0 flex-1 text-sm space-y-0.5">
@@ -324,7 +328,10 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
           <div className="mt-5 flex gap-4">
             <div className="w-24 shrink-0 aspect-[2/3] rounded-lg overflow-hidden bg-night-900 border border-night-600">
               {result.cover_image ? (
-                <img src={result.cover_image} alt={t('isbnModal.coverPreview')} className="w-full h-full object-cover" />
+                // URL distante (Google Books / Open Library) routée via le proxy
+                // d'image du backend (MÊME ORIGINE) — anti Mixed Content et anti
+                // blocage CORS / hotlinking des CDN.
+                <img src={toDisplayImageUrl(result.cover_image)} alt={t('isbnModal.coverPreview')} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full grid place-items-center text-slate-600 text-xs text-center px-2">{t('common.noImage')}</div>
               )}

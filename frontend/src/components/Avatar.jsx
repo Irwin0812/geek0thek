@@ -6,6 +6,7 @@
  * the Free Software Foundation, either version 3 of the License.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { toDisplayImageUrl } from '../services/imageUrl.js'
 
 /** Révoque une object URL de prévisualisation… seulement si c'est bien une
  *  object URL (blob:). Les URL HTTP (avatar déjà enregistré) n'ont rien à
@@ -17,18 +18,16 @@ export function revokePreviewUrl(url) {
 }
 
 /**
- * Convertit un chemin local de profil ("/uploads/avatars/...") en URL
- * absolue servie même à travers un reverse proxy / protocole différent :
- * on préserve l'hôte et le PORT éventuel de la page courante.
- * Les URL déjà absolues (http://, https://, //… — ex : Cover Art
- * Archive, blob: object URL d'aperçu) sont renvoyées telles quelles.
+ * Convertit une valeur « image de profil » en source prête pour <img src>.
+ *
+ * Délégué au helper centralisé services/imageUrl.js : un chemin local
+ * ("/uploads/avatars/...") est renvoyé RELATIF (résolu contre l'origine courante
+ * — jamais de hôte codé en dur) et une URL distante passe par le proxy d'image
+ * du backend (MÊME ORIGINE, anti Mixed Content / CORS). Les object URLs blob:
+ * d'aperçu sont conservées telles quelles.
  */
 export function toAbsoluteUrl(raw) {
-  if (!raw) return null
-  const value = String(raw).trim()
-  if (!value) return null
-  if (/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(value)) return value
-  return `${window.location.protocol}//${window.location.host}${value}`
+  return toDisplayImageUrl(raw)
 }
 
 /** Attache le couple (img, url) à une tâche de décodage puis de rendu :

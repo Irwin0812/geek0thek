@@ -5,6 +5,8 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License.
  */
+import { toDisplayImageUrl } from '../services/imageUrl.js'
+
 /**
  * Configuration partagée des cartes (vue grille) : dimensions, ratio
  * d'image et typographie selon la taille demandée.
@@ -78,16 +80,17 @@ export function coverFit() {
 }
 
 /**
- * Résout l'URL d'image d'un élément selon le type :
- *  - vinyl : chaîne /uploads/... servie par le proxy nginx → telle quelle
- *  - comic : chaîne /uploads/comics/... → préfixée par l'origine
- * Les URL distantes (http/https) sont conservées telles quelles.
+ * Résout l'URL d'image d'un élément pour l'affichage (<img src>).
+ *
+ * Centralisé dans services/imageUrl.js : les chemins LOCAUX (/uploads/…) sont
+ * renvoyés RELATIFS (résolus contre l'origine courante — jamais de hôte codé
+ * en dur) et les URL DISTANTES (http/https) passent par le proxy d'image du
+ * backend (même origine) pour éviter le Mixed Content et les blocages CORS /
+ * hotlinking des CDN tiers. Le paramètre `type` est conservé pour la
+ * compatibilité des appels existants mais n'influence plus la résolution.
  */
 export function resolveCoverUrl(type, coverUrl) {
-  if (!coverUrl || typeof coverUrl !== 'string' || !coverUrl) return null
-  if (coverUrl.startsWith('http')) return coverUrl
-  if (type === 'comic') return `${window.location.origin}${coverUrl}`
-  return coverUrl
+  return toDisplayImageUrl(coverUrl)
 }
 
 /**
