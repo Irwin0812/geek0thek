@@ -482,6 +482,7 @@
     "totpCode": "Code de vérification (6 chiffres)",
     "totpQrAlt": "QR code de configuration 2FA",
     "totpQrLoading": "Génération du QR code…",
+    "totpQrError": "Impossible de générer le QR code dans ce navigateur — saisissez manuellement la clé secrète ci-dessous.",
     "totpConfirmEnable": "Confirmer et activer la 2FA",
     "totpCodeRequired": "Saisissez le code à 6 chiffres affiché par votre application.",
     "totpEnabledToast": "2FA activée — un code à 6 chiffres sera demandé à chaque connexion.",

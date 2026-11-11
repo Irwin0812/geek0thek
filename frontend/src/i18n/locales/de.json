@@ -477,6 +477,7 @@
     "totpCode": "Bestätigungscode (6 Ziffern)",
     "totpQrAlt": "QR-Code für die 2FA-Einrichtung",
     "totpQrLoading": "QR-Code wird generiert…",
+    "totpQrError": "QR-Code kann in diesem Browser nicht erstellt werden — geben Sie den geheimen Schlüssel unten manuell ein.",
     "totpConfirmEnable": "Bestätigen und 2FA aktivieren",
     "totpCodeRequired": "Geben Sie den von Ihrer App angezeigten 6-stelligen Code ein.",
     "totpEnabledToast": "2FA aktiviert — bei jeder Anmeldung wird ein 6-stelliger Code verlangt.",

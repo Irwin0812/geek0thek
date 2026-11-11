@@ -477,6 +477,7 @@
     "totpCode": "Verification code (6 digits)",
     "totpQrAlt": "2FA setup QR code",
     "totpQrLoading": "Generating QR code…",
+    "totpQrError": "Unable to generate the QR code in this browser — enter the secret key below manually.",
     "totpConfirmEnable": "Confirm and enable 2FA",
     "totpCodeRequired": "Enter the 6-digit code displayed by your app.",
     "totpEnabledToast": "2FA enabled — a 6-digit code will be requested at each login.",

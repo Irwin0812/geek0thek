@@ -140,16 +140,39 @@ export default function Profile() {
   const [totpError, setTotpError] = useState('')
   const [totpBusy, setTotpBusy] = useState(false)
 
-  // QR code (data URL) généré côté client depuis l'URI otpauth:// — aucune
-  // dépendance serveur, rendu immédiant dans la section 2FA du profil.
+  // QR code généré CÔTÉ CLIENT depuis l'URI otpauth:// — aucune dépendance
+  // réseau, donc AUCUNE URL d'image pointant vers localhost / un port backend
+  // (cause classique du QR « cassé » en production via le domaine public) :
+  // le <img> reçoit une Data URI autonome (data:image/png;base64,…), injectée
+  // directement dans `src`. Robustesse en production (reverse proxy, CSP,
+  // canvas restreint) :
+  //   1) PNG via canvas (toDataURL) — rendu net, scannable partout ;
+  //   2) repli SVG (toString) si le canvas échoue ou renvoie une chaîne vide —
+  //      toujours une Data URI, jamais un chemin relatif vers un hôte local ;
+  //   3) en cas d'échec total : message d'erreur VISIBLE (plus de QR « vide »
+  //      silencieux) — la clé secrète reste affichable pour la saisie manuelle.
   useEffect(() => {
     if (!totpSetup || !totpSetup.otpauthUri) return
     let cancelled = false
-    QRCode.toDataURL(totpSetup.otpauthUri, { width: 180, margin: 1, errorCorrectionLevel: 'M' })
-      .then((dataUrl) => {
-        if (!cancelled) setTotpSetup((s) => (s ? { ...s, qr: dataUrl } : s))
+    const opts = { width: 180, margin: 1, errorCorrectionLevel: 'M' }
+    const apply = (qr) => {
+      if (!cancelled && qr) setTotpSetup((s) => (s ? { ...s, qr } : s))
+    }
+    const svgDataUri = (svg) => `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+
+    QRCode.toDataURL(totpSetup.otpauthUri, opts)
+      .then((png) => (png && png.startsWith('data:image/') ? png : null))
+      .catch(() => null)
+      .then(async (png) => {
+        if (png) return apply(png)
+        const svg = await QRCode.toString(totpSetup.otpauthUri, opts)
+        if (svg) return apply(svgDataUri(svg))
+        if (!cancelled) setTotpError(t('profile.totpQrError'))
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!cancelled) setTotpError(t('profile.totpQrError'))
+      })
+
     return () => { cancelled = true }
   }, [totpSetup && totpSetup.otpauthUri])
 

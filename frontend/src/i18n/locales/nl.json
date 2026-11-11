@@ -477,6 +477,7 @@
     "totpCode": "Verificatiecode (6 cijfers)",
     "totpQrAlt": "QR-code voor 2FA-configuratie",
     "totpQrLoading": "QR-code wordt gegenereerd…",
+    "totpQrError": "De QR-code kan niet worden gegenereerd in deze browser — voer de geheime sleutel hieronder handmatig in.",
     "totpConfirmEnable": "Bevestigen en 2FA inschakelen",
     "totpCodeRequired": "Voer de 6-cijferige code in die door uw app wordt weergegeven.",
     "totpEnabledToast": "2FA ingeschakeld — bij elke inlogging wordt een 6-cijferige code gevraagd.",
