@@ -1,69 +1,93 @@
 # 💿📚 Geek0thek — Médiathèque Personnelle
 
-Application web full-stack conteneurisée pour la gestion de collections de
-**Vinyles** et de **Bandes Dessinées** (BD / Mangas / Comics) : thème sombre
-natif, UI soignée, stockage local des couvertures.
+---
 
-| Couche | Technologie |
-|---|---|
-| Backend | **Node.js 22** + **Express** (API REST, JWT, Helmet, CORS, Multer) |
-| Frontend | **React 18** (Vite) + **Tailwind CSS 3** |
-| Base de données | **PostgreSQL 16** (persistance locale via volume Docker) |
-| Stockage images | Dossier local `./uploads` monté dans le conteneur backend (sous-dossiers `vinyls/` et `comics/`) |
-| APIs vinyles | **MusicBrainz** + **Cover Art Archive** (sans clé API) **+ Discogs** (jeton `DISCOGS_TOKEN` requis) — import par **code-barres (EAN/UPC)** |
-| APIs BD | **Google Books** + **Open Library** (pré-remplissage automatique par **ISBN**, sans clé API) |
-| Déploiement | **Docker Compose** (cible **Debian 12**, IP `172.16.2.75`) ou **installation locale native sous Windows** (Node.js + PostgreSQL) — reverse-proxy friendly |
+## Description du projet
 
-Fonctionnalités clés :
-
-- Authentification **login + mot de passe (bcrypt)** avec JWT, rôles `admin` / `user`.
-- Admin de test principal créé à l'initialisation : `admin` / `admin` — **prêt à
-  l'emploi** (drapeau `must_change_password = FALSE`, connexion directe sans
-  onboarding forcé). Les données, collections et réglages du compte sont
-  conservés lors d'une réinitialisation.
-- **Vinyles** : import par **code-barres (EAN/UPC)** interrogeant **MusicBrainz**
-  (fiche de référence : titre, artiste, date, label, tracklist, MBID)
-  **+ Discogs en complément** (si jeton configuré : date, label, genre,
-  miniature, id de la release + URL de la fiche), ou saisie manuelle complète.
-- **BDs** : pré-remplissage par **ISBN** (Google Books, Open Library en secours) ou
-  saisie manuelle complète (série, tome, auteurs, illustrateurs, éditeur…).
-- **Visibilité publique/privée** de chaque collection (toggle dans le tableau de bord),
-  appliquée aux vinyles **et** aux BDs.
-- **Stockage local des couvertures** sur le disque de la VM hôte
-  (`./uploads/vinyls` et `./uploads/comics`) — les images distantes
-  (MusicBrainz / Cover Art Archive, **Discogs**, Google Books, Open Library)
-  sont **téléchargées et ré-hébergées localement**.
-- Pages **Collections publiques** (lecture seule, sans compte) : vinyles + BDs.
-- Compatible **reverse proxy externe** (`X-Forwarded-For`, `X-Forwarded-Proto`, WebSocket).
+Application web full-stack conteneurisée pour la gestion de collections de Disques, de Bandes Dessinées (BD / Mangas / Comics), de (à venir) Jeux de Rôle, Jeux Vidéo, Livres/Magazines.
 
 ---
 
-## 📂 Arborescence du projet
+## 💙 Soutenir le projet
+
+**Geek0thek est un projet conçu, développé et hébergé en solo, sur fonds propres.**
+L'hébergement (VM, base de données, stockage des couvertures), la maintenance et le développement continu sont entièrement pris en charge par l'auteur.
+
+Si cette médiathèque vous est utile et que vous souhaitez contribuer à sa pérennité, vous pouvez faire un **don libre** via PayPal :
+
+👉 **[Soutenez le projet en faisant un don via PayPal](https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN)**
+
+- **Aucun montant minimum ni maximum** : chaque contribution, quelle qu'en soit la taille, est la bienvenue et finance directement l'hébergement et le développement.
+- Le bouton **« Soutenez le projet »** est également disponible en permanence dans le pied de page de l'application (il s'adapte au thème visuel actif).
+
+Merci pour votre soutien ! 🙏
+
+---
+
+## Essayer la démo
+
+🔗 **Démo en ligne :** <https://demothek.igerarts.be>
+
+| Identifiant | Mot de passe |
+| --- | --- |
+| `demo` | `demo` |
+
+---
+
+## Fonctionnalités clés
+
+**Geek0thek** est une application web full-stack moderne conçue sur mesure pour centraliser, organiser et valoriser la collection complète de vos médias physiques et objets culturels (disques vinyles, bandes dessinées, jeux vidéo, jeux de rôle, livres et magazines). Pensée pour offrir une expérience fluide, immersive et hautement personnalisable, la plateforme combine une gestion rigoureuse des données avec une esthétique visuelle soignée.
+
+### 1. Gestion Multi-Bibliothèques et Collections
+
+- **Diversité des supports :** Prise en charge native de multiples collections physiques (Vinyles, BD, Jeux vidéo, JDR, Livres) avec des fiches descriptives adaptées à chaque univers culturel.
+- **Imports et Métadonnées :** Intégration d'API externes (telles que Discogs, Google Books) et de fonctionnalités de scan par code-barres (via smartphone) pour simplifier l'ajout d'œuvres.
+- **Cohérence des données :** Mécanismes de normalisation intelligents, garantissant par exemple que le genre musical du premier disque ajouté pour un artiste se réplique automatiquement pour les ajouts ultérieurs du même groupe.
+
+### 2. Identité Visuelle et Thèmes Personnalisés
+
+- **Immersion thématique :** L'application propose plusieurs univers graphiques distincts et mémorisables (comme le thème *Médiathèque* avec ses tons chaleureux, le thème *Néon* utilisant des polices typographiques spécifiques comme Neuropol, ou encore le thème *Disquaire* aux accents rétro inspirés des années 80).
+- **Gestion des préférences utilisateur :** Sauvegarde en base de données du thème de prédilection de chaque utilisateur, garantissant la persistance de son choix à chaque reconnexion.
+- **Interface responsive :** Boutons d'interaction ergonomiques (navigation rapide, retour en haut de page positionné au-dessus du footer) et support multilingue complet (français, anglais, néerlandais) avec détection automatique de la langue du navigateur.
+
+### 3. Sécurité & Rôles
+
+- **Authentification sécurisée :** Gestion des profils utilisateurs et intégration d'options de sécurité avancées (Double authentification / 2FA).
+- **Traçabilité des versions :** Affichage dynamique du numéro de Release GitHub officiel dans le pied de page, assurant un suivi clair des versions déployées.
+
+### 4. Architecture & Stack Technique
+
+- **Stack moderne :** Développé autour d'un backend Node.js / Express et d'un frontend React / Tailwind CSS, reposant sur une base de données PostgreSQL robuste optimisée pour traiter des volumes de données et des libellés étendus.
+- **Approche native et auto-hébergée :** Conçu pour tourner nativement sous Linux, témoignant d'une volonté d'indépendance vis-à-vis des solutions cloud propriétaires au profit d'une infrastructure locale, performante et souveraine. Une installation locale sous Windows (mode natif) est également possible.
+
+---
+
+## 📂 Arborescence du projet & Couches / Technologies
 
 ```text
 geek0thek/
-├── .env.example               # Variables d'environnement (template)
-├── docker-compose.yml         # Orchestration : db + backend + frontend
+├── .env                        # Variables d'environnement de production
+├── .gitignore
+├── package.json                # Configuration globale / scripts
 ├── README.md
 ├── database/
-│   └── init.sql               # Schéma (users, vinyls, comics, vues) + seed de l'admin admin/admin (bcrypt coût 12, must_change_password = FALSE)
-├── uploads/                   # Volume local des couvertures (disque de la VM hôte)
-│   ├── vinyls/                # Jaquettes de disques (créé automatiquement au 1er démarrage)
-│   └── comics/                # Couvertures de BD (créé automatiquement au 1er démarrage)
+│   └── init.sql                # Schéma de la base de données (tables, types élargis TEXT/VARCHAR)
+├── uploads/                    # Volume local des couvertures et images
+│   ├── vinyls/                 # Jaquettes de disques
+│   └── comics/                 # Couvertures de BD
 ├── backend/
-│   ├── Dockerfile
-│   ├── package.json
+│   ├── package.json            # Dépendances backend (express, pg, multer, etc.)
 │   └── src/
-│       ├── server.js          # App Express, statique /uploads, proxy trust, routes
+│       ├── server.js           # App Express, statique /uploads, proxy trust, routes
 │       ├── config/
-│       │   ├── db.js          # Pool PostgreSQL (pg)
-│       │   └── env.js         # Configuration centralisée (env)
+│       │   ├── db.js           # Pool PostgreSQL (pg)
+│       │   └── env.js          # Configuration centralisée (env)
 │       ├── middlewares/
-│       │   ├── auth.js        # JWT (authenticate) + requireAdmin
-│       │   └── upload.js      # Multer -> /app/uploads/vinyls | /app/uploads/comics (noms aléatoires)
+│       │   ├── auth.js         # JWT (authenticate) + requireAdmin
+│       │   └── upload.js       # Multer (gestion des uploads indépendants jaquettes/séries)
 │       ├── controllers/
 │       │   ├── authController.js
-│       │   ├── userController.js
+│       │   ├── userController.js    # Gestion des profils, préférences et thèmes utilisateur
 │       │   ├── vinylController.js
 │       │   ├── musicBrainzController.js
 │       │   ├── discogsController.js
@@ -78,66 +102,74 @@ geek0thek/
 │       │   ├── comicRoutes.js
 │       │   └── isbnRoutes.js
 │       └── utils/
-│           ├── musicBrainzClient.js # MusicBrainz + Cover Art Archive : recherche par barcode + téléchargement local
-│           ├── discogsClient.js     # Discogs : recherche par code-barres (jeton requis) + identifiants release
-│           └── isbnClient.js      # Google Books / Open Library par ISBN + téléchargement local
+│           ├── musicBrainzClient.js # MusicBrainz + Cover Art Archive
+│           ├── discogsClient.js     # Discogs (recherche par code-barres / release)
+│           └── isbnClient.js        # Google Books / Open Library par ISBN
 └── frontend/
-    ├── Dockerfile             # Build Vite multi-étapes -> nginx alpine
-    ├── nginx.conf             # SPA + proxy /api & /uploads (headers X-Forwarded-*)
-    ├── package.json
+    ├── package.json            # Dépendances frontend (React, Vite, Tailwind, i18next)
     ├── tailwind.config.js
     └── src/
-        ├── App.jsx            # Routage + contexte d'authentification
-        ├── index.css          # Thème sombre (Tailwind, palette "night"/"gold")
+        ├── App.jsx             # Routage + contextes (auth, thèmes, i18n)
+        ├── index.css           # Thèmes graphiques et styles Tailwind
         ├── main.jsx
         ├── components/
         │   ├── Navbar.jsx
+        │   ├── Footer.jsx      # Footer incluant l'affichage dynamique de la release GitHub
+        │   ├── TopButton.jsx   # Bouton retour en haut positionné au-dessus du footer
         │   ├── ProtectedRoute.jsx
         │   ├── VinylCard.jsx
         │   ├── BarcodeModal.jsx
         │   ├── ComicCard.jsx
         │   └── IsbnModal.jsx
+        ├── locales/            # Dictionnaires de traduction i18n (fr, en, nl) pour toutes les sections
         ├── pages/
         │   ├── Login.jsx
-        │   ├── Onboarding.jsx         # Sécurité 1re connexion : forçage du changement de mot de passe (+ pseudo)
+        │   ├── Onboarding.jsx      # Sécurité 1re connexion
         │   ├── Dashboard.jsx
-        │   ├── Collection.jsx         # Vinyles de l'utilisateur
-        │   ├── ComicCollection.jsx    # BDs de l'utilisateur
-        │   ├── PublicCollection.jsx   # Collections publiques (vinyles + BDs)
+        │   ├── Collection.jsx      # Vinyles de l'utilisateur
+        │   ├── ComicCollection.jsx # BDs de l'utilisateur
+        │   ├── PublicCollection.jsx# Collections publiques
         │   ├── AddVinyl.jsx
         │   ├── AddComic.jsx
+        │   ├── Profile.jsx         # Paramètres utilisateur, sécurité (2FA) et thèmes
         │   └── AdminUsers.jsx
         └── services/
-            └── api.js         # Client REST (JWT, multipart, gestion 401)
+            └── api.js          # Client REST (JWT, multipart, gestion 401)
 ```
+
+| Couche | Technologies / Outils | Rôle & Caractéristiques |
+| --- | --- | --- |
+| **Frontend (Présentation)** | **React**, **Vite**, **Tailwind CSS** | Interface utilisateur dynamique (SPA), responsive, avec thèmes personnalisables (Médiathèque, Néon, Disquaire). |
+| **Internationalisation & UI** | **i18next**, **Lucide Icons** / **React Icons** | Support multilingue (FR, EN, NL), détection de langue et composant d'UI (bouton Top, footer dynamique). |
+| **Backend (API / Serveur)** | **Node.js**, **Express.js** | API REST pour la gestion des données, de l'authentification et du traitement multipart (uploads). |
+| **Sécurité & Authentification** | **JWT (JSON Web Tokens)**, **bcrypt**, **express-rate-limit** | Authentification sécurisée, hachage de mots de passe, gestion du 2FA et protection anti-bot/rate-limiting. |
+| **Base de données (Données)** | **PostgreSQL** (`pg`) | Base de données relationnelle robuste avec types élargis (`TEXT`) pour éviter la limitation de taille des libellés. |
+| **Stockage Fichiers** | **Multer**, Système de fichiers local | Gestion et organisation locale des jaquettes de disques, couvertures de BD et images médias dans `/uploads`. |
+| **Services & APIs Externes** | **Discogs API**, **MusicBrainz**, **Cover Art Archive**, **Google Books / Open Library** | Métadonnées de collections et récupération automatique d'informations via codes-barres / ISBN. |
+| **Infrastructure & Hôte** | **Debian 12 (Bookworm)**, **Nginx** | Déploiement natif auto-hébergé sur VM dédié avec reverse proxy HTTPS et gestion DNS local (`dnsmasq`). |
 
 ---
 
 ## ⚙️ Spécifications système minimales
 
-L'application tourne sous **Docker Compose** avec **3 conteneurs** : PostgreSQL 16,
-backend Node.js 22 (API Express) et frontend nginx. Les spécifications ci-dessous
-sont celles recommandées pour l'exécuter **sereinement** sur la VM hôte.
+L'application tourne sous **Docker Compose** avec **3 conteneurs** : PostgreSQL 16, backend Node.js 22 (API Express) et frontend nginx. Les spécifications ci-dessous sont celles recommandées pour l'exécuter **sereinement** sur la VM hôte.
 
 ### Matériel
 
 | Ressource | Minimum | Recommandé |
-|---|---|---|
+| --- | --- | --- |
 | **CPU** | 2 cœurs (vCPU) | 4 cœurs (vCPU) |
 | **Mémoire RAM** | 2 Go | 4 Go |
 | **Espace disque libre** | 10 Go | 30 Go+ (les couvertures téléversées/téléchargées s'accumulent dans `./uploads`) |
 | **Réseau** | Connexion internet sortante (egress) | — |
 
-> **Répartition indicative de la RAM** : PostgreSQL ~500 Mo, backend Node.js
-> ~300 Mo, nginx ~50 Mo, le reste pour l'OS et Docker. En dessous de 2 Go, les
-> imports par code-barres/ISBN (téléchargement + ré-hébergement des couvertures)
-> peuvent devenir lents ou provoquer des OOM.
+> **Répartition indicative de la RAM** : PostgreSQL ~500 Mo, backend Node.js ~300 Mo, nginx ~50 Mo, le reste pour l'OS et Docker. En dessous de 2 Go, les imports par code-barres/ISBN (téléchargement + ré-hébergement des couvertures) peuvent devenir lents ou provoquer des OOM.
 
 ### Logiciels (prérequis hôte)
 
 | Logiciel | Version | Rôle |
-|---|---|---|
-| **Système d'exploitation** | Debian 12 (cible) — tout Linux compatible Docker fonctionne | Hôte de la VM |
+| --- | --- | --- |
+| **Système d'exploitation** | Debian 12 (cible) — tout Linux compatible Docker fonctionne | Windows natif sans Docker |
 | **Docker Engine** | ≥ 24.x (dernière stable) | Exécution des conteneurs |
 | **Docker Compose** | v2 (plugin `docker compose`) | Orchestration db + backend + frontend |
 | **Git** | récent | Déploiement (`git clone`) et mises à jour (`git pull`) |
@@ -150,242 +182,147 @@ L'application a besoin d'une **connexion internet sortante** pour :
 - **Imports BD** : Google Books, Open Library.
 - **Indicateur de mise à jour** : API GitHub (dépôt privé → `GITHUB_TOKEN`).
 
-Sans egress, l'application fonctionne normalement (collections locales,
-authentification) mais les imports par code-barres/ISBN échouent (`502`).
+Sans egress, l'application fonctionne normalement (collections locales, authentification) mais les imports par code-barres/ISBN échouent (`502`).
 
-> Les ports entrants requis sont uniquement le **port 80** (frontend). PostgreSQL
-> (5432) et l'API backend (8080) restent **internes au réseau Docker** et ne sont
-> pas exposés sur l'hôte.
+> Les ports entrants requis sont uniquement le **port 80** (frontend). PostgreSQL (5432) et l'API backend (8080) restent **internes au réseau Docker** et ne sont pas exposés sur l'hôte.
 
 ---
 
-## 🚀 Installation pas à pas (Debian 12 — VM `172.16.2.75`)
+## 🚀 Installation pas à pas
 
-### 1. Prérequis sur la VM
+### A. Linux — Docker Compose
+
+#### 1. Préparation du système (Docker Engine + Docker Compose)
+
+Connectez-vous en SSH à votre VM, puis préparez le système et installez les outils requis :
 
 ```bash
 # Mettre à jour le système
 sudo apt update && sudo apt upgrade -y
 
-# Installer Docker Engine + Compose (répositoire officiel Docker)
+# Installer les dépendances et le dépôt officiel Docker
+sudo apt install -y curl git apt-transport-https ca-certificates gnupg lsb-release
 curl -fsSL https://get.docker.com | sudo sh
-sudo usermod -aG docker $USER        # puis se reconnecter pour le groupe docker
+
+# Ajouter votre utilisateur au groupe docker pour éviter d'utiliser sudo à chaque commande
+sudo usermod -aG docker $USER
 ```
 
-Vérifications :
+*Note : Si vous venez d'ajouter votre utilisateur au groupe docker, déconnectez-vous de la session SSH (`exit`) puis reconnectez-vous pour appliquer le changement.*
+
+Vérifiez que tout est bien en place :
 
 ```bash
 docker --version
 docker compose version
 ```
 
-Conseil Debian 12 : la VM doit avoir l'IP **`172.16.2.75`** sur son interface
-(`ip addr`). Le port **80** doit être accessible (pare-feu local `iptables`/`nftables`
-et pare-feu du réseau si nécessaire).
+Vérifiez également que l'adresse IP de la VM correspond bien à celle attendue par la configuration (`votre_adresse_ip_ici`) :
 
-### 2. Déployer les fichiers du projet
+```bash
+ip addr
+```
+
+#### 2. Récupération des fichiers du projet (Git)
+
+Créez le répertoire d'installation (par exemple dans `/opt`), clonez votre dépôt, puis positionnez-vous dedans :
 
 ```bash
 sudo mkdir -p /opt && cd /opt
-sudo git clone <depot-git> geek0thek     # ou copier l'arborescence complète
+
+# Cloner le dépôt dans le dossier geek0thek (ajustez l'URL de votre dépôt si nécessaire)
+sudo git clone <url-du-depot-git> geek0thek
+
+# Donner la propriété du dossier à votre utilisateur courant
+sudo chown -R $USER:$USER /opt/geek0thek
 cd /opt/geek0thek
 ```
 
-### 3. Préparer l'environnement & le secret JWT
+#### 3. Configuration du fichier `.env`
+
+Le projet fournit un modèle de configuration. Dupliquez-le pour créer votre fichier `.env` actif :
 
 ```bash
 cp .env.example .env
 ```
 
-Éditez `.env` :
+Ouvrez le fichier `.env` avec votre éditeur favori (ex. `nano .env`) et adaptez les valeurs clés :
 
-```env
-# Secret JWT : générer une longue chaîne aléatoire
-openssl rand -hex 64
-#   puis coller la valeur dans JWT_SECRET=...
+1. **Sécurité JWT (obligatoire) :** Générez une chaîne aléatoire sécurisée en exécutant la commande suivante dans un autre terminal :
 
-# (Optionnel) User-Agent identifié envoyé à MusicBrainz :
-MUSICBRAINZ_USER_AGENT=Geek0thek/1.0.0 (contact@example.com)
-# Options : CORS_ORIGIN=http://172.16.2.75  (à ajuster si reverse proxy https)
-```
+   ```bash
+   openssl rand -hex 64
+   ```
 
-### 4. Permissions du dossier `uploads` (important)
+   Copiez le résultat et collez-le à la place de la valeur par défaut :
 
-Les conteneurs s'exécutent en utilisateur `node` (uid 1000) côté backend.
-Le serveur crée les sous-dossiers s'ils manquent, mais pour éviter tout
-problème sur le disque hôte :
+   ```env
+   JWT_SECRET=votre_chaine_aleatoire_generee_ici
+   ```
 
-```bash
-cd /opt/geek0thek
-sudo mkdir -p uploads/vinyls uploads/comics
-sudo chown -R 1000:1000 uploads        # uid 1000 = utilisateur "node" dans l'image
-sudo chmod 775 uploads uploads/vinyls uploads/comics
-ls -laR uploads
-```
+2. **Paramètres réseau et base de données :** Vérifiez que l'IP d'écoute correspond bien à votre environnement (`votre_adresse_ip_ici`) et que le mot de passe de la base de données vous convient :
 
-> Le volume `./uploads:/app/uploads` garantit que les couvertures (fichiers
-> téléversés **et** téléchargées depuis MusicBrainz / Cover Art Archive,
-> Discogs, Google Books / Open Library)
-> sont stockées **sur le disque de la VM hôte** :
-> - `/opt/geek0thek/uploads/vinyls/` → jaquettes de disques
-> - `/opt/geek0thek/uploads/comics/` → couvertures de BD
->
-> Multer route automatiquement chaque upload vers le bon sous-dossier selon
-> la route concernée (`/api/vinyls/*` → `vinyls/`, `/api/comics/*` → `comics/`).
-> La base de données est de même persistée dans `/opt/geek0thek/data`.
+   ```env
+   APP_HOST_IP=votre_adresse_ip_ici
+   APP_PORT=80
+   POSTGRES_PASSWORD=your_db_password
+   CORS_ORIGIN=http://votre_adresse_ip_ici
+   APP_URL=http://votre_adresse_ip_ici
+   ```
 
-### 5. API MusicBrainz (aucune clé requise)
+3. **Clés et jetons optionnels (Discogs, Google Books, Last.fm, GitHub) :** Renseignez vos clés API si vous souhaitez activer les fonctionnalités avancées d'import de métadonnées et l'indicateur de mise à jour GitHub (laissez vide si vous n'en avez pas l'utilité immédiate).
 
-L'import par code-barres s'appuie sur **MusicBrainz** (métadonnées : titre,
-artiste, date, label) et **Cover Art Archive** (jaquette). **Aucune clé API ni
-compte n'est requis** : le backend identifie l'application via l'en-tête
-`User-Agent` (`Geek0thek/1.0.0 (contact@example.com)` par défaut).
+#### 4. Configuration des dossiers et des permissions de stockage
 
-Vous pouvez personnaliser ce User-Agent dans `.env` (recommandé : indiquer un
-contact valide, exigé par MusicBrainz) :
-
-```env
-MUSICBRAINZ_USER_AGENT=Geek0thek/1.0.0 (contact@example.com)
-```
-
-Sans paramètre configuré, l'endpoint
-`GET /api/musicbrainz/status` renvoie toujours `configured: true` (l'API ne
-dépend d'aucune clé) et la recherche par code-barres fonctionne immédiatement.
-
-> **Quota** : MusicBrainz autorise **1 requête/seconde** maximum.
-> L'application ne fait qu'une seule requête de recherche par import
-> (+ une récupération de jaquette sur Cover Art Archive).
-
-> **BD / ISBN** : les recherches par ISBN s'appuient sur **Google Books API**
-> puis **Open Library** en secours. **Aucune clé API n'est requise** et aucun
-> paramètre `.env` n'est nécessaire — le backend effectue la recherche côté
-> serveur et télécharge la couverture localement (ré-hébergement).
-
-### 6. API Discogs — jeton personnel (`DISCOGS_TOKEN`)
-
-**Discogs complète MusicBrainz** dans la recherche par code-barres : en plus
-de la fiche de référence MusicBrainz (titre, artiste, date, label, tracklist,
-MBID), Discogs apporte la **date, le label et le genre manquants**, la **miniature**,
-et les **identifiants de la release**
-(`discogs_release_id` + `discogs_url`, persistés avec le vinyle).
-
-Discogs **exige** un **jeton personnel** + un `User-Agent` identifié. Sans
-`DISCOGS_TOKEN`, la recherche Discogs est simplement **désactivée** :
-l'application fonctionne alors avec MusicBrainz seul, sans erreur.
-
-**Obtenir un jeton Discogs** (compte gratuit requis) :
-
-1. Se connecter sur <https://www.discogs.com>
-2. Ouvrir <https://www.discogs.com/settings/developers>
-3. Cliquer sur **« Create New Token »** et donner un nom (ex. `Geek0thek`)
-4. Laisser les **permissions par défaut** (la lecture seule suffit)
-5. Copier le jeton généré dans `.env` :
-
-```env
-# Jeton Discogs (obligatoire pour activer le complément Discogs)
-DISCOGS_TOKEN=votre-jeton-discogs-ici
-
-# (Optionnel) User-Agent identifié envoyé à Discogs (recommandé) :
-DISCOGS_USER_AGENT=Geek0thek/1.0.0 (contact@example.com)
-
-# (Optionnel) Nombre de requêtes Discogs autorisées par minute (défaut 25, max 250) :
-DISCOGS_RATE_LIMIT_PER_MINUTE=25
-```
-
-> **Quota** : Discogs autorise par défaut **25 requêtes/min** par jeton.
-> L'application limite d'elle-même le débit (limiteurs internes) et ne fait
-> qu'une requête de recherche par code-barres.
-> `GET /api/discogs/status` renvoie `configured: true` uniquement si
-> `DISCOGS_TOKEN` est renseigné et valide.
-
-**Endpoint combiné d'import par code-barres**
-
-`GET /api/musicbrainz/barcode/:code` (JWT requis, EAN/UPC : 8 à 14 chiffres)
-interroge **MusicBrainz et Discogs en parallèle**, puis **fusionne** les
-fiches : MusicBrainz est la référence (tracklist, MBID) ; Discogs ne
-complète que ce qui manque + ses identifiants. Les deux sources sont
-indépendantes :
-
-- **Discogs non configuré** → aucune erreur, fiche MusicBrainz seule
-  (`providers.discogs: "not-configured"`).
-- **Source absente d'un disque (404)** → non bloquant, l'autre source est renvoyée.
-- **Échec d'infrastructure (502/429/401)** → signalé dans `warnings` si l'autre
-  source a trouvé la fiche ; sinon statut de la 1ʳᵉ erreur renvoyé (429 ou 502).
-
-Réponse `200` :
-
-```json
-{
-  "success": true,
-  "data": {
-    "barcode": "0123456789012",
-    "artist": "Artiste",
-    "title": "Titre",
-    "label": "Label",
-    "genre": "Rock",
-    "release_date": "1995-06-01",
-    "tracklist": "Titre 1\nTitre 2",
-    "track_count": 2,
-    "cover_image": "/uploads/…",
-    "mbid": "uuid",
-    "discogs_release_id": 123456,
-    "discogs_url": "https://www.discogs.com/release/123456",
-    "source": "musicbrainz+discogs"
-  },
-  "providers": { "musicbrainz": "found", "discogs": "found" },
-  "warnings": []
-}
-```
-
-- `source` : `"musicbrainz"` / `"discogs"` / `"musicbrainz+discogs"`.
-- `providers.<src>` : `"found"` | `"not-found"` | `"not-configured"` (discogs) | `"unavailable"`.
-- `discogs_release_id` / `discogs_url` sont `null` si Discogs n'a pas reconnu le disque
-  (ou n'est pas configuré) ; ils sont **persistés avec le vinyle** à la création.
-- Aucune des deux sources ne connaît le code → **`404`** (saisie manuelle conseillée).
-
-L'endpoint Discogs seul (pour débogage) est aussi exposé :
-`GET /api/discogs/status` et `GET /api/discogs/barcode/:code`.
-
-### 7. Lancer l'application
+Le backend utilise un dossier local pour persister les jaquettes et images de manière sécurisée sur le disque de l'hôte. Préparez ce répertoire :
 
 ```bash
-cd /opt/geek0thek
+mkdir -p uploads/vinyls uploads/comics
+
+# Le conteneur backend s'exécute sous l'UID 1000 (utilisateur node).
+# Attribuez les bonnes permissions pour éviter les erreurs d'écriture :
+sudo chown -R 1000:1000 uploads
+chmod 775 uploads uploads/vinyls uploads/comics
+```
+
+#### 5. Lancement de l'application avec Docker Compose
+
+Tout est prêt. Lancez le déploiement en arrière-plan en demandant la construction des images :
+
+```bash
 docker compose up -d --build
 ```
 
-Suivi des journaux :
+#### 6. Vérification du déploiement
+
+Suivez les logs de démarrage pour vous assurer que les services (`db`, `backend`, `frontend`) s'initialisent correctement sans erreur :
 
 ```bash
 docker compose logs -f
+```
+
+Vérifiez l'état des conteneurs :
+
+```bash
 docker compose ps
 ```
 
-La base PostgreSQL exécute automatiquement `database/init.sql` **à la toute
-première création** du volume `./data` : le schéma complet (tables `users`,
-`vinyls`, `comics` + vues publiques) est mis en place et
-**l'admin de test principal est créé** (`admin` / `admin`, mot de passe hashé
-bcrypt, drapeau `must_change_password = FALSE`).
+- **Base de données :** À la toute première création, PostgreSQL exécutera automatiquement le script d'initialisation (`database/init.sql`) pour créer les tables et le compte administrateur par défaut.
+- **Accès :** L'application est désormais accessible sur le réseau à l'adresse **`http://votre_adresse_ip_ici`**.
 
-L'application est alors joignable à l'URL **`http://172.16.2.75`**.
+### B. Windows — mode natif (sans Docker)
 
----
+Cette section décrit l'installation **native** de l'application sur une machine Windows : Node.js et PostgreSQL s'exécutent directement sur la machine, sans conteneur. Le projet est structuré en deux dossiers distincts (`backend/` et `frontend/`), chacun disposant de son propre `package.json`.
 
-## 🪟 Installation locale sous Windows (mode natif — sans Docker)
-
-Cette section décrit l'installation **native** de l'application sur une machine
-Windows : Node.js et PostgreSQL tournent directement sur la machine, sans
-conteneurs ni Docker. Le projet est un monorepo en deux dossiers (`backend/`
-et `frontend/`) ; chaque dossier possède son propre `package.json`.
-
-### Prérequis techniques
+#### Prérequis techniques
 
 | Logiciel | Version | Rôle |
-|---|---|---|
+| --- | --- | --- |
 | **Node.js** | **LTS 20.x ou 22.x** (≥ 20, recommandé : dernière LTS) + npm inclus | Runtime du backend Express et du frontend Vite/React |
 | **PostgreSQL** | **16.x** (Windows x64, installateur officiel EDB) | Base de données locale |
-| **Git for Windows** | récent | Clonage du dépôt et mises à jour (`git pull`) |
+| **Git for Windows** | Récent | Clonage du dépôt et mises à jour (`git pull`) |
 
-Vérifications dans un **PowerShell** ou **cmd.exe** :
+Vérifications rapides dans un terminal **PowerShell** :
 
 ```powershell
 node --version    # v20.x / v22.x
@@ -394,252 +331,256 @@ psql --version    # PostgreSQL 16.x (après l'installation)
 git --version
 ```
 
-> **PostgreSQL sur Windows** : téléchargez le bundle officiel
-> <https://www.postgresql.org/download/windows/> (ex. `postgresql-16.x-x64.exe`).
-> L'installateur installe le service Windows « PostgreSQL 16 » (démarrage
-> automatique) et propose d'installer **pgAdmin** (optionnel). Notez le mot de
-> passe du superutilisateur `postgres` demandé pendant l'installation : il
-> servira à créer la base et l'utilisateur ci-dessous.
+> **PostgreSQL sur Windows** : téléchargez le package officiel sur le site d'EDB/PostgreSQL. L'installateur configure automatiquement le service Windows « PostgreSQL 16 » au démarrage. Notez bien le mot de passe du superutilisateur `postgres` défini lors de l'installation, il vous sera demandé pour initialiser la base.
 
-### Étape 1 — Récupération du projet
+#### Étape 1 — Récupération du projet
+
+Placez-vous dans votre dossier de travail (par exemple `C:\Users\votre_utilisateur`) et clonez ou placez les fichiers du projet dans `geek0thek` :
 
 ```powershell
-# Depuis le dossier de travail de votre choix (ex. C:\dev)
-cd C:\dev
-git clone <depot-git> geek0thek     # ou copier l'arborescence complète du dépôt
+cd C:\Users\votre_utilisateur
+git clone <url-du-depot-git> geek0thek
 cd geek0thek
 ```
 
-Le projet est ensuite local dans `C:\dev\geek0thek` (ou le chemin de votre
-choix) :
+L'arborescence locale est alors la suivante :
 
 ```text
 geek0thek/
-├── .env.example        # template des variables d'environnement
-├── database/init.sql   # schéma + seed admin
-├── uploads/            # couvertures (créé automatiquement au 1er démarrage)
-├── backend/            # API Express (package.json)
-└── frontend/           # React + Vite (package.json)
+├── .env.example        # Template des variables d'environnement
+├── database/init.sql   # Schéma et données initiales (seed admin)
+├── uploads/            # Dossier de stockage des jaquettes (créé automatiquement)
+├── backend/            # API Express
+└── frontend/           # Interface React + Vite
 ```
 
-### Étape 2 — Configuration de la base de données PostgreSQL
+#### Étape 2 — Configuration de la base de données PostgreSQL
 
-Ouvrez **psql** en superutilisateur (`postgres`) : depuis le menu Démarrer,
-lancez **« psql »** (ou `C:\Program Files\PostgreSQL\16\bin\psql.exe -U postgres`),
-puis saisissez le mot de passe `postgres` défini à l'installation.
+Ouvrez l'outil **psql** (disponible depuis le menu Démarrer ou via le chemin d'installation `C:\Program Files\PostgreSQL\16\bin\psql.exe`) en vous connectant en tant qu'administrateur (`-U postgres`). Saisissez le mot de passe défini à l'installation.
 
-Créez l'utilisateur et la base de données :
+Créez l'utilisateur dédié et la base de données (remplacez `votre_mot_de_passe_postgres` par un mot de passe fort de votre choix) :
 
 ```sql
-CREATE USER vinyl WITH PASSWORD 'V4ult!Postgres2026';
+CREATE USER vinyl WITH PASSWORD 'votre_mot_de_passe_postgres';
 CREATE DATABASE geek0thek OWNER vinyl;
 \q
 ```
 
-Puis exécutez le script d'initialisation (schéma complet : tables `users`,
-`vinyls`, `comics`, vues publiques + **seed de l'admin `admin` / `admin`**) :
+Exécutez ensuite le script d'initialisation pour mettre en place le schéma (tables `users`, `vinyls`, `comics`, vues publiques) et le compte administrateur par défaut (`admin` / `admin`) :
 
 ```powershell
-psql -U postgres -d geek0thek -f "C:\dev\geek0thek\database\init.sql"
+psql -U postgres -d geek0thek -f "C:\Users\votre_utilisateur\geek0thek\database\init.sql"
 ```
 
-Vérification :
+Vérification de la bonne création des tables :
 
 ```powershell
 psql -U vinyl -d geek0thek -c "\dt"
-# -> tables : users, vinyls, comics (+ vues public_vinyls / public_comics)
 ```
 
-> **Windows + psql** : si `psql` n'est pas dans le `PATH`, préfixez les
-> commandes par `"C:\Program Files\PostgreSQL\16\bin\psql.exe"`.
-> Le mot de passe de l'utilisateur `vinyl` peut être personnalisé — il doit
-> simplement correspondre à `DB_PASSWORD` dans `.env` (étape 3).
+> **Chemin psql** : si la commande `psql` n'est pas reconnue directement dans votre terminal, préfixez-la avec le chemin complet de l'exécutable : `"C:\Program Files\PostgreSQL\16\bin\psql.exe"`.
 
-### Étape 3 — Configuration des variables d'environnement
+#### Étape 3 — Configuration des variables d'environnement
 
-Copiez le template `.env.example` vers `.env` **à la racine du projet** :
+Dupliquez le fichier modèle `.env.example` pour créer votre fichier `.env` actif à la racine du projet :
 
 ```powershell
-cd C:\dev\geek0thek
+cd C:\Users\votre_utilisateur\geek0thek
 copy .env.example .env
 ```
 
-Puis adaptez `.env` pour le mode natif Windows (les valeurs ci-dessous sont les
-défauts attendus par le backend) :
+Ouvrez le fichier `.env` avec votre éditeur et ajustez les paramètres pour le mode natif Windows :
 
 ```env
-# --- Base de données PostgreSQL (locale, machine hôte) ----------
+# --- Base de données PostgreSQL (locale) -------------------------
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=vinyl
-DB_PASSWORD=V4ult!Postgres2026
+DB_PASSWORD=votre_mot_de_passe_postgres
 DB_NAME=geek0thek
 
 # --- Backend (API Express) --------------------------------------
 PORT=8080
 NODE_ENV=development
-# OBLIGATOIRE : générer une longue chaîne aléatoire, ex. :
-#   node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+# OBLIGATOIRE : générer une longue chaîne aléatoire (ex: openssl rand -hex 64)
 JWT_SECRET=votre-secret-aleatoire-long-ici
 CORS_ORIGIN=http://localhost:5173
 
-# --- Stockage des jaquettes (dossier local du projet) -----------
-UPLOAD_DIR=C:\dev\geek0thek\uploads
+# --- Stockage des jaquettes (chemin absolu local) ---------------
+UPLOAD_DIR=C:\Users\votre_utilisateur\geek0thek\uploads
 MAX_UPLOAD_MB=10
 
-# --- URL publique de l'application (liens des e-mails) ----------
+# --- URL publique de l'application ------------------------------
 APP_URL=http://localhost:5173
 ```
 
-> **Notes** :
-> - Le backend lit `.env` à la **racine du dépôt** (`geek0thek/.env`) — c'est
->   le même fichier que pour Docker, il n'y a donc qu'un seul `.env` à gérer.
-> - `DB_HOST=localhost` remplace l'hôte interne Docker `db`.
-> - `CORS_ORIGIN=http://localhost:5173` correspond au port du serveur de
->   développement Vite (le proxy `/api` et `/uploads` est géré par Vite, voir
->   `frontend/vite.config.js`).
-> - Les variables d'API externes (`DISCOGS_TOKEN`, `LASTFM_API_KEY`,
->   `GOOGLE_BOOKS_API_KEY`, SMTP…) restent optionnelles : sans elles, les
->   fonctions correspondantes sont simplement désactivées (voir sections
->   dédiées plus haut).
+#### Étape 4 — Installation des dépendances et lancement
 
-### Étape 4 — Installation des dépendances & lancement
+Ouvrez **deux terminaux PowerShell séparés** pour lancer le backend et le frontend en parallèle :
 
-Le projet est un monorepo : installez les dépendances du **backend** puis du
-**frontend** (deux terminaux distincts, ou deux onglets PowerShell).
+**Terminal 1 — Backend (API Express sur le port 8080) :**
 
 ```powershell
-# Terminal 1 — Backend (API Express sur http://localhost:8080)
-cd C:\dev\geek0thek\backend
+cd C:\Users\votre_utilisateur\geek0thek\backend
 npm install
-npm run dev        # mode développement : node --watch (rechargement auto)
-# ou en production :
-npm start          # node src/server.js
+npm run dev       # Mode développement avec rechargement automatique
 ```
 
+**Terminal 2 — Frontend (Serveur Vite sur le port 5173) :**
+
 ```powershell
-# Terminal 2 — Frontend (Vite sur http://localhost:5173)
-cd C:\dev\geek0thek\frontend
+cd C:\Users\votre_utilisateur\geek0thek\frontend
 npm install
-npm run dev        # mode développement : serveur Vite + proxy /api & /uploads -> :8080
+npm run dev       # Serveur de dev Vite avec proxy intégré vers le backend
 ```
 
-L'application est alors joignable à l'URL **`http://localhost:5173`** —
-connectez-vous avec le compte seedé **`admin` / `admin`**.
+L'application est désormais accessible sur votre navigateur à l'adresse **`http://localhost:5173`**. Connectez-vous avec le compte administrateur initial (`admin` / `admin`).
 
-> **Build de production du frontend** (optionnel) :
-> `npm run build` dans `frontend/` génère `frontend/dist/` ; le backend Express
-> peut ensuite servir ce dossier statiquement, ou tout serveur web (nginx, IIS…)
-> peut le servir avec un proxy `/api` → `http://localhost:8080`.
+#### Commandes utiles (mode natif Windows)
 
-### Commandes utiles (mode natif Windows)
+- **Arrêter les services** : appuyez sur `Ctrl+C` dans chacun des terminaux PowerShell.
+- **Vérifier la santé de l'API** :
 
-```powershell
-# Arrêter : Ctrl+C dans chaque terminal (backend puis frontend)
+  ```powershell
+  curl http://localhost:8080/api/health
+  ```
 
-# Vérifier la santé de l'API (base incluse)
-curl http://localhost:8080/api/health
-# -> { "status": "ok", "schema_ok": true }
+- **Sauvegarde de la base de données** :
 
-# Se connecter à la base
-psql -U vinyl -d geek0thek
+  ```powershell
+  pg_dump -U vinyl -Fc geek0thek > backup.dump
+  ```
 
-# Sauvegarde / restauration de la base
-pg_dump -U vinyl -Fc geek0thek > backup-2026.dump
-pg_restore -U vinyl -d geek0thek --clean < backup-2026.dump
+- **Mise à jour du code** :
 
-# Re-démarrer proprement la base (⚠️ EFFACE les données)
-psql -U postgres -c "DROP DATABASE geek0thek;"
-psql -U postgres -c "CREATE DATABASE geek0thek OWNER vinyl;"
-psql -U vinyl -d geek0thek -f database\init.sql
-
-# Mise à jour du code
-git pull
-cd backend && npm install && cd ..\frontend && npm install
-```
-
-> **Dépannage rapide (Windows)** :
-> - `ECONNREFUSED 127.0.0.1:5432` → le service Windows « PostgreSQL 16 » n'est
->   pas démarré (`services.msc` → démarrer le service) ou le port a changé.
-> - `password authentication failed for user "vinyl"` → `DB_PASSWORD` dans
->   `.env` ne correspond pas au mot de passe créé à l'étape 2.
-> - `EADDRINUSE :::8080` (ou `:5173`) → un autre processus occupe le port :
->   changer `PORT` dans `.env` (backend) ou `server.port` dans
->   `frontend/vite.config.js`.
-> - `sharp` / `bcryptjs` : aucune compilation native requise sur Windows
->   (prébuilds fournies) ; en cas d'erreur d'installation, `npm cache clean --force`
->   puis `npm install` à nouveau.
+  ```powershell
+  git pull
+  cd backend; npm install
+  cd ../frontend; npm install
+  ```
 
 ---
 
-## 🔑 Comptes par défaut
+## 💙 Soutenir le projet
 
-| Login | Mot de passe | Rôle |
-|---|---|---|
-| `admin` | `admin` | `admin` (compte de test principal, seedé dans `init.sql`) |
+**Geek0thek est un projet conçu, développé et hébergé en solo, sur fonds propres.**
+L'hébergement (VM, base de données, stockage des couvertures), la maintenance et le développement continu sont entièrement pris en charge par l'auteur.
 
-- Seul un **admin** peut créer / modifier / supprimer des comptes
-  (section *Utilisateurs*).
-- Le mot de passe est stocké **hashé bcrypt** (coût 12 en base / 10 pour les
-  comptes créés via l'UI) ; jamais en clair.
+Si cette médiathèque vous est utile et que vous souhaitez contribuer à sa pérennité, vous pouvez faire un **don libre** via PayPal :
 
-### 🔒 Sécurité à la première connexion (onboarding forcé)
+👉 **[Soutenez le projet en faisant un don via PayPal](https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN)**
 
-Tant que le compte porte le drapeau `must_change_password = TRUE` — c'est le cas
-de **tout compte créé via l'API** (l'admin de test `admin` / `admin` est seedé
-avec le drapeau à `FALSE`, il n'est donc pas concerné) — l'accès à
-l'application est **bloqué** :
+- **Aucun montant minimum ni maximum** : chaque contribution, quelle qu'en soit la taille, est la bienvenue et finance directement l'hébergement et le développement.
+- Le bouton **« Soutenez le projet »** est également disponible en permanence dans le pied de page de l'application (il s'adapte au thème visuel actif).
 
-1. **Login** avec les identifiants de première installation → redirection
-   obligatoire vers la page **Onboarding** (`/onboarding`).
-2. La modification du mot de passe est **obligatoire** (nouveau mot de passe
-   d'au moins 8 caractères, différent de l'actuel, **double saisie**) ; le
-   **pseudo de login peut être personnalisé** (facultatif).
-3. Une fois validé (`POST /api/auth/onboarding`), la base est mise à jour
-   (nouveau `login`, nouveau `password_hash` bcrypt, drapeau remis à `FALSE`)
-   et la session est renouvelée avec un **nouveau JWT** : retour au tableau de
-   bord.
-
-Côté API, le garde `requirePasswordChanged` renvoie `403`
-(`code: "must-change-password"`) sur toutes les routes protégées tant que le
-drapeau n'est pas levé ; le frontend intercepte ce code et redirige vers la
-page de forçage. Une **réinitialisation du mot de passe par un admin**
-(`PUT /api/users/:id` avec `newPassword`) remet le drapeau à `TRUE` : la
-prochaine connexion du compte redevient un onboarding forcé.
-
-### 📅 Rappel de sécurité semestriel (comptes SANS 2FA)
-
-En complément de l'onboarding forcé, un **rappel automatique** est envoyé
-**tous les 6 mois** à chaque utilisateur **actif** qui n'a **pas activé
-l'authentification à deux facteurs (2FA)**, pour l'inviter / inciter à changer
-son mot de passe et à activer la 2FA.
-
-- **Mécanisme** : une tâche planifiée (planificateur natif `setInterval`, sans
-  dépendance externe) démarre au boot de l'API, une fois la base disponible.
-  Elle vérifie **quotidiennement** les comptes éligibles ; le rappel n'est
-  réellement envoyé que si le compte est « échu ».
-- **Éligibilité** : compte `is_active = TRUE`, `totp_enabled = FALSE` (2FA non
-  activée), dont le mot de passe a plus de 6 mois (`users.password_changed_at`,
-  ou `created_at` en repli) **et** qui n'a pas reçu de rappel depuis plus de
-  6 mois (`users.last_password_reminder_at`).
-- **Règle non bloquante** : il s'agit d'une simple demande **informative** par
-  e-mail. Elle ne bloque **jamais** l'accès à l'application, ne modifie ni le
-  mot de passe ni le drapeau `must_change_password` — seul le champ
-  `last_password_reminder_at` est mis à jour (pour éviter les doublons).
-- **Idempotence** : le champ `last_password_reminder_at` garantit qu'aucun
-  utilisateur ne reçoit plus d'un rappel par période de 6 mois, même si la
-  vérification tourne quotidiennement ou que le conteneur est redémarré.
-- **SMTP requis** : si le SMTP n'est pas configuré, aucun rappel n'est envoyé
-  (et aucun compte n'est marqué) — les rappels partiront dès que le SMTP sera
-  opérationnel.
+Merci pour votre soutien ! 🙏
 
 ---
 
-## 🖥️ Configuration d'un reverse proxy externe
+## 🔑 Comment se connecter pour la première fois ?
 
-Le frontend (nginx interne) et le backend (Express `trust proxy = 1`) sont
-déjà câblés pour recevoir les en-têtes `X-Forwarded-*`. Exemple **nginx** pour
-un reverse proxy sur la VM (domaine `vinyle.exemple.fr`) :
+- **Identifiants de départ :** Pour votre toute première connexion, utilisez le compte par défaut avec le nom d'utilisateur `admin` et le mot de passe `admin`.
+- **Rôle Administrateur :** Ce compte administrateur est le seul qui possède les droits pour créer, modifier ou supprimer d'autres comptes utilisateurs.
+- **Sécurité des mots de passe :** Vos mots de passe ne sont jamais enregistrés en clair : ils sont systématiquement protégés et cryptés grâce à un système de hachage hautement sécurisé (bcrypt).
+
+---
+
+## 🔒 La sécurité lors de la création d'un compte (Onboarding forcé)
+
+Si un administrateur vous crée un nouveau compte, l'application vous oblige à sécuriser votre accès dès votre première connexion :
+
+1. **Le blocage temporaire :** Lorsque vous vous connectez avec un compte nouvellement créé par un administrateur, l'accès au reste de l'application est bloqué. Vous êtes automatiquement redirigé vers une page spéciale (**Onboarding**).
+2. **Le changement obligatoire :** Sur cette page, vous devez obligatoirement choisir un nouveau mot de passe (qui doit faire au moins 8 caractères, être différent du provisoire et être saisi deux fois). Vous pouvez également personnaliser votre nom d'utilisateur si vous le souhaitez.
+3. **Le retour à la normale :** Une fois validé, votre nouveau mot de passe est enregistré en toute sécurité, le blocage est levé, et vous accédez directement au tableau de bord de l'application.
+
+> **À noter :** Si un administrateur réinitialise votre mot de passe à l'avenir, cette procédure de sécurité se réenclenchera automatiquement lors de votre connexion suivante.
+
+---
+
+## 📅 Le rappel de sécurité tous les 6 mois (Comptes sans 2FA)
+
+Pour vous aider à garder votre compte en sécurité, l'application effectue une vérification automatique régulière :
+
+- **Un rappel amical par e-mail :** Si vous n'avez pas activé la **double authentification (2FA)** pour protéger votre compte, vous recevrez un e-mail **tous les 6 mois** vous conseillant de changer votre mot de passe et d'activer cette sécurité supplémentaire.
+- **Aucun blocage de votre compte :** Il s'agit uniquement d'une recommandation par e-mail. Cela **ne bloque jamais votre accès** à l'application et ne change pas vos identifiants. Vous pouvez continuer à utiliser votre compte normalement.
+- **Pas de spam :** Le système enregistre la date du dernier envoi pour s'assurer que vous ne receviez **jamais plus d'un e-mail de rappel tous les 6 mois**.
+- **Condition :** Ces e-mails de prévention ne sont envoyés que si le service de messagerie (SMTP) de l'application est configuré par l'administrateur.
+
+---
+
+## 🔄 L'indicateur automatique de mise à jour (GitHub)
+
+L'application vérifie d'elle-même si une nouvelle version est disponible sur internet :
+
+- **Vérification automatique :** À chaque ouverture de l'application (puis discrètement toutes les 5 minutes), le système compare la version installée sur votre serveur avec la dernière version publiée sur le dépôt GitHub du projet.
+- **Le bouton d'alerte :**
+  - Tant que votre application est parfaitement à jour, **aucun bouton ne s'affiche**.
+  - Dès qu'une nouvelle mise à jour est publiée, un **bouton « Mise à jour disponible »** apparaît en haut à droite de l'écran.
+- **Comment faire la mise à jour ?** En passant votre souris sur ce bouton, une petite bulle s'affiche avec la commande à exécuter sur votre serveur (`git pull && docker compose up -d --build`).
+- **Disparition automatique :** Une fois la mise à jour appliquée sur le serveur, l'application le détecte toute seule et le bouton disparaît automatiquement.
+
+---
+
+## ✉️ Configuration des notifications E-mail (SMTP)
+
+L'application peut envoyer des **notifications par e-mail** automatiques dans les cas suivants :
+
+- **Création de compte par un admin** : le nouvel utilisateur reçoit un e-mail confirmant la création de son compte avec ses accès (identifiant + mot de passe provisoire).
+- **Partage de bibliothèque** : quand un utilisateur ouvre l'accès en consultation à sa collection à un autre utilisateur, ce dernier reçoit un e-mail de notification.
+- **Réinitialisation du mot de passe** (« identifiant / mot de passe oublié ») : le propriétaire du compte reçoit un lien temporaire (jeton à usage unique, validité 1 h).
+- **Rappel de sécurité semestriel (comptes SANS 2FA)** : tous les 6 mois, chaque utilisateur actif qui n'a **pas** activé l'authentification à deux facteurs (2FA) reçoit un e-mail d'**information** l'invitant à changer son mot de passe et à activer la 2FA. Ce rappel est **non bloquant** : il ne bloque jamais l'accès à l'application (voir section *Rappel de sécurité semestriel* ci-dessus).
+
+Ces envois sont pilotés **exclusivement par les variables d'environnement** du fichier `.env` (à la racine du projet). Chaque utilisateur configure ainsi **son propre serveur SMTP** — aucun code à modifier.
+
+### Renseigner vos paramètres SMTP
+
+Ajoutez (ou complétez) le bloc suivant dans `.env` :
+
+```env
+# Configuration SMTP pour les notifications par e-mail
+SMTP_HOST=smtp.votre-serveur.com
+SMTP_PORT=465 # ou 587 selon TLS/SSL
+SMTP_USER=votre-email@domaine.com
+SMTP_PASS=votre-mot-de-passe
+SMTP_FROM="Geek0thek <votre-email@domaine.com>"
+```
+
+| Variable | Description |
+| --- | --- |
+| `SMTP_HOST` | Hôte du serveur SMTP (ex. `smtp.gmail.com`, `mail.exemple.fr`) |
+| `SMTP_PORT` | Port : **465** (TLS/SSL implicite) ou **587** (STARTTLS) |
+| `SMTP_USER` | Identifiant de connexion SMTP (généralement votre adresse e-mail) |
+| `SMTP_PASS` | Mot de passe SMTP (ou « app password » si votre fournisseur l'exige, ex. Gmail) |
+| `SMTP_FROM` | Expéditeur affiché : `« Nom <adresse> »` (optionnel — repli sur `SMTP_USER`) |
+
+> **Port 465 vs 587** : le backend détecte automatiquement le mode de chiffrement à partir du port (`465` → TLS implicite, `587` → STARTTLS). Une surcharge manuelle est possible via `SMTP_SECURE=true|false`.
+
+### Variables vides = notifications désactivées (sans erreur)
+
+Si `SMTP_HOST`, `SMTP_USER` ou `SMTP_PASS` restent **vides**, l'application fonctionne **normalement** : les notifications e-mail sont simplement **désactivées** proprement (un avertissement est journalisé en console au démarrage, jamais de crash). L'envoi d'e-mails est **non bloquant** : un échec d'envoi (réseau, authentification, adresse invalide…) ne fait **jamais** échouer l'action qui l'a déclenché (création du compte, partage de la bibliothèque).
+
+### Appliquer la configuration
+
+Après avoir modifié `.env`, recréez le conteneur backend pour charger les nouvelles variables :
+
+```bash
+cd /opt/geek0thek
+docker compose up -d --force-recreate backend
+# ou un redémarrage complet :
+docker compose down && docker compose up -d --build
+```
+
+Vérification dans les journaux (l'avertissement « SMTP non configuré » doit disparaître) :
+
+```bash
+docker compose logs -f backend
+```
+
+---
+
+## 🖥️ Configuration d'un reverse proxy externe (Nginx)
+
+Le frontend (nginx interne) et le backend (Express `trust proxy = 1`) sont déjà câblés pour recevoir les en-têtes `X-Forwarded-*`. Exemple **nginx** pour un reverse proxy sur la VM (domaine `vinyle.exemple.fr`) :
 
 ```nginx
 server {
@@ -662,7 +603,7 @@ server {
 
     # En-têtes de proxy attendus par Express + nginx interne
     location / {
-        proxy_pass http://172.16.2.75:80;
+        proxy_pass http://votre_adresse_ip_ici:80;
         proxy_http_version 1.1;
 
         proxy_set_header Host              $host;
@@ -685,8 +626,7 @@ Et ajuster dans `.env` (puis `docker compose up -d`) :
 CORS_ORIGIN=https://vinyle.exemple.fr
 ```
 
-> L'application fonctionne **sans** reverse proxy (HTTP port 80) ; le proxy
-> n'est nécessaire que pour HTTPS/SNI ou un domaine public.
+> L'application fonctionne **sans** reverse proxy (HTTP port 80) ; le proxy n'est nécessaire que pour HTTPS/SNI ou un domaine public.
 
 ---
 
@@ -724,274 +664,10 @@ docker compose exec -T db pg_restore -U vinyl -d geek0thek --clean < backup.dump
 
 ---
 
-## 🔄 Mise à jour de l'application (indicateur automatique)
-
-L'application surveille **automatiquement** si une mise à jour est disponible sur le
-dépôt GitHub (`Irwin0812/geek0thek`) et le signale visuellement.
-
-- **Au chargement** de la webapp, le backend compare le **commit du code déployé**
-  (lu dans le dépôt git monté en lecture seule dans le conteneur backend) au
-  **dernier commit** de la branche par défaut du dépôt GitHub.
-- **Bouton « Mise à jour disponible »** : tant que les deux versions sont
-  **identiques**, aucun bouton n'apparaît. Dès qu'un nouveau commit est poussé sur
-  GitHub, un **bouton rectangulaire à bords arrondis** apparaît dans le **coin
-  supérieur droit** de l'interface (stylé comme le bouton « TOP », selon le thème).
-- **Infobulle au survol** : en passant la souris sur le bouton, une bulle indique la
-  marche à suivre pour effectuer la mise à jour :
-  `git pull && docker compose up -d --build`.
-- **Disparition automatique** : après avoir effectué la mise à jour (les deux
-  versions redeviennent égales), le bouton disparaît de lui-même — sans recharger
-  la page (re-vérification discrète toutes les 5 minutes).
-
-### Prérequis : jeton GitHub (`GITHUB_TOKEN`)
-
-Le dépôt étant **privé**, l'API GitHub exige un jeton pour lire le dernier commit.
-Sans jeton, l'indicateur reste **silencieux** (bouton masqué — jamais de faux
-positif). Pour l'activer :
-
-```bash
-# Sur la VM 172.16.2.75, ajouter au .env (jeton GitHub avec lecture du dépôt) :
-GITHUB_TOKEN=github_pat_...
-# Puis relancer le backend pour charger la variable :
-docker compose up -d backend
-```
-
-> Le jeton est stocké dans `.env`, **jamais exposé** par l'API ni loggé.
-
-### Effectuer la mise à jour
-
-```bash
-cd /opt/geek0thek
-git pull && docker compose down && docker compose up -d --build
-```
-
-Après ce `pull` + rebuild, le commit déployé rejoint la HEAD de GitHub : le bouton
-« Mise à jour disponible » disparaît automatiquement.
-
----
-
-## ✉️ Configuration des notifications E-mail (SMTP)
-
-L'application peut envoyer des **notifications par e-mail** automatiques dans les cas suivants :
-
-- **Création de compte par un admin** : le nouvel utilisateur reçoit un e-mail
-  confirmant la création de son compte avec ses accès (identifiant + mot de passe
-  provisoire).
-- **Partage de bibliothèque** : quand un utilisateur ouvre l'accès en consultation à
-  sa collection à un autre utilisateur, ce dernier reçoit un e-mail de notification.
-- **Réinitialisation du mot de passe** (« identifiant / mot de passe oublié ») : le
-  propriétaire du compte reçoit un lien temporaire (jeton à usage unique, validité 1 h).
-- **Rappel de sécurité semestriel (comptes SANS 2FA)** : tous les 6 mois, chaque
-  utilisateur actif qui n'a **pas** activé l'authentification à deux facteurs (2FA)
-  reçoit un e-mail d'**information** l'invitant à changer son mot de passe et à activer
-  la 2FA. Ce rappel est **non bloquant** : il ne bloque jamais l'accès à l'application
-  (voir section *Rappel de sécurité semestriel* ci-dessous).
-
-Ces envois sont pilotés **exclusivement par les variables d'environnement** du fichier
-`.env` (à la racine du projet). Chaque utilisateur configure ainsi **son propre serveur
-SMTP** — aucun code à modifier.
-
-### Renseigner vos paramètres SMTP
-
-Ajoutez (ou complétez) le bloc suivant dans `.env` :
-
-```env
-# Configuration SMTP pour les notifications par e-mail
-SMTP_HOST=smtp.votre-serveur.com
-SMTP_PORT=465 # ou 587 selon TLS/SSL
-SMTP_USER=votre-email@domaine.com
-SMTP_PASS=votre-mot-de-passe
-SMTP_FROM="Geek0thek <votre-email@domaine.com>"
-```
-
-| Variable | Description |
-|---|---|
-| `SMTP_HOST` | Hôte du serveur SMTP (ex. `smtp.gmail.com`, `mail.exemple.fr`) |
-| `SMTP_PORT` | Port : **465** (TLS/SSL implicite) ou **587** (STARTTLS) |
-| `SMTP_USER` | Identifiant de connexion SMTP (généralement votre adresse e-mail) |
-| `SMTP_PASS` | Mot de passe SMTP (ou « app password » si votre fournisseur l'exige, ex. Gmail) |
-| `SMTP_FROM` | Expéditeur affiché : `« Nom <adresse> »` (optionnel — repli sur `SMTP_USER`) |
-
-> **Port 465 vs 587** : le backend détecte automatiquement le mode de chiffrement à
-> partir du port (`465` → TLS implicite, `587` → STARTTLS). Une surcharge manuelle est
-> possible via `SMTP_SECURE=true|false`.
-
-### Variables vides = notifications désactivées (sans erreur)
-
-Si `SMTP_HOST`, `SMTP_USER` ou `SMTP_PASS` restent **vides**, l'application fonctionne
-**normalement** : les notifications e-mail sont simplement **désactivées** proprement
-(un avertissement est journalisé en console au démarrage, jamais de crash). L'envoi
-d'e-mails est **non bloquant** : un échec d'envoi (réseau, authentification, adresse
-invalide…) ne fait **jamais** échouer l'action qui l'a déclenché (création du compte,
-partage de la bibliothèque).
-
-### Appliquer la configuration
-
-Après avoir modifié `.env`, recréez le conteneur backend pour charger les nouvelles
-variables :
-
-```bash
-cd /opt/geek0thek
-docker compose up -d --force-recreate backend
-# ou un redémarrage complet :
-docker compose down && docker compose up -d --build
-```
-
-Vérification dans les journaux (l'avertissement « SMTP non configuré » doit disparaître) :
-
-```bash
-docker compose logs -f backend
-```
-
----
-
-## 🔒 Sécurité & bonnes pratiques
-
-- **JWT** signé (HS256) avec `JWT_SECRET` à longue valeur aléatoire ; expiration `7d`.
-- **bcrypt** pour tous les mots de passe (jamais en clair, ni en log).
-- **Onboarding forcé à la première connexion** : drapeau
-  `users.must_change_password` (comptes créés via l'API ; le seed admin/admin est à FALSE)
-  → changement de mot de passe obligatoire (double saisie) et pseudo de login
-  personnalisable avant tout accès ; garde API `requirePasswordChanged`
-  (`403 must-change-password`) sur toutes les routes protégées.
-- **Rappel de sécurité semestriel (comptes SANS 2FA)** : tâche planifiée qui envoie,
-  tous les 6 mois, un e-mail d'**information** aux utilisateurs actifs n'ayant pas
-  activé la 2FA, pour les inciter à changer leur mot de passe. **Non bloquant**
-  (jamais de blocage d'accès) ; idempotent via `users.last_password_reminder_at`.
-- **Helmet** (en-têtes sécurité) + **CORS** restreint aux origines autorisées.
-- **Express `trust proxy = 1`** pour lire correctement `X-Forwarded-For`.
-- Couvertures servies statiquement (`/uploads/...`) : noms de fichiers
-  **aléatoires** (`cover-<hex>`), filtrage MIME (JPG/PNG/WEBP/GIF),
-  limite `MAX_UPLOAD_MB` (10 Mo par défaut), 1 fichier par import.
-- **PostgreSQL** n'expose rien : le port 5432 reste **interne au réseau Docker**
-  (non publié sur l'hôte) ; seul le backend y accède.
-- Le compte `node` (uid 1000, non-root) exécute le backend.
-- Les couvertures **téléchargées depuis MusicBrainz / Cover Art Archive,
-  Discogs, Google Books / Open Library**
-  sont **ré-hébergées localement** (le champ `cover_url` stocke toujours un
-  chemin `/uploads/vinyls/...` ou `/uploads/comics/...`, ou une URL distante
-  validée) pour ne pas dépendre des CDN tiers.
-- **Jeton Discogs** : stocké dans `.env`, **jamais exposé** par l'API ni loggé
-  (le statut `GET /api/discogs/status` ne renvoie qu'un booléen `configured`).
-- ISBN des BDs **unique** en base (contrainte `UNIQUE`) pour éviter les doublons.
-
----
-
-## 🧩 Schéma de base de données (résumé)
-
-```sql
-users      (id, last_name, first_name, email UNIQUE, login UNIQUE, password_hash,
-            role [admin|user], phone, bio, is_public BOOLEAN,
-            must_change_password BOOLEAN (défaut FALSE ; TRUE = onboarding forcé),
-            totp_secret TEXT, totp_enabled BOOLEAN (2FA Google Authenticator / TOTP),
-            password_changed_at TIMESTAMPTZ (dernière modification du mot de passe),
-            last_password_reminder_at TIMESTAMPTZ (dernier rappel semestriel envoyé),
-            created_at, updated_at)
-
-vinyls     (id, user_id FK->users ON DELETE CASCADE, cover_url TEXT NOT NULL,
-            artist, title, track_count, tracklist, genre, label, release_date,
-            barcode UNIQUE,
-            mbid VARCHAR(40),             -- MBID MusicBrainz (release UUID)
-            discogs_release_id BIGINT,   -- id de la release Discogs (recherche code-barres)
-            discogs_url TEXT,            -- URL de la fiche release Discogs
-            acquired_date DATE, notes,
-            is_special_edition BOOL,     -- « Édition spéciale » (case à cocher)
-            is_picture_disc BOOL,        -- « Picture Disc » (select Oui/Non)
-            discs_count INT 1→5,         -- « Nombre de vinyls » (select 1 → 5, défaut 1)
-            color VARCHAR(50),           -- « Couleur » de la galette (défaut 'Noir')
-            created_at, updated_at)
-
-comics     (id, user_id FK->users ON DELETE CASCADE, cover_url TEXT,
-            title TEXT NOT NULL, series TEXT, tome_number,
-            authors TEXT NOT NULL, illustrators, publisher NOT NULL,
-            release_date, genre, isbn UNIQUE, synopsis,
-            condition (défaut 'Bon état'), is_special_edition BOOL,
-            created_at, updated_at)
-
-public_vinyls  -- vue : vinyles des collections is_public = TRUE
-public_comics  -- vue : BDs des collections is_public = TRUE
-```
-
-Triggers `updated_at` automatiques sur les trois tables.
-
-#### Table `vinyls` — détail des colonnes
-
-| Colonne | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | `BIGSERIAL` | PK | Identifiant unique du vinyle |
-| `user_id` | `BIGINT` | FK→`users(id)` `ON DELETE CASCADE`, NOT NULL | Propriétaire de la fiche |
-| `cover_url` | `TEXT` | NOT NULL | Jaquette : `/uploads/vinyls/…` (locale) ou URL distante |
-| `artist` | `TEXT` | NOT NULL | Artiste (principal) |
-| `title` | `TEXT` | NOT NULL | Titre de l'album / single |
-| `track_count` | `INTEGER` | `>= 0`, défaut `0` | Nombre de titres |
-| `tracklist` | `TEXT` | — | Liste des titres (1 titre par ligne) |
-| `genre` | `TEXT` | — | Genre musical |
-| `label` | `TEXT` | — | Label discographique |
-| `release_date` | `DATE` | — | Date de parution |
-| `barcode` | `VARCHAR(64)` | UNIQUE | Code-barres EAN/UPC (clé d'import) |
-| `mbid` | `VARCHAR(40)` | — | MBID MusicBrainz (UUID de la release) |
-| `discogs_release_id` | `BIGINT` | 🆕 | **Id de la release Discogs** (recherche par code-barres) |
-| `discogs_url` | `TEXT` | 🆕 | **URL de la fiche release Discogs** |
-| `acquired_date` | `DATE` | NOT NULL, défaut `CURRENT_DATE` | Date d'ajout du vinyle à la collection (remplace « année d'acquisition ») |
-| `notes` | `TEXT` | — | Notes libres |
-| `is_special_edition` | `BOOLEAN` | 🆕 NOT NULL, défaut `FALSE` | **Édition spéciale** (case à cocher du formulaire) |
-| `is_picture_disc` | `BOOLEAN` | 🆕 NOT NULL, défaut `FALSE` | **Picture Disc** (select Oui/Non du formulaire) |
-| `discs_count` | `INTEGER` | 🆕 NOT NULL, défaut `1`, `BETWEEN 1 AND 5` | **Nombre de vinyls** (select 1 → 5, défaut 1 — borne resserrée par la migration 006) |
-| `color` | `VARCHAR(50)` | 🆕 NOT NULL, défaut `'Noir'` | **Couleur** de la galette (Noir, Blanc, Rouge, Bleu…, Or, Argent, Cuivre, Bronze, Marbré, Splatter…) |
-| `created_at` / `updated_at` | `TIMESTAMPTZ` | NOT NULL, défaut `now()` | Horodatage (auto via trigger) |
-
-> Les colonnes **`discogs_release_id`** et **`discogs_url`** sont ajoutées
-> automatiquement par la migration idempotente `vinyls.discogs` au démarrage
-> de l'API (`backend/src/config/db.js`) et présentes dans `database/init.sql`.
-> Elles sont renseignées lors d'un import combiné MusicBrainz + Discogs.
-> Idem pour **`is_special_edition`**, **`is_picture_disc`**, **`discs_count`** et
-> **`color`** (migration `vinyls.options`, cf. `database/migrations/005_add_vinyl_options.sql`).
-> La borne du CHECK **`discs_count`** est resserrée de 1 → 20 à 1 → 5 par la suite
-> de migrations `vinyls.discs-count-1-to-5` (`database/migrations/006_vinyls_discs_count_1_to_5.sql`) :
-> les valeurs existantes hors plage sont d'abord resserrées aux bornes, puis la contrainte est remplacée.
-
-Index : `users(role)` ; `vinyls(user_id, artist, title, genre, release_date, barcode,
-mbid, discogs_release_id)` ; `comics(user_id, isbn, title, authors, publisher)`.
-
----
-
-## 📡 API REST (référence)
-
-| Méthode | Endpoint | Accès | Description |
-|---|---|---|---|
-| `POST` | `/api/auth/login` | public | `login`/`login or email` + `password` → `{ token, user }` (le profil renvoyé porte `mustChangePassword`) |
-| `POST` | `/api/auth/onboarding` | auth | **Sécurité 1re connexion** : `currentPassword` + `newPassword` (obligatoire) + `login?` (pseudo personnalisable) → `{ token, user }` ; remet `must_change_password = FALSE` |
-| `GET`  | `/api/auth/me` | auth | Profil courant |
-| `GET`  | `/api/users` | admin | Liste des comptes (+ nb de vinyles / BDs) |
-| `POST` | `/api/users` | admin | Créer un compte (rôle `user`) |
-| `PUT`  | `/api/users/me` | auth | Modifier son profil / mot de passe |
-| `PUT`  | `/api/users/:id` | admin | Modifier un compte |
-| `DELETE` | `/api/users/:id` | admin | Supprimer un compte (+ vinyles et BDs) |
-| `GET`  | `/api/vinyls` | auth | Ma collection (`?q=` recherche) |
-| `POST` | `/api/vinyls` | auth | Créer (multipart `cover` ou `coverRemoteUrl`) |
-| `GET`  | `/api/vinyls/:id` | auth (owner) | Détail d'un vinyle |
-| `PUT`  | `/api/vinyls/:id` | auth (owner) | Modifier |
-| `DELETE` | `/api/vinyls/:id` | auth (owner) | Supprimer (+ fichier local) |
-| `GET`  | `/api/vinyls/public` | public | Collections publiques (`?q=&genre=&label=`) |
-| `GET`  | `/api/musicbrainz/status` | auth | `{ configured, provider, discogs: { configured } }` — état MusicBrainz + Discogs |
-| `GET`  | `/api/musicbrainz/barcode/:code` | auth | **Import combiné par code-barres (8 à 14 chiffres)** : MusicBrainz (réf.) **+ Discogs** si `DISCOGS_TOKEN` configuré → fiche fusionnée `{ data, providers, warnings? }` |
-| `GET`  | `/api/discogs/status` | auth | `{ configured, provider: "discogs" }` — `true` si `DISCOGS_TOKEN` renseigné |
-| `GET`  | `/api/discogs/barcode/:code` | auth | Recherche Discogs seule par code-barres (8 à 14 chiffres) (débogage) |
-| `GET`  | `/api/comics` | auth | Ma collection BD (`?q=` recherche) |
-| `POST` | `/api/comics` | auth | Créer (multipart `cover` ou `coverRemoteUrl`) |
-| `GET`  | `/api/comics/:id` | auth (owner) | Détail d'une BD |
-| `PUT`  | `/api/comics/:id` | auth (owner) | Modifier |
-| `DELETE` | `/api/comics/:id` | auth (owner ou admin) | Supprimer (+ fichier local) |
-| `GET`  | `/api/comics/public/user/:userId` | public | BDs d'une collection publique (sans auth) |
-| `GET`  | `/api/isbn/lookup/:isbn` | auth | Pré-remplissage BD : Google Books, Open Library en secours |
-| `GET`  | `/api/health` | public | Sonde de santé (base incluse) |
-
----
-
 ## 🩺 Dépannage
 
 | Symptôme | Cause probable / solution |
-|---|---|
+| --- | --- |
 | Pages vides après login (navbar visible, aucun bouton *Ajouter*, aucune liste) | `ProtectedRoute` rendait `children` (undefined) en route **layout** sans `<Outlet/>` → corrigé dans `frontend/src/components/ProtectedRoute.jsx`. Rebuild + redéploiement du conteneur frontend : `docker compose up -d --build frontend` + **vidage du cache du navigateur** |
 | `502` sur recherche code-barres | Pas/plus de connexion internet côté serveur (MusicBrainz inaccessibles) → vérifier l'egress réseau de la VM |
 | `429` sur recherche code-barres | Quota MusicBrainz atteint (1 req/s) → réessayer après quelques secondes |
@@ -1009,59 +685,19 @@ mbid, discogs_release_id)` ; `comics(user_id, isbn, title, authors, publisher)`.
 | `Base de données incomplète (colonne absente)` sur POST/PUT `/api/vinyls` | Même cause : appliquer `docker compose exec -T db psql -U vinyl -d geek0thek -f /dev/stdin < database/migrations/007_ensure_vinyl_acquired_date.sql` puis `docker compose restart backend` ; vérifier les logs de démarrage (`migration appliquée : vinyls.added-date`) |
 | Re-démarrer proprement la base | `docker compose down -v` puis `up -d` (⚠️ efface la base, `init.sql` recrée l'admin) |
 
-### Migrations & réparation du schéma
-
-L'API applique **automatiquement** des migrations idempotentes au démarrage
-(`backend/src/config/db.js`) : chaque migration est tracée dans la table
-`schema_migrations` et n'est ré-exécutée qu'une fois — un échec antérieur ne
-bloque plus les migrations suivantes (notamment `vinyls.added-date`, qui crée
-`vinyls.acquired_date`).
-
-**Réparation définitive** d'un schéma incomplet (message
-`column "acquired_date" does not exist` à la modification d'un vinyle) :
-
-```bash
-# 1. Inspecter : la colonne doit apparaître en sortie.
-docker compose exec \
-  psql -U vinyl -d geek0thek \
-  -c "SELECT column_name, data_type, is_nullable, column_default
-      FROM information_schema.columns
-      WHERE table_name = 'vinyls' AND column_name = 'acquired_date';"
-
-# 2. Si vide : appliquer la migration 007 (création + backfill + NOT NULL).
-docker compose exec -T db \
-  psql -U vinyl -d geek0thek -f /dev/stdin < database/migrations/007_ensure_vinyl_acquired_date.sql
-
-# 3. Reconstruire le conteneur API avec le code à jour, redémarrer, confirmer.
-docker compose up -d --build backend
-curl -s http://172.16.2.75/api/health   # -> { "status": "ok", "schema_ok": true }
-```
-
-> Sans la colonne, `GET /api/health` renvoie `schema_ok: false` et tout
-> POST/PUT `/api/vinyls` échoue avec le message
-> *Base de données incomplète (colonne absente) : appliquez la migration 007
-> puis relancez l'API.* Les logs backend affichent l'instruction SQL en échec
-> et son nom de migration.
-
 ---
 
 ## 💙 Soutenir le projet
 
 **Geek0thek est un projet conçu, développé et hébergé en solo, sur fonds propres.**
-L'hébergement (VM, base de données, stockage des couvertures), la maintenance et le
-développement continu sont entièrement pris en charge par l'auteur.
+L'hébergement (VM, base de données, stockage des couvertures), la maintenance et le développement continu sont entièrement pris en charge par l'auteur.
 
-Si cette médiathèque vous est utile et que vous souhaitez contribuer à sa pérennité,
-vous pouvez faire un **don libre** via PayPal :
+Si cette médiathèque vous est utile et que vous souhaitez contribuer à sa pérennité, vous pouvez faire un **don libre** via PayPal :
 
-[![Donner avec PayPal](https://www.paypalobjects.com/images/logos/315x49.gif)](https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN)
+👉 **[Soutenez le projet en faisant un don via PayPal](https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN)**
 
-👉 **[Soutenez le projet — bouton de don officiel PayPal](https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN)**
-
-- **Aucun montant minimum ni maximum** : chaque contribution, quelle qu'en soit la
-  taille, est la bienvenue et finance directement l'hébergement et le développement.
-- Le bouton **« Soutenez le projet »** est également disponible en permanence dans le
-  pied de page de l'application (il s'adapte au thème visuel actif).
+- **Aucun montant minimum ni maximum** : chaque contribution, quelle qu'en soit la taille, est la bienvenue et finance directement l'hébergement et le développement.
+- Le bouton **« Soutenez le projet »** est également disponible en permanence dans le pied de page de l'application (il s'adapte au thème visuel actif).
 
 Merci pour votre soutien ! 🙏
 
@@ -1069,7 +705,7 @@ Merci pour votre soutien ! 🙏
 
 ## Licence & Politique de contribution
 
-Ce logiciel est distribué sous licence **GNU Affero General Public License v3.0 (AGPLv3)**. 
+Ce logiciel est distribué sous licence **GNU Affero General Public License v3.0 (AGPLv3)**.
 
 Toutefois, le dépôt officiel **n'accepte aucune contribution externe ni aucune Pull Request** de la part de tiers. Vous êtes totalement libre de forker le projet et de l'utiliser conformément aux termes de la licence AGPLv3, mais aucun code extérieur ne sera fusionné dans la branche principale.
 
