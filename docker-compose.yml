@@ -1,6 +1,6 @@
 # ============================================================
 # Geek0thek - Docker Compose
-# Déploiement cible : Debian 12 (VM 172.16.2.75)
+# Déploiement cible : Debian 12 (VM your_vm_ip_adress)
 # Compatible reverse proxy externe (X-Forwarded-For / X-Forwarded-Proto)
 # ============================================================
 
@@ -52,10 +52,10 @@ services:
       DB_NAME: ${POSTGRES_DB:-geek0thek}
       JWT_SECRET: ${JWT_SECRET:-REMPLACER_PAR_UN_SECRET_ALEATOIRE_LONG}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://172.16.2.75}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://your_vm_ip_adress}
       # IP / port de la VM cible : le backend en dérive dynamiquement les
       # origines CORS autorisées (http/https, avec et sans port).
-      APP_HOST_IP: ${APP_HOST_IP:-172.16.2.75}
+      APP_HOST_IP: ${APP_HOST_IP:-your_vm_ip_adress}
       APP_PORT: ${APP_PORT:-80}
       UPLOAD_DIR: ${UPLOAD_DIR:-/app/uploads}
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-10}
@@ -88,7 +88,7 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-}
       # URL publique de l'application (liens cliquables des e-mails).
-      APP_URL: ${APP_URL:-http://172.16.2.75}
+      APP_URL: ${APP_URL:-http://your_vm_ip_adress}
     volumes:
       # Jaquettes : stockage local sur le disque de la VM hôte
       - ./uploads:/app/uploads
@@ -118,8 +118,8 @@ services:
     depends_on:
       - backend
     ports:
-      # Écoute sur la VM cible 172.16.2.75 (surcharge via .env si besoin)
-      - "${APP_HOST_IP:-172.16.2.75}:${APP_PORT:-80}:80"
+      # Écoute sur la VM cible your_vm_ip_adress (surcharge via .env si besoin)
+      - "${APP_HOST_IP:-your_vm_ip_adress}:${APP_PORT:-80}:80"
     networks:
       - geek0thek-net
 
