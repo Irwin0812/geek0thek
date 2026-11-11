@@ -27,7 +27,7 @@ async function authenticate(req, res, next) {
 
     const { rows } = await query(
       `SELECT id, login, role, first_name, last_name, email, is_public, is_active,
-              avatar_url, language, must_change_password
+              avatar_url, language, theme, must_change_password
        FROM users WHERE id = $1`,
       [payload.sub]
     );
