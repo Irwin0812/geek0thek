@@ -42,11 +42,27 @@ const env = {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
 
-  // Origine(s) autorisée(s) pour le CORS (reverse proxy / VM cible)
-  corsOrigins: (process.env.CORS_ORIGIN || 'http://172.16.2.75')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean),
+  // IP / port de la VM cible (accès direct ou reverse proxy externe).
+  appHostIp: process.env.APP_HOST_IP || '172.16.2.75',
+  appPort: toInt(process.env.APP_PORT, 80),
+
+  // Origine(s) autorisée(s) pour le CORS : liste explicite via CORS_ORIGIN
+  // (séparée par des virgules — domaines / ports de staging ou reverse proxy)
+  // + origines dérivées dynamiquement de APP_HOST_IP / APP_PORT (http/https,
+  // avec et sans port) pour couvrir tous les accès légitimes à la webapp.
+  corsOrigins: (() => {
+    const origins = new Set();
+    for (const origin of (process.env.CORS_ORIGIN || 'http://172.16.2.75').split(',')) {
+      const trimmed = origin.trim();
+      if (trimmed) origins.add(trimmed);
+    }
+    const host = process.env.APP_HOST_IP || '172.16.2.75';
+    for (const protocol of ['http', 'https']) {
+      origins.add(`${protocol}://${host}`);
+      if (process.env.APP_PORT) origins.add(`${protocol}://${host}:${toInt(process.env.APP_PORT, 80)}`);
+    }
+    return [...origins];
+  })(),
 
   // URL publique de l'application (liens cliquables des e-mails de
   // notification). Défaut : origine du CORS (reverse proxy / VM cible).

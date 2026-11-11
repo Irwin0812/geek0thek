@@ -49,6 +49,17 @@ app.use(
       }
       return callback(new Error('Origine non autorisée par CORS.'));
     },
+    // Méthodes + en-têtes explicitement autorisés (préflight OPTIONS inclus)
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'X-Forwarded-For',
+      'X-Forwarded-Proto',
+      'X-Forwarded-Host',
+      'X-Forwarded-Port',
+    ],
     credentials: true,
   })
 );
