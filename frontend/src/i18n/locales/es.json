@@ -465,7 +465,22 @@
     "minChars": "Mínimo 8 caracteres — letras, dígitos y cualquier carácter especial están permitidos.",
     "confirmPassword": "Confirmar la nueva contraseña",
     "confirmPasswordPlaceholder": "Repite la nueva contraseña",
-    "cropLabel": "Ajustar la imagen de perfil"
+    "cropLabel": "Ajustar la imagen de perfil",
+    "totpTitle": "Seguridad — autenticación en dos pasos (2FA)",
+    "totpSubtitle": "Opción recomendada: active Google Authenticator para proteger su cuenta con un código de 6 dígitos además de la contraseña.",
+    "totpInactive": "2FA desactivada",
+    "totpActivate": "Activar la 2FA",
+    "totpActive": "2FA activada — se pedirá un código de 6 dígitos en cada inicio de sesión.",
+    "totpDeactivate": "Desactivar la 2FA",
+    "totpScanHint": "Escanee este código QR con Google Authenticator (o introduzca manualmente la clave a continuación) y escriba el código mostrado para confirmar.",
+    "totpSecret": "Clave secreta (introducción manual)",
+    "totpCode": "Código de verificación (6 dígitos)",
+    "totpQrAlt": "Código QR de configuración 2FA",
+    "totpQrLoading": "Generando el código QR…",
+    "totpConfirmEnable": "Confirmar y activar la 2FA",
+    "totpCodeRequired": "Introduzca el código de 6 dígitos mostrado por su aplicación.",
+    "totpEnabledToast": "2FA activada — se pedirá un código de 6 dígitos en cada inicio de sesión.",
+    "totpDisabledToast": "2FA desactivada."
   },
   "settings": {
     "displayMode": "Modo de visualización",

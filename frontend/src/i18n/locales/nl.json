@@ -465,7 +465,22 @@
     "minChars": "Minimaal 8 tekens — letters, cijfers en alle speciale tekens zijn toegestaan.",
     "confirmPassword": "Bevestig het nieuwe wachtwoord",
     "confirmPasswordPlaceholder": "Herhaal het nieuwe wachtwoord",
-    "cropLabel": "Profielfoto aanpassen"
+    "cropLabel": "Profielfoto aanpassen",
+    "totpTitle": "Beveiliging — tweefactorauthenticatie (2FA)",
+    "totpSubtitle": "Aanbevolen optie: schakel Google Authenticator in om uw account te beschermen met een 6-cijferige code naast het wachtwoord.",
+    "totpInactive": "2FA uitgeschakeld",
+    "totpActivate": "2FA inschakelen",
+    "totpActive": "2FA ingeschakeld — bij elke inlogging wordt een 6-cijferige code gevraagd.",
+    "totpDeactivate": "2FA uitschakelen",
+    "totpScanHint": "Scan deze QR-code met Google Authenticator (of voer de sleutel hieronder handmatig in) en typ de weergegeven code om te bevestigen.",
+    "totpSecret": "Geheime sleutel (handmatige invoer)",
+    "totpCode": "Verificatiecode (6 cijfers)",
+    "totpQrAlt": "QR-code voor 2FA-configuratie",
+    "totpQrLoading": "QR-code wordt gegenereerd…",
+    "totpConfirmEnable": "Bevestigen en 2FA inschakelen",
+    "totpCodeRequired": "Voer de 6-cijferige code in die door uw app wordt weergegeven.",
+    "totpEnabledToast": "2FA ingeschakeld — bij elke inlogging wordt een 6-cijferige code gevraagd.",
+    "totpDisabledToast": "2FA uitgeschakeld."
   },
   "settings": {
     "displayMode": "Weergavemodus",
