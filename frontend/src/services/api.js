@@ -45,8 +45,13 @@ async function request(path, { method = 'GET', body, isForm = false } = {}) {
 
   if (response.status === 401) {
     clearSession()
+    // Redirection vers /login avec le paramètre explicite ?expired=true :
+    // c'est UNIQUEMENT la présence de ce paramètre qui déclenche l'affichage
+    // de l'alerte « Session expirée. » sur la page de connexion (Login.jsx).
+    // Sans lui, un simple retour sur /login (déconnexion volontaire, F5…)
+    // ne doit afficher AUCUN message d'erreur par défaut.
     if (!window.location.pathname.startsWith('/login')) {
-      window.location.assign('/login')
+      window.location.assign('/login?expired=true')
     }
     throw new Error('Session expirée.')
   }

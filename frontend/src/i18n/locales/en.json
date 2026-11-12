@@ -516,6 +516,7 @@
     "password": "Password",
     "login": "Sign in",
     "loginBusy": "Signing in…",
+    "sessionExpired": "Session expired.",
     "firstLoginHint": "Main test account: admin “admin” / “admin” (created when the database was initialized)."
   },
   "onboarding": {

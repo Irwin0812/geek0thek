@@ -516,6 +516,7 @@
     "password": "Wachtwoord",
     "login": "Aanmelden",
     "loginBusy": "Aan het aanmelden…",
+    "sessionExpired": "Sessie verlopen.",
     "firstLoginHint": "Hoofdtestaccount: admin « admin » / « admin » (gemaakt bij het initialiseren van de database)."
   },
   "onboarding": {

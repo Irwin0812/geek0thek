@@ -5,8 +5,8 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License.
  */
-import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../App.jsx'
 import { api } from '../services/api.js'
@@ -25,6 +25,33 @@ export default function Login() {
   // alors à l'étape « code à 6 chiffres » (tempToken conservé ici).
   const [totpStep, setTotpStep] = useState(null) // null | { tempToken }
   const [totpCode, setTotpCode] = useState('')
+
+  // ALERTE « Session expirée. » : affichée UNIQUEMENT si le paramètre d'URL
+  // ?expired=true est EXPLICITEMENT présent (posé par services/api.js quand un
+  // appel API renvoie 401 hors de la page de connexion). Jamais par défaut :
+  // une déconnexion volontaire ou un simple retour sur /login n'affiche donc
+  // aucun message rouge. Dès l'affichage, l'URL est nettoyée (replaceState)
+  // pour que le message ne réapparaisse ni au F5, ni à la reconnexion.
+  const [searchParams, setSearchParams] = useSearchParams()
+  // Valeur figée au montage : l'alerte ne dépend QUE du paramètre ?expired=true
+  // présent à l'arrivée sur la page (jamais de réévaluation en boucle).
+  const [sessionExpired] = useState(
+    () => searchParams.get('expired') === 'true',
+  )
+  useEffect(() => {
+    if (!sessionExpired) return
+    const params = new URLSearchParams(window.location.search)
+    if (params.has('expired')) {
+      params.delete('expired')
+      const qs = params.toString()
+      window.history.replaceState(
+        window.history.state,
+        '',
+        window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash,
+      )
+      setSearchParams(params, { replace: true })
+    }
+  }, [sessionExpired, searchParams, setSearchParams])
 
   const finishLogin = (logged) => {
     // Sécurité à la première connexion : si le compte porte encore les
@@ -90,6 +117,16 @@ export default function Login() {
           </h1>
           <p className="mt-1 text-sm text-slate-400">{t('auth.tagline')}</p>
         </div>
+
+        {/* Alerte « Session expirée. » — visible UNIQUEMENT si l'URL porte
+            explicitement ?expired=true (session invalidée par le serveur).
+            L'URL est nettoyée dès l'affichage : pas de boucle au F5 ni à la
+            reconnexion, et aucun message par défaut sur /login. */}
+        {sessionExpired && (
+          <p className="mb-4 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-lg px-3 py-2">
+            {t('auth.sessionExpired')}
+          </p>
+        )}
 
         {!totpStep ? (
           <form onSubmit={submit} className="card p-6 space-y-4 shadow-2xl shadow-black/40">

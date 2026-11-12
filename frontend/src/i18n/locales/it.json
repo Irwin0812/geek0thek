@@ -516,6 +516,7 @@
     "password": "Password",
     "login": "Accedi",
     "loginBusy": "Accesso in corso…",
+    "sessionExpired": "Sessione scaduta.",
     "firstLoginHint": "Account principale di test: admin « admin » / « admin » (creato all'inizializzazione del database)."
   },
   "onboarding": {

@@ -516,6 +516,7 @@
     "password": "Contraseña",
     "login": "Iniciar sesión",
     "loginBusy": "Iniciando sesión…",
+    "sessionExpired": "Sesión expirada.",
     "firstLoginHint": "Cuenta principal de prueba: admin « admin » / « admin » (creada al inicializar la base de datos)."
   },
   "onboarding": {

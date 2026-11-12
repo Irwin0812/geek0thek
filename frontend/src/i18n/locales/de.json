@@ -516,6 +516,7 @@
     "password": "Passwort",
     "login": "Anmelden",
     "loginBusy": "Anmeldung…",
+    "sessionExpired": "Sitzung abgelaufen.",
     "firstLoginHint": "Haupt-Testkonto: Admin „admin“ / „admin“ (wird bei der Initialisierung der Datenbank erstellt)."
   },
   "onboarding": {
