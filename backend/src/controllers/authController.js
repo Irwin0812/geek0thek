@@ -178,7 +178,9 @@ async function verifyTotpCode(req, res, next) {
 //     jeton (non expiré, non consommé), pose le nouveau mot de passe et remet
 //     must_change_password = FALSE (l'utilisateur a choisi SON mot de passe
 //     via un lien sécurisé — pas d'onboarding forcé ensuite). Le jeton est
-//     marqué consommé (usage unique).
+//     marqué consommé (usage unique) UNIQUEMENT au moment effectif du
+//     changement de mot de passe, dans la même transaction : aucune
+//     vérification préliminaire ne le consomme ni ne l'invalide.
 // ------------------------------------------------------------
 
 /** Hachage SHA-256 (hex) d'un jeton — seul le hachage est persisté. */
@@ -242,16 +244,30 @@ async function resetPassword(req, res, next) {
       return res.status(400).json({ error: passwordError });
     }
 
+    // Robustesse du jeton : on normalise la valeur fournie dans l'URL avant de
+    // la comparer au HACHAGE SHA-256 stocké en base (trim + minuscules) — le
+    // hachage est déterministe, donc la comparaison reste exacte. Le jeton n'est
+    // JAMAIS consommé ni invalidé par cette vérification : seule l'écriture du
+    // nouveau mot de passe (transaction ci-dessous) le marque « utilisé ».
+    const providedToken = String(token).trim().toLowerCase();
+
     const { rows } = await query(
       `SELECT pr.id AS resetId, pr.expires_at, pr.used_at, u.id AS userId, u.password_hash
        FROM password_resets pr JOIN users u ON u.id = pr.user_id
        WHERE pr.token_hash = $1`,
-      [hashResetToken(String(token))]
+      [hashResetToken(providedToken)]
     );
     const reset = rows[0];
-    if (!reset || reset.used_at !== null) {
-      return res.status(400).json({ error: 'Lien de réinitialisation invalide ou déjà utilisé.' });
+    // Jeton inconnu (aucune ligne) : lien invalide — distinct d'un lien déjà
+    // consommé. Un jeton tout frais et jamais utilisé ne peut PAS tomber ici.
+    if (!reset) {
+      return res.status(400).json({ error: 'Lien de réinitialisation invalide. Demandez un nouveau lien.' });
     }
+    // Lien déjà consommé (usage unique) : seul cas où « déjà utilisé » est vrai.
+    if (reset.used_at !== null) {
+      return res.status(400).json({ error: 'Lien de réinitialisation déjà utilisé. Demandez un nouveau lien.' });
+    }
+    // Lien expiré (1 h) : non consommé mais hors validité.
     if (new Date(reset.expires_at).getTime() < Date.now()) {
       return res.status(400).json({ error: 'Lien de réinitialisation expiré. Demandez un nouveau lien.' });
     }
