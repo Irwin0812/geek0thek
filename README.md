@@ -583,47 +583,84 @@ docker compose logs -f backend
 Le frontend (nginx interne) et le backend (Express `trust proxy = 1`) sont déjà câblés pour recevoir les en-têtes `X-Forwarded-*`. Exemple **nginx** pour un reverse proxy sur la VM (domaine `vinyle.exemple.fr`) :
 
 ```nginx
-server {
-    listen 80;
-    server_name vinyle.exemple.fr;
-    # Redirection http -> https
-    return 301 https://$host$request_uri;
+# 1. Définition du Backend avec Keep-Alive
+upstream stream-[nomchoisipourVM] {
+    server [votre_ip_locale];
+    keepalive 32; # Maintient les connexions ouvertes vers la VM
 }
 
+# 2. Serveur HTTPS Principal
 server {
-    listen 443 ssl;
-    http2 on;
-    server_name vinyle.exemple.fr;
-
-    ssl_certificate     /etc/letsencrypt/live/vinyle.exemple.fr/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/vinyle.exemple.fr/privkey.pem;
+    listen 443 ssl; # managed by Certbot
+    server_name [votre_nom_domaine];
 
     # Uploads volumineux (jaquettes / couvertures BD)
     client_max_body_size 15m;
 
-    # En-têtes de proxy attendus par Express + nginx interne
-    location / {
-        proxy_pass http://votre_adresse_ip_ici:80;
-        proxy_http_version 1.1;
+    # Certificats Let's Encrypt (Certbot)
+    ssl_certificate /etc/letsencrypt/live/[votre_nom_domaine]/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/[votre_nom_domaine]/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 
-        proxy_set_header Host              $host;
-        proxy_set_header X-Real-IP         $remote_addr;
-        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    # Inclusion de la règle centralisée security.txt
+    include /etc/nginx/snippets/security-txt.conf;
+
+    # Logs
+    access_log /var/log/nginx/[nomchoisipourVM].access.log;
+    error_log  /var/log/nginx/[nomchoisipourVM].error.log;
+
+    # --- EN-TÊTES DE SÉCURITÉ SÉCURISÉS (Proprement déclarés) ---
+    add_header Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' d>
+    #add_header Content-Security-Policy "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline';" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+    add_header Cross-Origin-Opener-Policy "same-origin" always;
+    add_header Cross-Origin-Resource-Policy "same-origin" always;
+    add_header Cross-Origin-Embedder-Policy "require-corp" always;
+
+    # Communication Proxy avec la VM
+    location / {
+        proxy_pass http://stream-[nomchoisipourVM];
+        proxy_redirect default;
+
+        # HTTP/1.1 + Keep-Alive
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+
+        # Transmettre les informations complètes du client à la VM interne
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host  $host;
-        proxy_set_header X-Forwarded-Port  $server_port;
+        proxy_set_header X-Forwarded-Host $host;
+
+        proxy_headers_hash_max_size 512;
+        proxy_headers_hash_bucket_size 128;
 
         # Support WebSocket (si besoin en amont de l'API)
         proxy_set_header Upgrade           $http_upgrade;
         proxy_set_header Connection        "upgrade";
     }
 }
-```
 
-Et ajuster dans `.env` (puis `docker compose up -d`) :
+# 3. Redirection HTTP vers HTTPS propre (Port 80)
 
-```env
-CORS_ORIGIN=https://vinyle.exemple.fr
+server {
+    if ($host = [votre_nom_domaine]) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    server_name [votre_nom_domaine];
+    listen 80;
+    return 404; # managed by Certbot
+
+
+}
 ```
 
 > L'application fonctionne **sans** reverse proxy (HTTP port 80) ; le proxy n'est nécessaire que pour HTTPS/SNI ou un domaine public.
