@@ -522,6 +522,7 @@
     "login": "Se connecter",
     "loginBusy": "Connexion…",
     "sessionExpired": "Session expirée.",
+    "invalidCredentials": "Identifiant ou mot de passe incorrect.",
     "firstLoginHint": "Compte de test principal : admin « admin » / « admin » (créé à l'initialisation de la base).",
     "forgotPassword": "Mot de passe ou identifiant oublié ?",
     "forgotTitle": "Réinitialiser votre mot de passe",

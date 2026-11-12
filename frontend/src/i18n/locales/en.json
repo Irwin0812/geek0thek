@@ -517,6 +517,7 @@
     "login": "Sign in",
     "loginBusy": "Signing in…",
     "sessionExpired": "Session expired.",
+    "invalidCredentials": "Incorrect username or password.",
     "firstLoginHint": "Main test account: admin “admin” / “admin” (created when the database was initialized)."
   },
   "onboarding": {

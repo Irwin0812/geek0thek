@@ -517,6 +517,7 @@
     "login": "Iniciar sesión",
     "loginBusy": "Iniciando sesión…",
     "sessionExpired": "Sesión expirada.",
+    "invalidCredentials": "Nombre de usuario o contraseña incorrectos.",
     "firstLoginHint": "Cuenta principal de prueba: admin « admin » / « admin » (creada al inicializar la base de datos)."
   },
   "onboarding": {

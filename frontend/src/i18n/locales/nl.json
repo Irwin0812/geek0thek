@@ -517,6 +517,7 @@
     "login": "Aanmelden",
     "loginBusy": "Aan het aanmelden…",
     "sessionExpired": "Sessie verlopen.",
+    "invalidCredentials": "Onjuiste gebruikersnaam of wachtwoord.",
     "firstLoginHint": "Hoofdtestaccount: admin « admin » / « admin » (gemaakt bij het initialiseren van de database)."
   },
   "onboarding": {

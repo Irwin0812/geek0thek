@@ -75,7 +75,16 @@ export default function Login() {
       completeLogin(result.token, result.user)
       finishLogin(result.user)
     } catch (err) {
-      setError(err.message)
+      // Un 401 sur POST /auth/login signifie « identifiants refusés » : le
+      // service api.js signale tout 401 par « Session expirée. », mais sur la
+      // page de connexion l'utilisateur n'est PAS connecté — on remplace donc
+      // ce message par un message clair d'identifiants incorrects (jamais
+      // « Session expirée. » lors d'une soumission du formulaire).
+      setError(
+        err.message === 'Session expirée.'
+          ? t('auth.invalidCredentials', 'Identifiant ou mot de passe incorrect.')
+          : err.message,
+      )
     } finally {
       setBusy(false)
     }

@@ -517,6 +517,7 @@
     "login": "Anmelden",
     "loginBusy": "Anmeldung…",
     "sessionExpired": "Sitzung abgelaufen.",
+    "invalidCredentials": "Benutzername oder Passwort ist falsch.",
     "firstLoginHint": "Haupt-Testkonto: Admin „admin“ / „admin“ (wird bei der Initialisierung der Datenbank erstellt)."
   },
   "onboarding": {
