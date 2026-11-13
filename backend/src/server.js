@@ -72,9 +72,15 @@ if (env.nodeEnv !== 'production') {
 }
 
 // ------------------------------------------------------------
-// Serveur statique des jaquettes (volume ./uploads -> /app/uploads)
-// Sécurité : aucun index de répertoire, cache immuable en production
+// Serveur statique des jaquettes / avatars (volume ./uploads -> /app/uploads)
+// Sécurité : aucun index de répertoire, cache immuable en production.
+// Le dossier est servi sur /uploads — c'est l'unique source de vérité pour
+// les chemins relatifs « /uploads/avatars/<fichier> » stockés en base et
+// résolus par le front contre l'origine courante (jamais d'hôte brut).
 // ------------------------------------------------------------
+// env.uploadDir résout `process.env.UPLOAD_DIR || path.join(__dirname, '../uploads')`
+// (cf. config/env.js) — MÊME dossier que multer (middlewares/upload.js) et le
+// service de nettoyage : une seule source de vérité, jamais de divergence.
 fs.mkdirSync(env.uploadDir, { recursive: true });
 app.use(
   '/uploads',
