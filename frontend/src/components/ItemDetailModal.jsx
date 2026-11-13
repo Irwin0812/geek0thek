@@ -20,6 +20,7 @@
 
 import { useTranslation } from 'react-i18next'
 import { toDisplayImageUrl } from '../services/imageUrl.js'
+import { toColorList, colorDot, colorLabel } from '../services/discColors.jsx'
 
 /** Formate une date (ISO « AAAA-MM-JJ » de comics.added_date ou ISO8601) en jj/mm/aaaa. */
 function addDateFr(value) {
@@ -39,6 +40,11 @@ export default function ItemDetailModal({ type, item, onClose, onEdit }) {
   // (anti Mixed Content / CORS).
   const cover = toDisplayImageUrl(item.coverUrl)
 
+  // Couleurs de la galette (multi-select, colonne vinyls.color TEXT séparée
+  // par des virgules) : normalisées en tableau pour l'affichage en tags
+  // discrets (pastille de teinte + libellé traduit).
+  const discColors = isVinyl ? toColorList(item.color, []) : []
+
   // « MusicBrainz » / « Discogs » = noms propres, non traduits.
   const rows = isVinyl
     ? [
@@ -46,6 +52,22 @@ export default function ItemDetailModal({ type, item, onClose, onEdit }) {
         [t('collection.fieldLabel'), item.label],
         [t('collection.fieldReleaseYear'), item.releaseDate ? String(item.releaseDate).slice(0, 4) : null],
         [t('collection.fieldTracks'), item.trackCount > 0 ? item.trackCount : null],
+        // Options du disque (même ordre que le formulaire d'ajout) : nombre de
+        // galettes, couleurs (tags pastille + libellé) et Picture Disc.
+        [t('collection.fieldDiscsCount'), item.discsCount > 0 ? item.discsCount : null],
+        [t('vinylForm.colorLabel'), discColors.length ? (
+          <span className="flex flex-wrap items-center justify-end gap-1.5">
+            {discColors.map((c) => (
+              <span
+                key={c}
+                className="inline-flex items-center gap-1 rounded-full border border-night-500/60 bg-night-700/40 px-2 py-0.5 text-[11px] text-slate-300"
+              >
+                {colorDot(c, 10)}
+                {colorLabel(c, t)}
+              </span>
+            ))}
+          </span>
+        ) : null],
         [t('collection.fieldBarcode'), item.barcode],
         // Identifiants externes cliquables vers la fiche de référence
         ['MusicBrainz', item.mbid ? (
@@ -161,6 +183,16 @@ export default function ItemDetailModal({ type, item, onClose, onEdit }) {
               <p className="mt-1.5 text-base text-slate-400 sm:text-lg" title={subtitle}>
                 {subtitle}
               </p>
+            )}
+
+            {/* Badge « Picture Disc » : affiché UNIQUEMENT si l'option est
+                cochée/vraie pour ce disque (colonne is_picture_disc). */}
+            {isVinyl && item.pictureDisc && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="badge bg-gold-500/90 text-night-950 border border-gold-400/60 font-bold">
+                  {t('vinylForm.pictureDiscLabel')}
+                </span>
+              </div>
             )}
 
             {!isVinyl && (item.isSpecialEdition || item.isSigned) && (

@@ -98,6 +98,7 @@
     "fieldReleaseYear": "Release year",
     "fieldTracks": "Tracks",
     "fieldBarcode": "Barcode",
+    "fieldDiscsCount": "Number of disks",
     "fieldSeries": "Series",
     "fieldAuthors": "Author(s)",
     "fieldIllustrators": "Artist(s)",
