@@ -84,7 +84,9 @@ function toVinylDto(row) {
     isSpecialEdition: Boolean(row.is_special_edition),
     pictureDisc: Boolean(row.is_picture_disc),
     discsCount: Math.min(5, Math.max(1, Number(row.discs_count) || 1)),
-    // Couleur de la galette : même nom que la colonne (le formulaire lit/envoie « color »).
+    // Couleurs de la galette (multi-select) : même nom que la colonne (le
+    // formulaire lit/envoie « color ») — liste séparée par des virgules
+    // (colonne TEXT), jamais vide (défaut « Noir »).
     color: row.color || DEFAULT_DISC_COLOR,
     createdAt: row.created_at,
   };
@@ -702,9 +704,29 @@ function asBoolean(value, fallback = false) {
   return /^(1|true|oui|yes)$/i.test(String(value).trim());
 }
 
-/** Couleurs de galettes du select « Couleur » (défaut « Noir ») : base,
- *  transparente et finitions métallisées / spéciales. */
+/** Couleurs de galettes du multi-select « Couleur » (défaut « Noir ») : base,
+ *  nuances / finitions (pâle, foncé, clair, fluo, mat, vif, flash, brillant,
+ *  pailleté, métallisé…), transparente et finitions métallisées / spéciales.
+ *  Stockage : colonne vinyls.color TEXT — liste de couleurs séparées par des
+ *  virgules (multi-select du formulaire). */
 const DEFAULT_DISC_COLOR = 'Noir';
+
+/**
+ * Normalise le champ « Couleurs » (multi-select) en chaîne séparée par des
+ * virgules pour la colonne vinyls.color (TEXT). Tolère un tableau (JSON), une
+ * chaîne déjà séparée par des virgules ou une valeur simple héritée (legacy
+ * mono-couleur). Valeurs vides / dupliquées retirées ; liste vide -> défaut
+ * « Noir » (jamais de valeur vide stockée — colonne NOT NULL).
+ */
+function normalizeDiscColors(value) {
+  const raw = Array.isArray(value) ? value : String(value || '').split(',');
+  const out = [];
+  for (const part of raw) {
+    const s = String(part || '').trim();
+    if (s && !out.includes(s)) out.push(s);
+  }
+  return out.length ? out.join(', ') : DEFAULT_DISC_COLOR;
+}
 
 /**
  * Valide les champs d'un disque. Retourne { erreur } ou { valeurs }.
@@ -789,8 +811,10 @@ function cleanVinyl(body) {
       5,
       Math.max(1, toInteger(body.discs_count ?? body.discsCount, 1))
     ),
-    // Couleur de la galette (VARCHAR) : jamais null — défaut « Noir ».
-    discColor: String(body.color || '').trim() || DEFAULT_DISC_COLOR,
+    // Couleurs de la galette (multi-select, colonne TEXT) : liste séparée par
+    // des virgules — jamais vide, défaut « Noir ». Tolère un tableau (JSON),
+    // une chaîne séparée par des virgules ou une valeur simple héritée.
+    discColor: normalizeDiscColors(body.color),
   };
   return { values };
 }

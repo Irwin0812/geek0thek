@@ -89,13 +89,14 @@ CREATE TABLE IF NOT EXISTS vinyls (
     -- Options du vinyle (rangée horizontale du formulaire) : type de disque
     -- (« Vinyle » / « Compact », défaut « Vinyle »), « Édition spéciale
     -- (case à cocher), « Picture Disc » (Oui/Non), nombre de galettes (1 → 5)
-    -- et couleur de la galette (défaut « Noir »).
+    -- et couleurs de la galette (MULTI-SELECT, défaut « Noir ») : liste de
+    -- couleurs séparées par des virgules (ex. « Noir, Orange, Métallisé »).
     disc_type          VARCHAR(20) NOT NULL DEFAULT 'Vinyle',
     is_special_edition BOOLEAN     NOT NULL DEFAULT FALSE,
     is_picture_disc    BOOLEAN     NOT NULL DEFAULT FALSE,
     discs_count        INTEGER     NOT NULL DEFAULT 1
                        CHECK (discs_count BETWEEN 1 AND 5),
-    color              VARCHAR(50) NOT NULL DEFAULT 'Noir',
+    color              TEXT        NOT NULL DEFAULT 'Noir',
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );

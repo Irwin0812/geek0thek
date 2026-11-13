@@ -47,16 +47,18 @@ const EMPTY = {
   discType: 'Vinyle', // valeur de l'option par défaut du select « Type de Disque » (voir option conservée dans le menu, exception)
   discsCount: 1,      // select entiers 1 → 5 — valeur par défaut 1
   pictureDisc: false, // case à cocher « Picture Disc » — défaut non coché
-  color: 'Noir',      // menu déroulant custom des couleurs de galettes (pastille + libellé) — défaut « Noir »
+  color: ['Noir'],    // MULTI-SELECT des couleurs de galettes (pastilles + libellés) — défaut « Noir »
 }
 
-/* Option « N/A » du menu déroulant « Couleur » : pas de couleur enregistrée
-   (valeur stockée en base, colonne vinyls.color VARCHAR(50) sans liste). */
+/* Option « N/A » du menu « Couleur » : pas de couleur enregistrée
+   (valeur stockée en base, colonne vinyls.color TEXT sans liste). */
 const COLOR_NA = 'N/A'
 
-/* Couleurs de galettes proposées dans le menu « Couleur » : teintes de base,
-   transparent et finitions métallisées / spéciales, chacune avec la teinte
-   (couleur CSS) de sa pastille ronde affichée à côté du libellé. */
+/* Couleurs de galettes proposées dans le menu « Couleur » (multi-select) :
+   teintes de base, nuances / finitions (pâle, foncé, clair, fluo, mat, vif,
+   flash, brillant, pailleté, métallisé…), transparent et finitions
+   métallisées / spéciales, chacune avec la teinte (couleur CSS) de sa
+   pastille ronde affichée à côté du libellé. */
 const DISC_COLORS = [
   { value: 'Noir', hex: '#17181b' },
   { value: 'Blanc', hex: '#f5f5f4' },
@@ -66,6 +68,23 @@ const DISC_COLORS = [
   { value: 'Jaune', hex: '#eab308' },
   { value: 'Violet', hex: '#7c3aed' },
   { value: 'Rose', hex: '#ec4899' },
+  { value: 'Orange', hex: '#f97316' },
+  { value: 'Mauve', hex: '#b07bb5' },
+  { value: 'Turquoise', hex: '#14b8a6' },
+  { value: 'Fuchsia', hex: '#d946ef' },
+  { value: 'Beige', hex: '#e0cfa8' },
+  { value: 'Crème', hex: '#f7f0d8' },
+  { value: 'Brun', hex: '#6f4e37' },
+  { value: 'Pâle', hex: '#d6d3e0' },
+  { value: 'Foncé', hex: '#2f2f3a' },
+  { value: 'Clair', hex: '#e5e7eb' },
+  { value: 'Fluo', hex: '#39ff14' },
+  { value: 'Mat', hex: '#9ca3af' },
+  { value: 'Vif', hex: '#ff3b30' },
+  { value: 'Flash', hex: 'linear-gradient(135deg, #f8fafc 0%, #cbd5e1 40%, #f8fafc 60%, #94a3b8 100%)' },
+  { value: 'Brillant', hex: 'linear-gradient(135deg, #ffffff 0%, #e2e8f0 45%, #94a3b8 100%)' },
+  { value: 'Pailleté', hex: 'radial-gradient(circle at 30% 30%, #f8fafc 0 12%, transparent 13%), radial-gradient(circle at 70% 60%, #e2e8f0 0 10%, transparent 11%), radial-gradient(circle at 50% 80%, #cbd5e1 0 9%, transparent 10%), #475569' },
+  { value: 'Métallisé', hex: 'linear-gradient(135deg, #94a3b8 0%, #e2e8f0 35%, #64748b 65%, #cbd5e1 100%)' },
   { value: 'Transparent', hex: 'rgba(148, 163, 184, 0.3)' },
   { value: 'Or', hex: '#d4a017' },
   { value: 'Argent', hex: '#cbd5e1' },
@@ -106,6 +125,21 @@ const toDiscsCount = (value, fallback = 1) => {
   const n = parseInt(String(value), 10)
   if (!Number.isFinite(n)) return fallback
   return Math.min(DISCS_COUNT_MAX, Math.max(1, n))
+}
+
+/* « Couleurs » (multi-select) : normalise la valeur reçue de l'API en TABLEAU
+   de chaînes uniques. Tolère un tableau (nouveau format), une chaîne séparée
+   par des virgules (format stocké en base, colonne vinyls.color TEXT) ou une
+   valeur simple héritée (legacy mono-couleur). Valeur absente / invalide ->
+   `fallback` (défaut ['Noir']). */
+const toColorList = (value, fallback = ['Noir']) => {
+  const raw = Array.isArray(value) ? value : String(value || '').split(',')
+  const out = []
+  for (const part of raw) {
+    const s = String(part || '').trim()
+    if (s && !out.includes(s)) out.push(s)
+  }
+  return out.length ? out : fallback
 }
 
 /* DISSOCIATION ARTISTE ↔ JAQUETTE — garde stricte du formulaire : une valeur
@@ -218,8 +252,10 @@ export default function AddVinyl() {
           discType: 'Vinyle',
           discsCount: toDiscsCount(v.discsCount),
           pictureDisc: Boolean(v.isPictureDisc),
-          // « N/A » (pas de couleur) : valeur explicite de la colonne color.
-          color: v.color || 'Noir',
+          // Couleurs (multi-select) : tableau normalisé depuis la colonne
+          // color (TEXT, valeurs séparées par des virgules ; « N/A » = pas de
+          // couleur — valeur explicite conservée telle quelle).
+          color: toColorList(v.color),
         })
         setExistingCover(v.coverUrl || '')
         // Image d'ARTISTE courante (aperçu du champ « Image de l'artiste »).
@@ -321,6 +357,19 @@ export default function AddVinyl() {
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
+  // MULTI-SELECT « Couleurs » : TOGGLE d'une couleur dans la liste du
+  // formulaire (ajout si absente, retrait si présente). Le menu reste ouvert
+  // pour cumuler les choix ; « N/A » (vide) est exclusif — voir le panneau.
+  const toggleColor = (value) => {
+    setForm((f) => {
+      const list = Array.isArray(f.color) ? f.color : toColorList(f.color, [])
+      return {
+        ...f,
+        color: list.includes(value) ? list.filter((c) => c !== value) : [...list, value],
+      }
+    })
+  }
+
   // ----------------------------------------------------------
   // SUPPRESSION EXPLICITE d'une image (« Retirer le fichier ») :
   //  - field === 'cover'       -> jaquette d'album (couverture du disque) ;
@@ -396,9 +445,13 @@ export default function AddVinyl() {
     const discType = String(form.discType || '').trim() || 'Vinyle'
     const isPictureDisc = Boolean(form.pictureDisc)
     const discsCount = toDiscsCount(form.discsCount, 1)
-    // « N/A » : valeur explicite (pas de couleur) — conservée telle quelle,
-    // seul un choix vide retombe sur le défaut « Noir ».
-    const discColor = String(form.color || '').trim() || 'Noir'
+    // Couleurs (multi-select) : tableau normalisé (valeurs uniques, ordre de
+    // sélection conservé). « N/A » : valeur explicite (pas de couleur) —
+    // conservée telle quelle ; un choix vide retombe sur le défaut « Noir ».
+    // Sérialisé en chaîne séparée par des virgules pour la colonne
+    // vinyls.color (TEXT).
+    const discColors = Array.isArray(form.color) ? form.color : toColorList(form.color, [])
+    const discColor = discColors.length ? discColors.join(', ') : 'Noir'
     setSaving(true)
     try {
       let result
@@ -772,11 +825,13 @@ export default function AddVinyl() {
               </label>
             </div>
 
-            {/* 4. Couleur : menu déroulant custom — pastille ronde de la teinte
-                à côté du libellé correspondant, cercle barré et vide pour
-                « N/A ». Le <select> natif ne pouvant pas afficher un SVG, un
-                bouton + panneau (useDismiss) remplace le <select> ; fermeture
-                au clic à l'extérieur ou sur Échap. */}
+            {/* 4. Couleurs : MULTI-SELECT custom — pastille ronde de la teinte
+                à côté du libellé, cercle barré et vide pour « N/A ». Le
+                <select> natif ne pouvant pas afficher un SVG ni cocher
+                plusieurs options, un bouton + panneau (useDismiss) remplace le
+                <select> ; fermeture au clic à l'extérieur ou sur Échap. Chaque
+                clic TOGGLE la couleur (ajout / retrait) — le menu reste ouvert
+                pour cumuler les choix ; « N/A » est exclusif (vide la liste). */}
             <div className="sm:flex-1" ref={colorMenuRef}>
               <span className="label">{t('vinylForm.colorLabel')}</span>
               <div className="relative">
@@ -787,9 +842,20 @@ export default function AddVinyl() {
                   aria-expanded={colorMenuOpen}
                   className="input flex !items-center justify-between gap-2 text-left"
                 >
-                  <span className="flex min-w-0 items-center gap-2">
-                    {colorDot(form.color)}
-                    <span className="truncate">{colorLabel(form.color, t)}</span>
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    {form.color.length === 0 ? (
+                      colorDot(COLOR_NA)
+                    ) : (
+                      form.color.slice(0, 4).map((c) => colorDot(c))
+                    )}
+                    {form.color.length > 4 && (
+                      <span className="shrink-0 text-[11px] text-slate-500">+{form.color.length - 4}</span>
+                    )}
+                    <span className="truncate">
+                      {form.color.length === 0
+                        ? t('vinylForm.na')
+                        : form.color.map((c) => colorLabel(c, t)).join(', ')}
+                    </span>
                   </span>
                   <svg
                     width="12"
@@ -809,6 +875,7 @@ export default function AddVinyl() {
                 {colorMenuOpen && (
                   <ul
                     role="listbox"
+                    aria-multiselectable="true"
                     tabIndex={-1}
                     onBlur={(e) => {
                       /* Le focus passe du bouton au <ul> au clic ; s'il sort de
@@ -817,16 +884,13 @@ export default function AddVinyl() {
                         setColorMenuOpen(false)
                       }
                     }}
-                    className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-y-auto rounded-lg border border-night-500 bg-night-800 py-1 shadow-xl shadow-black/50"
+                    className="absolute left-0 right-0 z-20 mt-1 max-h-64 overflow-y-auto rounded-lg border border-night-500 bg-night-800 py-1 shadow-xl shadow-black/50"
                   >
                     <ColorOption
                       value={COLOR_NA}
                       label={t('vinylForm.na')}
-                      selected={form.color === COLOR_NA}
-                      onSelect={() => {
-                        setForm((f) => ({ ...f, color: COLOR_NA }))
-                        setColorMenuOpen(false)
-                      }}
+                      selected={form.color.length === 0}
+                      onSelect={() => setForm((f) => ({ ...f, color: [] }))}
                     />
                     {DISC_COLORS.map((c) => (
                       <ColorOption
@@ -834,11 +898,8 @@ export default function AddVinyl() {
                         value={c.value}
                         label={colorLabel(c.value, t)}
                         hex={c.hex}
-                        selected={form.color === c.value}
-                        onSelect={() => {
-                          setForm((f) => ({ ...f, color: c.value }))
-                          setColorMenuOpen(false)
-                        }}
+                        selected={form.color.includes(c.value)}
+                        onSelect={() => toggleColor(c.value)}
                       />
                     ))}
                   </ul>
@@ -916,9 +977,10 @@ export default function AddVinyl() {
   )
 }
 
-/* Pastille d'accompagnement des choix du menu « Couleur » :
+/* Pastille d'accompagnement des choix du menu « Couleurs » (multi-select) :
    – couleur connue → petit cercle de la teinte (hex / dégradé de
-     DISC_COLORS — « Marbré » et « Splatter » portent un gradient CSS) ;
+     DISC_COLORS — « Marbré », « Splatter », « Flash », « Brillant »,
+     « Pailleté » et « Métallisé » portent un gradient CSS) ;
    – « N/A » → cercle barré et vide (SVG : anneau + diagonale).
    Une discrète bordure rend visibles les teintes claires et transparentes. */
 function colorDot(value, size = 14) {

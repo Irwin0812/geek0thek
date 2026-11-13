@@ -673,6 +673,26 @@ const MIGRATIONS = [
         WHERE u.is_public = TRUE AND u.share_comics = TRUE;`,
      ],
    },
+  // COULEURS DE GALETTE EN MULTI-SELECT — la colonne vinyls.color passe de
+  // VARCHAR(50) à TEXT : le formulaire « Nouveau / Modifier le disque » permet
+  // désormais de choisir PLUSIEURS couleurs pour un même disque, stockées en
+  // liste séparée par des virgules (ex. « Noir, Orange, Métallisé »).
+  // Élargissement sans perte (VARCHAR -> TEXT) ; les valeurs mono-couleur
+  // héritées restent valides telles quelles. La vue public_vinyls porte une
+  // dépendance sur la colonne : on la retire d'abord et on la recrée à
+  // l'identique (même pattern que « schema.widen-text-columns »). Idempotent.
+  {
+    name: 'vinyls.color-multi',
+    statements: [
+      'DROP VIEW IF EXISTS public_vinyls;',
+      'ALTER TABLE vinyls ALTER COLUMN color TYPE TEXT;',
+      `CREATE OR REPLACE VIEW public_vinyls AS
+       SELECT v.*, u.first_name, u.last_name
+       FROM vinyls v
+       JOIN users u ON u.id = v.user_id
+       WHERE u.is_public = TRUE AND u.share_vinyls = TRUE;`,
+    ],
+  },
 ];
 
 /**
