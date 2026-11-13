@@ -235,7 +235,12 @@ async function forgotPassword(req, res, next) {
 
 async function resetPassword(req, res, next) {
   try {
-    const { token, newPassword } = req.body || {};
+    // Concordance des données : le front envoie { token, newPassword }. On
+    // tolère aussi « password » comme alias du nouveau mot de passe pour ne
+    // jamais rejeter un payload valide à cause d'une seule clé attendue.
+    const body = req.body || {};
+    const token = body.token;
+    const newPassword = body.newPassword !== undefined ? body.newPassword : body.password;
     if (!token || !newPassword) {
       return res.status(400).json({ error: 'Champs requis : token et newPassword.' });
     }
@@ -251,8 +256,14 @@ async function resetPassword(req, res, next) {
     // nouveau mot de passe (transaction ci-dessous) le marque « utilisé ».
     const providedToken = String(token).trim().toLowerCase();
 
+    // ATTENTION (bug corrigé) : node-postgres (pg) BASCULE EN MINUSCULES les
+    // alias de colonnes du résultat (« resetId » -> « resetid », « userId » ->
+    // « userid »). Avec des alias en camelCase, `reset.resetId` valait
+    // undefined : l'UPDATE ci-dessous recevait NULL, ne matchait AUCUNE ligne
+    // (rowCount 0) et renvoyait à tort « déjà utilisé » pour un jeton tout
+    // frais — sans jamais le consommer. Les alias sont donc en minuscules.
     const { rows } = await query(
-      `SELECT pr.id AS resetId, pr.expires_at, pr.used_at, u.id AS userId, u.password_hash
+      `SELECT pr.id AS reset_id, pr.expires_at, pr.used_at, u.id AS user_id, u.password_hash
        FROM password_resets pr JOIN users u ON u.id = pr.user_id
        WHERE pr.token_hash = $1`,
       [hashResetToken(providedToken)]
@@ -282,7 +293,7 @@ async function resetPassword(req, res, next) {
       await client.query('BEGIN');
       const consumed = await client.query(
         `UPDATE password_resets SET used_at = now() WHERE id = $1 AND used_at IS NULL`,
-        [reset.resetId]
+        [reset.reset_id]
       );
       if (consumed.rowCount === 0) {
         await client.query('ROLLBACK');
@@ -291,7 +302,7 @@ async function resetPassword(req, res, next) {
       await client.query(
         `UPDATE users SET password_hash = $1, must_change_password = FALSE,
          password_changed_at = now() WHERE id = $2`,
-        [passwordHash, reset.userId]
+        [passwordHash, reset.user_id]
       );
       await client.query('COMMIT');
     } catch (txErr) {

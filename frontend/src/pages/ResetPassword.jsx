@@ -41,7 +41,11 @@ export default function ResetPassword() {
     }
     setBusy(true)
     try {
-      await api.resetPassword({ token, newPassword: form.newPassword })
+      // Le jeton de l'URL est transmis dans le CORPS de la requête POST (le
+      // backend ne lit que req.body). « password » est envoyé en plus de
+      // « newPassword » : les deux clés sont acceptées par le backend, la
+      // concordance du payload est donc garantie quel que soit le contrat.
+      await api.resetPassword({ token, newPassword: form.newPassword, password: form.newPassword })
       setDone(true)
     } catch (err) {
       setError(err.message)
