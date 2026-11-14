@@ -13,7 +13,7 @@ import BarcodeModal from '../components/BarcodeModal.jsx'
 import { CheckIcon } from '../components/icons.jsx'
 import { useDismiss } from '../components/hooks.js'
 import { toDisplayImageUrl } from '../services/imageUrl.js'
-import { COLOR_NA, DISC_COLORS, toColorList, colorDot, colorLabel } from '../services/discColors.jsx'
+import { COLOR_NA, sortedDiscColors, toColorList, colorDot, colorLabel } from '../services/discColors.jsx'
 
 // « DATE D'AJOUT » du jour (temps local), format AAAA-MM-JJ strict :
 // valeur par défaut du champ lors de la création d'un nouveau disque.
@@ -47,7 +47,7 @@ const EMPTY = {
   discType: 'Vinyle', // valeur de l'option par défaut du select « Type de Disque » (voir option conservée dans le menu, exception)
   discsCount: 1,      // select entiers 1 → 5 — valeur par défaut 1
   pictureDisc: false, // case à cocher « Picture Disc » — défaut non coché
-  color: ['Noir'],    // MULTI-SELECT des couleurs de galettes (pastilles + libellés) — défaut « Noir »
+  color: [],          // MULTI-SELECT des couleurs de galettes (pastilles + libellés) — défaut : aucune couleur (« N/A »)
 }
 
 /* Entiers du select « Nombre de Disques » (1 à 5, défaut 1). */
@@ -195,8 +195,9 @@ export default function AddVinyl() {
           pictureDisc: Boolean(v.isPictureDisc),
           // Couleurs (multi-select) : tableau normalisé depuis la colonne
           // color (TEXT, valeurs séparées par des virgules ; « N/A » = pas de
-          // couleur — valeur explicite conservée telle quelle).
-          color: toColorList(v.color),
+          // couleur — représenté dans le formulaire par une liste VIDE, donc
+          // retiré du tableau pour que l'option « N/A » soit cochée).
+          color: toColorList(v.color).filter((c) => c !== COLOR_NA),
         })
         setExistingCover(v.coverUrl || '')
         // Image d'ARTISTE courante (aperçu du champ « Image de l'artiste »).
@@ -387,12 +388,11 @@ export default function AddVinyl() {
     const isPictureDisc = Boolean(form.pictureDisc)
     const discsCount = toDiscsCount(form.discsCount, 1)
     // Couleurs (multi-select) : tableau normalisé (valeurs uniques, ordre de
-    // sélection conservé). « N/A » : valeur explicite (pas de couleur) —
-    // conservée telle quelle ; un choix vide retombe sur le défaut « Noir ».
-    // Sérialisé en chaîne séparée par des virgules pour la colonne
-    // vinyls.color (TEXT).
+    // sélection conservé). Liste vide = « N/A » (pas de couleur) — valeur
+    // explicite COLOR_NA stockée telle quelle en base. Sérialisé en chaîne
+    // séparée par des virgules pour la colonne vinyls.color (TEXT).
     const discColors = Array.isArray(form.color) ? form.color : toColorList(form.color, [])
-    const discColor = discColors.length ? discColors.join(', ') : 'Noir'
+    const discColor = discColors.length ? discColors.join(', ') : COLOR_NA
     setSaving(true)
     try {
       let result
@@ -833,7 +833,7 @@ export default function AddVinyl() {
                       selected={form.color.length === 0}
                       onSelect={() => setForm((f) => ({ ...f, color: [] }))}
                     />
-                    {DISC_COLORS.map((c) => (
+                    {sortedDiscColors(t).map((c) => (
                       <ColorOption
                         key={c.value}
                         value={c.value}

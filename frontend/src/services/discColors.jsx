@@ -124,3 +124,10 @@ export const colorLabel = (value, t) => {
   const key = `vinylForm.colors.${s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`
   return i18n.exists(key) ? t(key) : s
 }
+
+/* Couleurs du menu « Couleur » triées ALPHABÉTIQUEMENT par libellé TRADUIT
+   (langue d'affichage courante, localeCompare) : « N/A » reste en tête du
+   menu (rendu séparément dans AddVinyl.jsx), les autres couleurs suivent
+   dans l'ordre alphabétique de leur libellé traduit. */
+export const sortedDiscColors = (t) =>
+  [...DISC_COLORS].sort((a, b) => colorLabel(a.value, t).localeCompare(colorLabel(b.value, t)))
