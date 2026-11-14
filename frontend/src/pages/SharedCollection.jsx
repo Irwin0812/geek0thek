@@ -368,7 +368,7 @@ function SharedVinylsView({ vinyls, q, letter, openGroup, onOpenGroup, onResetLe
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <button className="btn-ghost" onClick={() => onOpenGroup(null)}>
+              <button className="btn-ghost btn-back-glow" onClick={() => onOpenGroup(null)}>
                 {t('collection.allArtists')}
               </button>
               <div>
@@ -513,7 +513,7 @@ function SharedComicsView({ comics, q, letter, openGroup, onOpenGroup, onResetLe
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <button className="btn-ghost" onClick={() => onOpenGroup(null)}>
+              <button className="btn-ghost btn-back-glow" onClick={() => onOpenGroup(null)}>
                 {t('collection.allSeries')}
               </button>
               <div>

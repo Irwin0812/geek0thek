@@ -59,6 +59,29 @@
     @apply btn bg-night-700/60 text-slate-200 border border-night-500 hover:bg-night-600;
   }
 
+  /* Boutons de retour aux listes parentes (« ← Tous les artistes », « ← Toutes les séries »…) :
+     lueur permanente aux couleurs du thème (accent), intensifiée au survol.
+     La lueur est une ombre portée EXTERNE uniquement — le texte reste parfaitement lisible.
+     !important : les fichiers src/themes/*.css sont importés APRÈS index.css sans @layer,
+     leurs règles non-couchées (ex. .btn-ghost { border-color }) l'emporteraient sinon. */
+  .btn-back-glow {
+    border-color: color-mix(in srgb, var(--accent-strong) 55%, transparent) !important;
+    box-shadow:
+      0 0 10px color-mix(in srgb, var(--accent-strong) 35%, transparent),
+      0 0 24px color-mix(in srgb, var(--accent-strong) 18%, transparent);
+    transition:
+      box-shadow 0.25s ease,
+      border-color 0.25s ease,
+      background-color 0.25s ease;
+  }
+
+  .btn-back-glow:hover {
+    border-color: color-mix(in srgb, var(--accent-strong) 85%, transparent) !important;
+    box-shadow:
+      0 0 14px color-mix(in srgb, var(--accent-strong) 60%, transparent),
+      0 0 34px color-mix(in srgb, var(--accent-strong) 32%, transparent);
+  }
+
   .btn-danger {
     @apply btn bg-rose-600/90 text-white hover:bg-rose-500;
   }

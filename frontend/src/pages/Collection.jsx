@@ -278,7 +278,7 @@ function CollectionView() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <button className="btn-ghost" onClick={() => setOpenGroup(null)}>{t('collection.allArtists')}</button>
+              <button className="btn-ghost btn-back-glow" onClick={() => setOpenGroup(null)}>{t('collection.allArtists')}</button>
               <div>
                 {/* Nom du groupe (« Divers » si non étiqueté) + compteur disques.
                     cb-group-title : lettrage « case de BD » sous le thème Comic Books. */}
