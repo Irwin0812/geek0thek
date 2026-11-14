@@ -6,7 +6,7 @@
  * the Free Software Foundation, either version 3 of the License.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n/i18n.js'
 import { api } from '../services/api.js'
@@ -124,7 +124,12 @@ export default function AddComic() {
   const { id } = useParams()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
+  const location = useLocation()
   const [params] = useSearchParams()
+  // Vue d'ORIGINE capturée à l'ouverture du formulaire : émise par la page
+  // source via location.state.from ({ path, view }) — destination du retour
+  // après ENREGISTREMENT et ANNULATION. null si ouvert directement (URL/reload).
+  const [origin] = useState(() => location.state?.from || null)
   const { t } = useTranslation()
 
   const [form, setForm] = useState(EMPTY)
@@ -579,7 +584,9 @@ export default function AddComic() {
             : ''
         )
       }
-      navigate('/comics', { state: { toastKey: isEdit ? 'collection.updatedComic' : 'collection.addedComic', title: isEdit ? undefined : result.comic.title } })
+      // Retour à la vue d'ORIGINE (page source + sous-état openGroup/letter/q)
+      // avec le toast de confirmation ; repli /comics si aucune origine.
+      navigate(origin?.path || '/comics', { state: { toastKey: isEdit ? 'collection.updatedComic' : 'collection.addedComic', title: isEdit ? undefined : result.comic.title, ...(origin?.view || {}) } })
     } catch (err) {
       setError(err.message)
     } finally {
@@ -877,7 +884,7 @@ export default function AddComic() {
           <button type="submit" className="btn-primary" disabled={saving}>
             {saving ? t('common.saving') : isEdit ? t('comicForm.saveChanges') : t('common.addCollection')}
           </button>
-          <button type="button" className="btn-ghost" onClick={() => navigate(-1)}>{t('common.cancel')}</button>
+          <button type="button" className="btn-ghost" onClick={() => navigate(origin?.path || '/comics', { state: { ...(origin?.view || {}) } })}>{t('common.cancel')}</button>
         </div>
       </form>
 
@@ -888,7 +895,8 @@ export default function AddComic() {
         // backend (api.comics.importByIsbn) ; aucun pré-remplissage n'est
         // nécessaire — on quitte le formulaire et on confirme via le toast.
         onImport={(comic) => {
-          navigate('/comics', { state: { toastKey: 'collection.importedComic', title: comic?.title || 'BD' } })
+          // Import direct : retour à la vue d'ORIGINE avec le toast d'import.
+          navigate(origin?.path || '/comics', { state: { toastKey: 'collection.importedComic', title: comic?.title || 'BD', ...(origin?.view || {}) } })
         }}
         onPrefill={(payload) => {
           // Mapping exhaustif : chaque champ renvoyé par IsbnModal est

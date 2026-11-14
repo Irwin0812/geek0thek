@@ -6,7 +6,7 @@
  * the Free Software Foundation, either version 3 of the License.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
 import BarcodeModal from '../components/BarcodeModal.jsx'
@@ -126,7 +126,12 @@ export default function AddVinyl() {
   const { id } = useParams()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
+  const location = useLocation()
   const [params] = useSearchParams()
+  // Vue d'ORIGINE capturée à l'ouverture du formulaire : émise par la page
+  // source via location.state.from ({ path, view }) — destination du retour
+  // après ENREGISTREMENT et ANNULATION. null si ouvert directement (URL/reload).
+  const [origin] = useState(() => location.state?.from || null)
   const { t } = useTranslation()
 
   const [form, setForm] = useState(EMPTY)
@@ -482,7 +487,9 @@ export default function AddVinyl() {
         }
         result = isEdit ? await api.vinyls.update(id, payload) : await api.vinyls.create(payload)
       }
-      navigate('/collection', { state: { toastKey: isEdit ? 'collection.updatedVinyl' : 'collection.addedVinyl', title: isEdit ? undefined : result.vinyl.title } })
+      // Retour à la vue d'ORIGINE (page source + sous-état openGroup/letter/q)
+      // avec le toast de confirmation ; repli /collection si aucune origine.
+      navigate(origin?.path || '/collection', { state: { toastKey: isEdit ? 'collection.updatedVinyl' : 'collection.addedVinyl', title: isEdit ? undefined : result.vinyl.title, ...(origin?.view || {}) } })
     } catch (err) {
       setError(err.message)
     } finally {
@@ -887,7 +894,7 @@ export default function AddVinyl() {
           <button type="submit" className="btn-primary" disabled={saving}>
             {saving ? t('common.saving') : isEdit ? t('vinylForm.saveChanges') : t('common.addCollection')}
           </button>
-          <button type="button" className="btn-ghost" onClick={() => navigate(-1)}>{t('common.cancel')}</button>
+          <button type="button" className="btn-ghost" onClick={() => navigate(origin?.path || '/collection', { state: { ...(origin?.view || {}) } })}>{t('common.cancel')}</button>
         </div>
       </form>
 

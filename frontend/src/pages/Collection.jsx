@@ -5,8 +5,8 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
 import VinylCard, { EmptyState } from '../components/VinylCard.jsx'
@@ -43,10 +43,14 @@ export default function Collection() {
 
 function CollectionView() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { settings } = useDisplay()
   const { t } = useTranslation()
+  // Sous-état de VUE restauré depuis location.state au remontage (retour d'un
+  // formulaire après enregistrement/annulation) : openGroup (artiste ouvert),
+  // letter (filtre alphabétique), q (recherche). Vide à l'ouverture normale.
   const [vinyls, setVinyls] = useState([])
-  const [q, setQ] = useState('')
+  const [q, setQ] = useState(() => location.state?.q || '')
   const [loadError, setLoadError] = useState('')
   const [detailVinyl, setDetailVinyl] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -55,9 +59,9 @@ function CollectionView() {
   // title }) et la suppression locale de cette page (common.retiredVinyl).
   const [toast, setToast] = useState(null)
   // Clé du groupe (artiste) ouvert au niveau 2, null pour la vue principale (niveau 1)
-  const [openGroup, setOpenGroup] = useState(null)
+  const [openGroup, setOpenGroup] = useState(() => location.state?.openGroup || null)
   // Lettre active du filtre alphabétique (#, A–Z), null = aucun filtre.
-  const [letter, setLetter] = useState(null)
+  const [letter, setLetter] = useState(() => location.state?.letter || null)
 
   useEffect(() => {
     if (location.state?.toastKey) {
@@ -109,10 +113,19 @@ function CollectionView() {
     }
   }
 
+  // Sous-état de VUE courant (artiste ouvert / filtre lettre / recherche) :
+  // transmis au formulaire via location.state.from pour un retour PRÉCIS à la
+  // même vue après enregistrement ou annulation. Porté par une REF (toujours à
+  // jour) afin que les callbacks STABILISÉS (onAction, cf. memo des lignes)
+  // lisent la vue du moment au clic sans dépendre de q/openGroup/letter —
+  // sinon leur identité changerait à chaque frappe et invaliderait le memo.
+  const viewRef = useRef({ openGroup, letter, q })
+  viewRef.current = { openGroup, letter, q }
+
   /** Pré-remplit le formulaire de création avec l'artiste du groupe. */
   const addForGroup = (group) => {
     const artist = group.name === NO_ARTIST_LABEL ? '' : group.name
-    window.location.assign(`/vinyles/nouveau?prefill=1&artist=${encodeURIComponent(artist)}`)
+    navigate(`/vinyles/nouveau?prefill=1&artist=${encodeURIComponent(artist)}`, { state: { from: { path: '/collection', view: viewRef.current } } })
   }
 
   // ------- Vue pilotée par les préférences d'affichage (grille / liste) -------
@@ -130,8 +143,8 @@ function CollectionView() {
     [t]
   )
   const onAction = useCallback(
-    (value, v) => (value === 'edit' ? window.location.assign(`/vinyles/${v.id}`) : setConfirmDelete(v)),
-    []
+    (value, v) => (value === 'edit' ? navigate(`/vinyles/${v.id}`, { state: { from: { path: '/collection', view: viewRef.current } } }) : setConfirmDelete(v)),
+    [navigate]
   )
   const openDetail = useCallback((v) => setDetailVinyl(v), [])
   const cardProps = useMemo(
@@ -163,7 +176,7 @@ function CollectionView() {
     : false
   const gridActions = (v) => (
     <div className="flex gap-2">
-      <Link to={`/vinyles/${v.id}`} className="btn-ghost flex-1 !py-1.5">{t('common.edit')}</Link>
+      <button type="button" className="btn-ghost flex-1 !py-1.5" onClick={() => navigate(`/vinyles/${v.id}`, { state: { from: { path: '/collection', view: viewRef.current } } })}>{t('common.edit')}</button>
       <button
         className="btn-danger !py-1.5"
         onClick={() => setConfirmDelete(v)}
@@ -198,7 +211,7 @@ function CollectionView() {
           <CollectionCounter type="disks" groups={filteredGroups.length} items={vinyls.length} />
           <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
           <ViewToolbar />
-          <Link to="/vinyles/nouveau" className="btn-primary !h-12">{t('dashboard.addVinyl')}</Link>
+          <button type="button" className="btn-primary !h-12" onClick={() => navigate('/vinyles/nouveau', { state: { from: { path: '/collection', view: viewRef.current } } })}>{t('dashboard.addVinyl')}</button>
         </div>
       </header>
 
@@ -229,7 +242,7 @@ function CollectionView() {
               q ? (
                 <button className="btn-ghost" onClick={() => setQ('')}>{t('collection.resetSearch')}</button>
               ) : (
-                <Link to="/vinyles/nouveau" className="btn-primary">{t('dashboard.addVinyl')}</Link>
+                <button type="button" className="btn-primary" onClick={() => navigate('/vinyles/nouveau', { state: { from: { path: '/collection', view: viewRef.current } } })}>{t('dashboard.addVinyl')}</button>
               )
             }
           />
@@ -369,7 +382,7 @@ function CollectionView() {
         type="vinyl"
         item={detailVinyl}
         onClose={() => setDetailVinyl(null)}
-        onEdit={(v) => { setDetailVinyl(null); window.location.assign(`/vinyles/${v.id}`) }}
+        onEdit={(v) => { setDetailVinyl(null); navigate(`/vinyles/${v.id}`, { state: { from: { path: '/collection', view: viewRef.current } } }) }}
       />
 
       {confirmDelete && (

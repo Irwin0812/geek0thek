@@ -6,7 +6,7 @@
  * the Free Software Foundation, either version 3 of the License.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowRight, BookOpen, ChevronDown, Dices, Disc3, Gamepad2, Layers, Library, Lock, PenLine, Plus, Tags, Users,
@@ -27,6 +27,7 @@ import { useAppliedTheme, useDismiss, useHoverClose } from '../components/hooks.
 export default function Dashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useTranslation()
   const { settings } = useDisplay()
   // Thème appliqué actuellement — sert UNIQUEMENT à habiller les TITRES du
@@ -51,6 +52,10 @@ export default function Dashboard() {
   const [detailVinyl, setDetailVinyl] = useState(null)
   const [detailComic, setDetailComic] = useState(null)
   const [loadError, setLoadError] = useState('')
+  // Toast structural { key, params } → `t(key, params)` : émis par les
+  // formulaires (AddVinyl / AddComic) au retour depuis le dashboard après
+  // enregistrement (location.state.toastKey + title). Auto-masqué après 4 s.
+  const [toast, setToast] = useState(null)
 
   const load = async () => {
     try {
@@ -64,6 +69,17 @@ export default function Dashboard() {
     }
   }
   useEffect(() => { load() }, [])
+
+  // Toast de confirmation au retour d'un formulaire (enregistrement depuis le
+  // dashboard) : même contrat que Collection / ComicCollection — lit
+  // location.state.toastKey + title, auto-masqué après 4 s.
+  useEffect(() => {
+    if (location.state?.toastKey) {
+      setToast({ key: location.state.toastKey, params: location.state.title ? { title: location.state.title } : null })
+      const timer = setTimeout(() => setToast(null), 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [location.state])
 
   /**
    * « Derniers ajouts » : tri chronologique STRICT sur la date d'ajout métier
@@ -108,9 +124,15 @@ export default function Dashboard() {
     // bloc « TUILES DU DASHBOARD ») — ré-ancrage des couleurs de texte des tuiles
     // à l'encre chaude du thème. Inerte sous les autres thèmes.
     <div className="lib-dash max-w-7xl mx-auto p-6 space-y-6">
+      {toast && (
+        <p className="text-sm text-amber-800 bg-amber-100 border border-amber-500/30 rounded-lg px-3 py-2">
+          {t(toast.key, toast.params ?? {})}
+        </p>
+      )}
+
       {/* Modale de détail (clic sur carte) */}
-      <ItemDetailModal type="vinyl" item={detailVinyl} onClose={() => setDetailVinyl(null)} onEdit={(v) => { setDetailVinyl(null); navigate(`/vinyles/${v.id}`) }} />
-      <ItemDetailModal type="comic" item={detailComic} onClose={() => setDetailComic(null)} onEdit={(c) => { setDetailComic(null); navigate(`/comics/${c.id}`) }} />
+      <ItemDetailModal type="vinyl" item={detailVinyl} onClose={() => setDetailVinyl(null)} onEdit={(v) => { setDetailVinyl(null); navigate(`/vinyles/${v.id}`, { state: { from: { path: '/' } } }) }} />
+      <ItemDetailModal type="comic" item={detailComic} onClose={() => setDetailComic(null)} onEdit={(c) => { setDetailComic(null); navigate(`/comics/${c.id}`, { state: { from: { path: '/' } } }) }} />
 
       {/* En-tête : même structure que les barres d'actions des collections —
           cb-actions (thème Comic Books : CARTOUCHE noir franc #191105 liseré or
@@ -312,7 +334,7 @@ export default function Dashboard() {
                   <EmptyState
                     title={t('dashboard.emptyVinylTitle')}
                     subtitle={t('dashboard.emptyVinylSubtitle')}
-                    action={<Link to="/vinyles/nouveau" className="btn-primary">{t('dashboard.addVinyl')}</Link>}
+                    action={<button type="button" className="btn-primary" onClick={() => navigate('/vinyles/nouveau', { state: { from: { path: '/' } } })}>{t('dashboard.addVinyl')}</button>}
                   />
                 </div>
               ) : (
@@ -354,7 +376,7 @@ export default function Dashboard() {
                   <EmptyState
                     title={t('dashboard.emptyComicTitle')}
                     subtitle={t('dashboard.emptyComicSubtitle')}
-                    action={<Link to="/comics/nouveau" className="btn-primary">{t('dashboard.addComic')}</Link>}
+                    action={<button type="button" className="btn-primary" onClick={() => navigate('/comics/nouveau', { state: { from: { path: '/' } } })}>{t('dashboard.addComic')}</button>}
                   />
                 </div>
               ) : (
@@ -434,7 +456,7 @@ function PrimaryStatCard({ to, icon, label, value, bgImage, glow, frame, chip, n
         {/* ACTIONS RAPIDES : bouton d'ajout (accent du domaine) + lien direct —
             ancrées à droite de la bannière (au lieu du bas dans le format carré). */}
         <span className="relative ml-auto flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-2">
-          <QuickAction to={to === '/collection' ? '/vinyles/nouveau' : `/comics/nouveau`} tone={frame.includes('amber') ? 'amber' : 'teal'}>
+          <QuickAction to={to === '/collection' ? '/vinyles/nouveau' : `/comics/nouveau`} tone={frame.includes('amber') ? 'amber' : 'teal'} state={{ from: { path: '/' } }}>
             <Plus size={14} strokeWidth={2.75} aria-hidden="true" />
             {t(`dashboard.${to === '/collection' ? 'addVinyl' : 'addComic'}`)}
           </QuickAction>
@@ -546,7 +568,7 @@ function SoonCard({ icon: Icon, label, bgImage }) {
  * le lien « Tout voir ». Focus clavier visible ; stopPropagation inutile —
  * boutons et liens principaux sont des FRÈRES au DOM, pas imbriqués.
  */
-function QuickAction({ to, tone = 'neutral', children }) {
+function QuickAction({ to, tone = 'neutral', state, children }) {
   // Idem AddMediaDropdown : lecture locale RÉACTIVE du thème (la variable de
   // scope de Dashboard() n'est pas accessible ici — ancien ReferenceError).
   const comicTheme = useAppliedTheme() === 'comic-books'
@@ -571,6 +593,7 @@ function QuickAction({ to, tone = 'neutral', children }) {
   return (
     <Link
       to={to}
+      state={state}
       className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider shadow-sm shadow-black/40 backdrop-blur-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 ${tones[tone]}`}
     >
       {children}
@@ -630,7 +653,8 @@ function AddMediaDropdown() {
 
   const pick = (opt) => {
     setOpen(false) // ferme AVANT la navigation (re-rendu / démontage propres)
-    if (opt.enabled) navigate(opt.to)
+    // Origine = dashboard : le formulaire y retourne après enregistrement/annulation.
+    if (opt.enabled) navigate(opt.to, { state: { from: { path: '/' } } })
   }
 
   return (

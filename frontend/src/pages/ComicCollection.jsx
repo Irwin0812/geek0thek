@@ -5,8 +5,8 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
 import ComicCard from '../components/ComicCard.jsx'
@@ -47,17 +47,20 @@ function ComicCollectionView() {
   const navigate = useNavigate()
   const { settings } = useDisplay()
   const { t } = useTranslation()
+  // Sous-état de VUE restauré depuis location.state au remontage (retour d'un
+  // formulaire après enregistrement/annulation) : openGroup (série ouverte),
+  // letter (filtre alphabétique), q (recherche). Vide à l'ouverture normale.
   const [comics, setComics] = useState([])
-  const [q, setQ] = useState('')
+  const [q, setQ] = useState(() => location.state?.q || '')
   const [loadError, setLoadError] = useState('')
   const [detailComic, setDetailComic] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   // Toast structural { key, params } → traduit en langue courante via t().
   const [toast, setToast] = useState(null)
   // Clé du groupe (série) ouvert au niveau 2, null pour la vue principale (niveau 1)
-  const [openGroup, setOpenGroup] = useState(null)
+  const [openGroup, setOpenGroup] = useState(() => location.state?.openGroup || null)
   // Lettre active du filtre alphabétique (#, A–Z), null = aucun filtre.
-  const [letter, setLetter] = useState(null)
+  const [letter, setLetter] = useState(() => location.state?.letter || null)
 
   useEffect(() => {
     if (location.state?.toastKey) {
@@ -109,6 +112,15 @@ function ComicCollectionView() {
     }
   }
 
+  // Sous-état de VUE courant (série ouverte / filtre lettre / recherche) :
+  // transmis au formulaire via location.state.from pour un retour PRÉCIS à la
+  // même vue après enregistrement ou annulation. Porté par une REF (toujours à
+  // jour) afin que les callbacks STABILISÉS (goEdit/onAction, cf. memo des
+  // lignes) lisent la vue du moment au clic sans dépendre de q/openGroup/letter
+  // — sinon leur identité changerait à chaque frappe et invaliderait le memo.
+  const viewRef = useRef({ openGroup, letter, q })
+  viewRef.current = { openGroup, letter, q }
+
   // useCallback : callback STABLE — requis pour que le memo des lignes/cartes
   // fonctionne (onAction en dépend, cf. plus bas).
   const goEdit = useCallback((comic) => {
@@ -117,7 +129,7 @@ function ComicCollectionView() {
       if (v !== null && v !== undefined && v !== '' && typeof v !== 'boolean') params.set(k, String(v))
     })
     setOpenGroup(null)
-    navigate(`/comics/${comic.id}?${params.toString()}`)
+    navigate(`/comics/${comic.id}?${params.toString()}`, { state: { from: { path: '/comics', view: viewRef.current } } })
   }, [navigate])
 
   /** Pré-remplit le formulaire de création avec les infos du groupe (série, auteurs, éditeur). */
@@ -131,7 +143,7 @@ function ComicCollectionView() {
     set('series', series)
     set('authors', first?.authors)
     set('publisher', first?.publisher)
-    window.location.assign(`/comics/nouveau?${params.toString()}`)
+    navigate(`/comics/nouveau?${params.toString()}`, { state: { from: { path: '/comics', view: viewRef.current } } })
   }
 
   // ------- Vue pilotée par les préférences d'affichage (grille / liste) -------
@@ -216,7 +228,7 @@ function ComicCollectionView() {
           <CollectionCounter type="comics" groups={filteredGroups.length} items={comics.length} />
           <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
           <ViewToolbar />
-          <Link to="/comics/nouveau" className="btn-primary !h-12">{t('dashboard.addComic')}</Link>
+          <button type="button" className="btn-primary !h-12" onClick={() => navigate('/comics/nouveau', { state: { from: { path: '/comics', view: viewRef.current } } })}>{t('dashboard.addComic')}</button>
         </div>
       </header>
 
@@ -247,7 +259,7 @@ function ComicCollectionView() {
               q ? (
                 <button className="btn-ghost" onClick={() => setQ('')}>{t('collection.resetSearch')}</button>
               ) : (
-                <Link to="/comics/nouveau" className="btn-primary">{t('dashboard.addComic')}</Link>
+                <button type="button" className="btn-primary" onClick={() => navigate('/comics/nouveau', { state: { from: { path: '/comics', view: viewRef.current } } })}>{t('dashboard.addComic')}</button>
               )
             }
           />
@@ -376,7 +388,7 @@ function ComicCollectionView() {
         type="comic"
         item={detailComic}
         onClose={() => setDetailComic(null)}
-        onEdit={(c) => { setDetailComic(null); navigate(`/comics/${c.id}`) }}
+        onEdit={(c) => { setDetailComic(null); navigate(`/comics/${c.id}`, { state: { from: { path: '/comics', view: viewRef.current } } }) }}
       />
 
       {confirmDelete && (
