@@ -51,6 +51,12 @@ function CollectionView() {
   // letter (filtre alphabétique), q (recherche). Vide à l'ouverture normale.
   const [vinyls, setVinyls] = useState([])
   const [q, setQ] = useState(() => location.state?.q || '')
+  // true dès que la PREMIÈRE charge des données est terminée (succès ou échec) :
+  // le garde « groupe disparu » ci-dessous ne doit JAMAIS s'exécuter pendant le
+  // chargement initial — sinon, au retour d'un formulaire avec openGroup restauré
+  // (artiste/série en cours de visualisation), la liste vide transitoire ferait
+  // basculer la page vers la vue générale AVANT l'arrivée des données.
+  const [hasLoaded, setHasLoaded] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [detailVinyl, setDetailVinyl] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -78,6 +84,9 @@ function CollectionView() {
       setVinyls(data)
     } catch (err) {
       setLoadError(err.message)
+    } finally {
+      // Fin de la première charge : le garde « groupe disparu » peut s'activer.
+      setHasLoaded(true)
     }
   }, [q])
 
@@ -90,8 +99,9 @@ function CollectionView() {
   const groups = useMemo(() => groupVinylsByArtist(vinyls), [vinyls])
   const currentGroup = openGroup ? groups.find((g) => g.key === openGroup) : null
   useEffect(() => {
-    if (openGroup && !groups.some((g) => g.key === openGroup)) setOpenGroup(null)
-  }, [groups, openGroup])
+    // hasLoaded : jamais de bascule pendant le chargement initial (cf. ci-dessus).
+    if (hasLoaded && openGroup && !groups.some((g) => g.key === openGroup)) setOpenGroup(null)
+  }, [groups, openGroup, hasLoaded])
 
   // Filtre alphabétique (#, A–Z) : groupes dont la lettre du nom correspond à
   // `letter` — accents normalisés (« Étrangers » → E, « À la page » → A).
