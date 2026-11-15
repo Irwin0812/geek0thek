@@ -28,9 +28,10 @@ jobs:
 
       - name: Connexion à GitHub Container Registry
         uses: docker/login-action@v3
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extraction du nom d'utilisateur GitHub (minuscules)
         id: var
