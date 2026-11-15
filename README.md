@@ -285,15 +285,27 @@ sudo chown -R 1000:1000 uploads
 chmod 775 uploads uploads/vinyls uploads/comics
 ```
 
-#### 5. Lancement de l'application avec Docker Compose
+#### 5. Authentification au registre GHCR (si les packages ne sont pas publics)
 
-Tout est prêt. Lancez le déploiement en arrière-plan en demandant la construction des images :
+Les images backend et frontend sont pré-compilées par le workflow GitHub Actions (`docker-publish.yml`) et publiées sur GitHub Container Registry (`ghcr.io`). Si vos packages GitHub ne sont **pas** en visibilité publique, authentifiez-vous sur le serveur de production avec un Personal Access Token (PAT) ayant la permission `read:packages` :
 
 ```bash
-docker compose up -d --build
+# CR_PAT = votre PAT GitHub (scope read:packages)
+echo $CR_PAT | docker login ghcr.io -u Irwin0812 --password-stdin
 ```
 
-#### 6. Vérification du déploiement
+> Si les packages sont publics, cette étape est facultative.
+
+#### 6. Lancement de l'application avec Docker Compose
+
+Tout est prêt. Lancez le déploiement en arrière-plan (les images sont tirées depuis GHCR) :
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+#### 7. Vérification du déploiement
 
 Suivez les logs de démarrage pour vous assurer que les services (`db`, `backend`, `frontend`) s'initialisent correctement sans erreur :
 
@@ -670,8 +682,9 @@ server {
 ## 🐳 Commandes Docker Compose utiles
 
 ```bash
-# Démarrer tout (build si besoin)
-docker compose up -d --build
+# Tirer les dernières images depuis GHCR puis démarrer
+docker compose pull
+docker compose up -d
 
 # Arrêter tout (les volumes restent : données + uploads)
 docker compose down

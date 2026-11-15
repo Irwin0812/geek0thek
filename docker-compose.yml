@@ -34,9 +34,8 @@ services:
     #   - "127.0.0.1:5432:5432"
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    # Image pré-compilée publiée par le workflow GitHub Actions (docker-publish.yml)
+    image: ghcr.io/irwin0812/geek0thek-backend:latest
     container_name: geek0thek-backend
     restart: unless-stopped
     depends_on:
@@ -110,9 +109,8 @@ services:
       - geek0thek-net
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    # Image pré-compilée publiée par le workflow GitHub Actions (docker-publish.yml)
+    image: ghcr.io/irwin0812/geek0thek-frontend:latest
     container_name: geek0thek-frontend
     restart: unless-stopped
     depends_on:
