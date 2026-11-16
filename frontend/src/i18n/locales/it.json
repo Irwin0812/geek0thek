@@ -679,5 +679,12 @@
     "noAccessSubtitle": "Non ti è stato concesso l'accesso in consultazione a questa biblioteca, oppure l'accesso è stato revocato.",
     "emptyTitle": "Collezione vuota",
     "emptySubtitle": "Questa collezione non contiene ancora alcun elemento."
+  },
+  "footer": {
+    "support": "Sostieni il progetto!",
+    "paypal": "Donaci con PayPal",
+    "copyright": "Geek0thek - Libreria di collezioni di GERARTS Irwin - 2026",
+    "getApp": "Scarica Geek0thek",
+    "cookies": "Gestisci i cookie"
   }
 }

@@ -679,5 +679,12 @@
     "noAccessSubtitle": "Ihnen wurde kein Lesezugriff auf diese Bibliothek erteilt, oder der Zugriff wurde entzogen.",
     "emptyTitle": "Leere Sammlung",
     "emptySubtitle": "Diese Sammlung enthält noch keine Einträge."
+  },
+  "footer": {
+    "support": "Unterstützen Sie das Projekt!",
+    "paypal": "Mit PayPal spenden",
+    "copyright": "Geek0thek - Sammlungsbibliothek von GERARTS Irwin - 2026",
+    "getApp": "Geek0thek herunterladen",
+    "cookies": "Cookies verwalten"
   }
 }

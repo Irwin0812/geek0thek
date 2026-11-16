@@ -6,6 +6,7 @@
  * the Free Software Foundation, either version 3 of the License.
  */
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
 
 /**
@@ -33,9 +34,13 @@ import { api } from '../services/api.js'
  *     libellé de version « Version: <tag release> » (jaune pour le thème BD),
  *     collé strictement à l'extrême droite. Masqué COMPLÈTEMENT tant qu'aucune
  *     Release GitHub officielle n'est publiée (« No releases published »).
+ *
+ * TOUTES les chaînes visibles sont internationalisées via useTranslation()
+ * (clé « footer.* » présente dans les 6 dictionnaires de langues).
  */
 
 export default function Footer() {
+  const { t } = useTranslation()
   // Version de la webapp = tag de la dernière Release GitHub officielle
   // (ex. « v1.0.0 »). Une seule requête au montage ; jamais d'erreur affichée :
   // si aucune release n'est publiée, ou si l'API GitHub est injoignable /
@@ -82,27 +87,23 @@ export default function Footer() {
             className="font-bold text-base whitespace-nowrap"
             style={{ color: 'var(--accent-strong)' }}
           >
-            Soutenez le projet !
+            {t('footer.support')}
           </span>
           {/* Image locale du bouton PayPal : hauteur ajustée (h-9 = 36px) pour
               s'ajuster à la hauteur du footer, largeur proportionnelle
               (w-auto) — jamais de déformation. */}
           <img
             src="/img/paypal.png"
-            alt="Bouton de don PayPal"
+            alt={t('footer.paypal')}
             className="h-9 w-auto shrink-0"
             loading="lazy"
           />
         </a>
 
-        {/* COLONNE 2 — CENTRE EXACT : mention de crédit UNIQUEMENT, centrée au
-            milieu de l'écran. */}
+        {/* COLONNE 2 — CENTRE EXACT : mention de crédit UNIQUEMENT (footer.copyright),
+            centrée au milieu de l'écran. */}
         <div className="justify-self-center text-center leading-relaxed whitespace-nowrap">
-          Geek0thek - Bibliothèque de collections par{' '}
-          <a href="mailto:webmaster@igerarts.be" className="text-slate-300 underline-offset-2 transition hover:text-gold-300 hover:underline">
-            GERARTS Irwin
-          </a>{' '}
-          - 2026
+          {t('footer.copyright')}
         </div>
 
         {/* COLONNE 3 — DROITE : libellé de version UNIQUEMENT, collé strictement

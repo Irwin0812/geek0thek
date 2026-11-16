@@ -679,5 +679,12 @@
     "noAccessSubtitle": "U heeft geen leestoegang tot deze bibliotheek gekregen, of de toegang is ingetrokken.",
     "emptyTitle": "Lege collectie",
     "emptySubtitle": "Deze collectie bevat nog geen items."
+  },
+  "footer": {
+    "support": "Steun het project!",
+    "paypal": "Doneer via PayPal",
+    "copyright": "Geek0thek - Collectiebibliotheek door GERARTS Irwin - 2026",
+    "getApp": "Download Geek0thek",
+    "cookies": "Cookiebeheer"
   }
 }
