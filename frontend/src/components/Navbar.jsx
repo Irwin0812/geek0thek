@@ -14,6 +14,7 @@ import { ChevronDown } from 'lucide-react'
 import { api, saveSession } from '../services/api.js'
 import Avatar from './Avatar.jsx'
 import { CheckIcon, GlobeIcon } from './icons.jsx'
+import FlagIcon from './FlagIcon.jsx'
 import ThemeIcon from './ThemeIcon.jsx'
 import { useDismiss, useHoverClose } from './hooks.js'
 import { getAppliedTheme, isKnownTheme, switchTheme, THEMES } from '../services/theme.js'
@@ -233,7 +234,7 @@ export default function Navbar() {
      sous-menu) : thème appliqué + langue active. */
   const activeTheme = THEMES.find((th) => th.id === appliedTheme) || THEMES[0]
   const currentLang = i18n.resolvedLanguage || i18n.language
-  const activeLangLabel = SUPPORTED_LANGUAGES.find((l) => l.code === currentLang)?.label
+  const activeLang = SUPPORTED_LANGUAGES.find((l) => l.code === currentLang)
 
   // cb-navbar : accroche de la charte « Comic Books » (thèmes/comic-books.css)
   // — barre jaune/rouge/cyan, lettrage Bangers, boutons harmonisés au message
@@ -503,12 +504,16 @@ export default function Navbar() {
                     >
                       {/* Petite planète (Globe) cyan à gauche du libellé, et la
                           langue courante affichée dans le même cyan : repère
-                          visuel unique de la rangée « Langue ». */}
+                          visuel unique de la rangée « Langue ». Le drapeau SVG
+                          de la langue active précède son libellé. */}
                       <span className="flex items-center gap-2">
                         <GlobeIcon size={14} className="shrink-0 text-cyan-300" />
                         {t('navbar.language')}
-                        {activeLangLabel && (
-                          <span className="text-xs font-normal text-cyan-300">{activeLangLabel}</span>
+                        {activeLang && (
+                          <span className="flex items-center gap-1.5 text-xs font-normal text-cyan-300">
+                            <FlagIcon code={activeLang.code} className="h-3 w-4" />
+                            {activeLang.label}
+                          </span>
                         )}
                       </span>
                       {/* Plus d'indicateur au repos (puce retirée) ; seul le
@@ -545,6 +550,10 @@ export default function Navbar() {
                                   : 'text-slate-300 hover:bg-night-700/60 hover:text-white'
                               }`}
                             >
+                              {/* Drapeau SVG de la langue (à gauche du libellé) :
+                                  net et identique dans tous les navigateurs,
+                                  y compris Windows (pas d'emojis natifs). */}
+                              <FlagIcon code={lang.code} className="h-3 w-4" />
                               {lang.label}
                               {active && <CheckIcon size={12} className="ml-auto shrink-0 text-slate-950" />}
                             </button>
