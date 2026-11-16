@@ -1,93 +1,93 @@
-# 💿📚 Geek0thek — Médiathèque Personnelle
+# 💿📚 Geek0thek — Personal Media Library
 
 ---
 
-## Description du projet
+## Project description
 
-Application web full-stack conteneurisée pour la gestion de collections de Disques, de Bandes Dessinées (BD / Mangas / Comics), de (à venir) Jeux de Rôle, Jeux Vidéo, Livres/Magazines.
-
----
-
-## 💙 Soutenir le projet
-
-**Geek0thek est un projet conçu, développé et hébergé en solo, sur fonds propres.**
-L'hébergement (VM, base de données, stockage des couvertures), la maintenance et le développement continu sont entièrement pris en charge par l'auteur.
-
-Si cette médiathèque vous est utile et que vous souhaitez contribuer à sa pérennité, vous pouvez faire un **don libre** via PayPal :
-
-👉 **[Soutenez le projet en faisant un don via PayPal](https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN)**
-
-- **Aucun montant minimum ni maximum** : chaque contribution, quelle qu'en soit la taille, est la bienvenue et finance directement l'hébergement et le développement.
-- Le bouton **« Soutenez le projet »** est également disponible en permanence dans le pied de page de l'application (il s'adapte au thème visuel actif).
-
-Merci pour votre soutien ! 🙏
+A containerized full-stack web application for managing collections of Records, Comics (BD / Manga / Comics), and (coming soon) Role-playing Games, Video Games, Books/Magazines.
 
 ---
 
-## Essayer la démo
+## 💙 Support the project
 
-🔗 **Démo en ligne :** <https://demothek.igerarts.be>
+**Geek0thek is a solo project — designed, developed and hosted by a single developer, at their own expense.**
+Hosting (VM, database, cover storage), maintenance and ongoing development are entirely funded by the author.
 
-| Identifiant | Mot de passe |
+If this media library is useful to you and you'd like to help keep it running, you can make a **free donation** via PayPal:
+
+👉 **[Support the project with a PayPal donation](https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN)**
+
+- **No minimum or maximum amount**: every contribution, of any size, is welcome and directly funds hosting and development.
+- The **"Support the project"** button is also permanently available in the application footer (it adapts to the active visual theme).
+
+Thank you for your support! 🙏
+
+---
+
+## Try the demo
+
+🔗 **Live demo:** <https://demothek.igerarts.be>
+
+| Username | Password |
 | --- | --- |
 | `demo` | `demo` |
 
 ---
 
-## Fonctionnalités clés
+## Key features
 
-**Geek0thek** est une application web full-stack moderne conçue sur mesure pour centraliser, organiser et valoriser la collection complète de vos médias physiques et objets culturels (disques vinyles, bandes dessinées, jeux vidéo, jeux de rôle, livres et magazines). Pensée pour offrir une expérience fluide, immersive et hautement personnalisable, la plateforme combine une gestion rigoureuse des données avec une esthétique visuelle soignée.
+**Geek0thek** is a modern full-stack web application built from scratch to centralize, organize and showcase your complete collection of physical media and cultural items (vinyl records, comics, video games, role-playing games, books and magazines). Designed for a smooth, immersive and highly customizable experience, the platform combines rigorous data management with a polished visual aesthetic.
 
-### 1. Gestion Multi-Bibliothèques et Collections
+### 1. Multi-library & collection management
 
-- **Diversité des supports :** Prise en charge native de multiples collections physiques (Vinyles, BD, Jeux vidéo, JDR, Livres) avec des fiches descriptives adaptées à chaque univers culturel.
-- **Imports et Métadonnées :** Intégration d'API externes (telles que Discogs, Google Books) et de fonctionnalités de scan par code-barres (via smartphone) pour simplifier l'ajout d'œuvres.
-- **Cohérence des données :** Mécanismes de normalisation intelligents, garantissant par exemple que le genre musical du premier disque ajouté pour un artiste se réplique automatiquement pour les ajouts ultérieurs du même groupe.
+- **Media diversity:** Native support for multiple physical collections (Vinyl, Comics, Video games, RPGs, Books) with descriptive record sheets tailored to each cultural domain.
+- **Imports & metadata:** Integration of external APIs (such as Discogs and Google Books) plus barcode scanning (via smartphone) to simplify adding items.
+- **Data consistency:** Smart normalization mechanisms — for example, the musical genre of the first record added for an artist is automatically replicated for subsequent additions by the same group.
 
-### 2. Identité Visuelle et Thèmes Personnalisés
+### 2. Visual identity & custom themes
 
-- **Immersion thématique :** L'application propose plusieurs univers graphiques distincts et mémorisables (comme le thème *Médiathèque* avec ses tons chaleureux, le thème *Néon* utilisant des polices typographiques spécifiques comme Neuropol, ou encore le thème *Disquaire* aux accents rétro inspirés des années 80).
-- **Gestion des préférences utilisateur :** Sauvegarde en base de données du thème de prédilection de chaque utilisateur, garantissant la persistance de son choix à chaque reconnexion.
-- **Interface responsive :** Boutons d'interaction ergonomiques (navigation rapide, retour en haut de page positionné au-dessus du footer) et support multilingue complet (français, anglais, néerlandais) avec détection automatique de la langue du navigateur.
+- **Thematic immersion:** The application offers several distinct, memorable visual universes (such as the *Library* theme with its warm tones, the *Neon* theme using specific typographic fonts like Neuropol, or the *Record Shop* theme with retro 80s-inspired accents).
+- **User preference management:** Each user's favorite theme is stored in the database, ensuring their choice persists across reconnections.
+- **Responsive interface:** Ergonomic interaction buttons (quick navigation, back-to-top button positioned above the footer) and full multilingual support (French, English, Dutch) with automatic browser language detection.
 
-### 3. Sécurité & Rôles
+### 3. Security & roles
 
-- **Authentification sécurisée :** Gestion des profils utilisateurs et intégration d'options de sécurité avancées (Double authentification / 2FA).
-- **Traçabilité des versions :** Affichage dynamique du numéro de Release GitHub officiel dans le pied de page, assurant un suivi clair des versions déployées.
+- **Secure authentication:** User profile management and integration of advanced security options (Two-Factor Authentication / 2FA).
+- **Version traceability:** Dynamic display of the official GitHub Release number in the footer, ensuring clear tracking of deployed versions.
 
-### 4. Architecture & Stack Technique
+### 4. Architecture & tech stack
 
-- **Stack moderne :** Développé autour d'un backend Node.js / Express et d'un frontend React / Tailwind CSS, reposant sur une base de données PostgreSQL robuste optimisée pour traiter des volumes de données et des libellés étendus.
-- **Approche native et auto-hébergée :** Conçu pour tourner nativement sous Linux, témoignant d'une volonté d'indépendance vis-à-vis des solutions cloud propriétaires au profit d'une infrastructure locale, performante et souveraine. Une installation locale sous Windows (mode natif) est également possible.
+- **Modern stack:** Built around a Node.js / Express backend and a React / Tailwind CSS frontend, backed by a robust PostgreSQL database optimized for large data volumes and extended labels.
+- **Native, self-hosted approach:** Designed to run natively on Linux, reflecting a commitment to independence from proprietary cloud solutions in favor of local, high-performance and sovereign infrastructure. A native Windows installation is also possible.
 
 ---
 
-## 📂 Arborescence du projet & Couches / Technologies
+## 📂 Project structure & layers / technologies
 
 ```text
 geek0thek/
-├── .env                        # Variables d'environnement de production
+├── .env                        # Production environment variables
 ├── .gitignore
-├── package.json                # Configuration globale / scripts
+├── package.json                # Global configuration / scripts
 ├── README.md
 ├── database/
-│   └── init.sql                # Schéma de la base de données (tables, types élargis TEXT/VARCHAR)
-├── uploads/                    # Volume local des couvertures et images
-│   ├── vinyls/                 # Jaquettes de disques
-│   └── comics/                 # Couvertures de BD
+│   └── init.sql                # Database schema (tables, widened TEXT/VARCHAR types)
+├── uploads/                    # Local volume for covers and images
+│   ├── vinyls/                 # Record sleeves
+│   └── comics/                 # Comic covers
 ├── backend/
-│   ├── package.json            # Dépendances backend (express, pg, multer, etc.)
+│   ├── package.json            # Backend dependencies (express, pg, multer, etc.)
 │   └── src/
-│       ├── server.js           # App Express, statique /uploads, proxy trust, routes
+│       ├── server.js           # Express app, static /uploads, proxy trust, routes
 │       ├── config/
-│       │   ├── db.js           # Pool PostgreSQL (pg)
-│       │   └── env.js          # Configuration centralisée (env)
+│       │   ├── db.js           # PostgreSQL pool (pg)
+│       │   └── env.js          # Centralized configuration (env)
 │       ├── middlewares/
 │       │   ├── auth.js         # JWT (authenticate) + requireAdmin
-│       │   └── upload.js       # Multer (gestion des uploads indépendants jaquettes/séries)
+│       │   └── upload.js       # Multer (independent sleeve/series upload handling)
 │       ├── controllers/
 │       │   ├── authController.js
-│       │   ├── userController.js    # Gestion des profils, préférences et thèmes utilisateur
+│       │   ├── userController.js    # Profile, preference and theme management
 │       │   ├── vinylController.js
 │       │   ├── musicBrainzController.js
 │       │   ├── discogsController.js
@@ -103,367 +103,367 @@ geek0thek/
 │       │   └── isbnRoutes.js
 │       └── utils/
 │           ├── musicBrainzClient.js # MusicBrainz + Cover Art Archive
-│           ├── discogsClient.js     # Discogs (recherche par code-barres / release)
-│           └── isbnClient.js        # Google Books / Open Library par ISBN
+│           ├── discogsClient.js     # Discogs (barcode / release lookup)
+│           └── isbnClient.js        # Google Books / Open Library by ISBN
 └── frontend/
-    ├── package.json            # Dépendances frontend (React, Vite, Tailwind, i18next)
+    ├── package.json            # Frontend dependencies (React, Vite, Tailwind, i18next)
     ├── tailwind.config.js
     └── src/
-        ├── App.jsx             # Routage + contextes (auth, thèmes, i18n)
-        ├── index.css           # Thèmes graphiques et styles Tailwind
+        ├── App.jsx             # Routing + contexts (auth, themes, i18n)
+        ├── index.css           # Visual themes and Tailwind styles
         ├── main.jsx
         ├── components/
         │   ├── Navbar.jsx
-        │   ├── Footer.jsx      # Footer incluant l'affichage dynamique de la release GitHub
-        │   ├── TopButton.jsx   # Bouton retour en haut positionné au-dessus du footer
+        │   ├── Footer.jsx      # Footer including dynamic GitHub release display
+        │   ├── TopButton.jsx   # Back-to-top button positioned above the footer
         │   ├── ProtectedRoute.jsx
         │   ├── VinylCard.jsx
         │   ├── BarcodeModal.jsx
         │   ├── ComicCard.jsx
         │   └── IsbnModal.jsx
-        ├── locales/            # Dictionnaires de traduction i18n (fr, en, nl) pour toutes les sections
+        ├── locales/            # i18n translation dictionaries (fr, en, nl) for all sections
         ├── pages/
         │   ├── Login.jsx
-        │   ├── Onboarding.jsx      # Sécurité 1re connexion
+        │   ├── Onboarding.jsx      # First-login security
         │   ├── Dashboard.jsx
-        │   ├── Collection.jsx      # Vinyles de l'utilisateur
-        │   ├── ComicCollection.jsx # BDs de l'utilisateur
-        │   ├── PublicCollection.jsx# Collections publiques
+        │   ├── Collection.jsx      # User's vinyl records
+        │   ├── ComicCollection.jsx # User's comics
+        │   ├── PublicCollection.jsx# Public collections
         │   ├── AddVinyl.jsx
         │   ├── AddComic.jsx
-        │   ├── Profile.jsx         # Paramètres utilisateur, sécurité (2FA) et thèmes
+        │   ├── Profile.jsx         # User settings, security (2FA) and themes
         │   └── AdminUsers.jsx
         └── services/
-            └── api.js          # Client REST (JWT, multipart, gestion 401)
+            └── api.js          # REST client (JWT, multipart, 401 handling)
 ```
 
-| Couche | Technologies / Outils | Rôle & Caractéristiques |
+| Layer | Technologies / Tools | Role & characteristics |
 | --- | --- | --- |
-| **Frontend (Présentation)** | **React**, **Vite**, **Tailwind CSS** | Interface utilisateur dynamique (SPA), responsive, avec thèmes personnalisables (Médiathèque, Néon, Disquaire). |
-| **Internationalisation & UI** | **i18next**, **Lucide Icons** / **React Icons** | Support multilingue (FR, EN, NL), détection de langue et composant d'UI (bouton Top, footer dynamique). |
-| **Backend (API / Serveur)** | **Node.js**, **Express.js** | API REST pour la gestion des données, de l'authentification et du traitement multipart (uploads). |
-| **Sécurité & Authentification** | **JWT (JSON Web Tokens)**, **bcrypt**, **express-rate-limit** | Authentification sécurisée, hachage de mots de passe, gestion du 2FA et protection anti-bot/rate-limiting. |
-| **Base de données (Données)** | **PostgreSQL** (`pg`) | Base de données relationnelle robuste avec types élargis (`TEXT`) pour éviter la limitation de taille des libellés. |
-| **Stockage Fichiers** | **Multer**, Système de fichiers local | Gestion et organisation locale des jaquettes de disques, couvertures de BD et images médias dans `/uploads`. |
-| **Services & APIs Externes** | **Discogs API**, **MusicBrainz**, **Cover Art Archive**, **Google Books / Open Library** | Métadonnées de collections et récupération automatique d'informations via codes-barres / ISBN. |
-| **Infrastructure & Hôte** | **Debian 12 (Bookworm)**, **Nginx** | Déploiement natif auto-hébergé sur VM dédié avec reverse proxy HTTPS et gestion DNS local (`dnsmasq`). |
+| **Frontend (Presentation)** | **React**, **Vite**, **Tailwind CSS** | Dynamic user interface (SPA), responsive, with customizable themes (Library, Neon, Record Shop). |
+| **Internationalization & UI** | **i18next**, **Lucide Icons** / **React Icons** | Multilingual support (FR, EN, NL), language detection and UI components (Top button, dynamic footer). |
+| **Backend (API / Server)** | **Node.js**, **Express.js** | REST API for data management, authentication and multipart processing (uploads). |
+| **Security & Authentication** | **JWT (JSON Web Tokens)**, **bcrypt**, **express-rate-limit** | Secure authentication, password hashing, 2FA handling and anti-bot/rate-limiting protection. |
+| **Database (Data)** | **PostgreSQL** (`pg`) | Robust relational database with widened types (`TEXT`) to avoid label size limitations. |
+| **File Storage** | **Multer**, local file system | Local management and organization of record sleeves, comic covers and media images in `/uploads`. |
+| **External Services & APIs** | **Discogs API**, **MusicBrainz**, **Cover Art Archive**, **Google Books / Open Library** | Collection metadata and automatic information retrieval via barcode / ISBN. |
+| **Infrastructure & Host** | **Debian 12 (Bookworm)**, **Nginx** | Native self-hosted deployment on a dedicated VM with HTTPS reverse proxy and local DNS management (`dnsmasq`). |
 
 ---
 
-## ⚙️ Spécifications système minimales
+## ⚙️ Minimum system specifications
 
-L'application tourne sous **Docker Compose** avec **3 conteneurs** : PostgreSQL 16, backend Node.js 22 (API Express) et frontend nginx. Les spécifications ci-dessous sont celles recommandées pour l'exécuter **sereinement** sur la VM hôte.
+The application runs under **Docker Compose** with **3 containers**: PostgreSQL 16, Node.js 22 backend (Express API) and nginx frontend. The specifications below are those recommended to run it **comfortably** on the host VM.
 
-### Matériel
+### Hardware
 
-| Ressource | Minimum | Recommandé |
+| Resource | Minimum | Recommended |
 | --- | --- | --- |
-| **CPU** | 2 cœurs (vCPU) | 4 cœurs (vCPU) |
-| **Mémoire RAM** | 2 Go | 4 Go |
-| **Espace disque libre** | 10 Go | 30 Go+ (les couvertures téléversées/téléchargées s'accumulent dans `./uploads`) |
-| **Réseau** | Connexion internet sortante (egress) | — |
+| **CPU** | 2 cores (vCPU) | 4 cores (vCPU) |
+| **RAM** | 2 GB | 4 GB |
+| **Free disk space** | 10 GB | 30 GB+ (uploaded/downloaded covers accumulate in `./uploads`) |
+| **Network** | Outgoing internet connection (egress) | — |
 
-> **Répartition indicative de la RAM** : PostgreSQL ~500 Mo, backend Node.js ~300 Mo, nginx ~50 Mo, le reste pour l'OS et Docker. En dessous de 2 Go, les imports par code-barres/ISBN (téléchargement + ré-hébergement des couvertures) peuvent devenir lents ou provoquer des OOM.
+> **Indicative RAM breakdown**: PostgreSQL ~500 MB, Node.js backend ~300 MB, nginx ~50 MB, the rest for the OS and Docker. Below 2 GB, barcode/ISBN imports (cover download + re-hosting) can become slow or trigger OOM errors.
 
-### Logiciels (prérequis hôte)
+### Software (host prerequisites)
 
-| Logiciel | Version | Rôle |
+| Software | Version | Role |
 | --- | --- | --- |
-| **Système d'exploitation** | Debian 12 (cible) — tout Linux compatible Docker fonctionne | Windows natif sans Docker |
-| **Docker Engine** | ≥ 24.x (dernière stable) | Exécution des conteneurs |
-| **Docker Compose** | v2 (plugin `docker compose`) | Orchestration db + backend + frontend |
-| **Git** | récent | Déploiement (`git clone`) et mises à jour (`git pull`) |
+| **Operating system** | Debian 12 (target) — any Docker-compatible Linux works | Native Windows without Docker |
+| **Docker Engine** | ≥ 24.x (latest stable) | Container execution |
+| **Docker Compose** | v2 (`docker compose` plugin) | Orchestration of db + backend + frontend |
+| **Git** | recent | Deployment (`git clone`) and updates (`git pull`) |
 
-### Accès réseau sortant (egress)
+### Outgoing network access (egress)
 
-L'application a besoin d'une **connexion internet sortante** pour :
+The application requires an **outgoing internet connection** for:
 
-- **Imports vinyles** : MusicBrainz, Cover Art Archive, Discogs (si `DISCOGS_TOKEN`), Last.fm.
-- **Imports BD** : Google Books, Open Library.
-- **Indicateur de mise à jour** : API GitHub (dépôt privé → `GITHUB_TOKEN`).
+- **Vinyl imports**: MusicBrainz, Cover Art Archive, Discogs (if `DISCOGS_TOKEN` is set), Last.fm.
+- **Comic imports**: Google Books, Open Library.
+- **Update indicator**: GitHub API (private repository → `GITHUB_TOKEN`).
 
-Sans egress, l'application fonctionne normalement (collections locales, authentification) mais les imports par code-barres/ISBN échouent (`502`).
+Without egress, the application works normally (local collections, authentication) but barcode/ISBN imports fail (`502`).
 
-> Les ports entrants requis sont uniquement le **port 80** (frontend). PostgreSQL (5432) et l'API backend (8080) restent **internes au réseau Docker** et ne sont pas exposés sur l'hôte.
+> The only required incoming port is **port 80** (frontend). PostgreSQL (5432) and the backend API (8080) remain **internal to the Docker network** and are not exposed on the host.
 
 ---
 
-## 🚀 Installation pas à pas
+## 🚀 Step-by-step installation
 
 ### A. Linux — Docker Compose
 
-#### 1. Préparation du système (Docker Engine + Docker Compose)
+#### 1. System preparation (Docker Engine + Docker Compose)
 
-Connectez-vous en SSH à votre VM, puis préparez le système et installez les outils requis :
+Connect to your VM over SSH, then prepare the system and install the required tools:
 
 ```bash
-# Mettre à jour le système
+# Update the system
 sudo apt update && sudo apt upgrade -y
 
-# Installer les dépendances et le dépôt officiel Docker
+# Install dependencies and the official Docker repository
 sudo apt install -y curl git apt-transport-https ca-certificates gnupg lsb-release
 curl -fsSL https://get.docker.com | sudo sh
 
-# Ajouter votre utilisateur au groupe docker pour éviter d'utiliser sudo à chaque commande
+# Add your user to the docker group to avoid using sudo for every command
 sudo usermod -aG docker $USER
 ```
 
-*Note : Si vous venez d'ajouter votre utilisateur au groupe docker, déconnectez-vous de la session SSH (`exit`) puis reconnectez-vous pour appliquer le changement.*
+*Note: If you just added your user to the docker group, log out of the SSH session (`exit`) and reconnect to apply the change.*
 
-Vérifiez que tout est bien en place :
+Verify that everything is in place:
 
 ```bash
 docker --version
 docker compose version
 ```
 
-Vérifiez également que l'adresse IP de la VM correspond bien à celle attendue par la configuration (`votre_adresse_ip_ici`) :
+Also verify that the VM's IP address matches the one expected by the configuration (`your_ip_address_here`):
 
 ```bash
 ip addr
 ```
 
-#### 2. Récupération des fichiers du projet (Git)
+#### 2. Fetching the project files (Git)
 
-Créez le répertoire d'installation (par exemple dans `/opt`), clonez votre dépôt, puis positionnez-vous dedans :
+Create the installation directory (e.g. in `/opt`), clone your repository, then move into it:
 
 ```bash
 sudo mkdir -p /opt && cd /opt
 
-# Cloner le dépôt dans le dossier geek0thek (ajustez l'URL de votre dépôt si nécessaire)
-sudo git clone <url-du-depot-git> geek0thek
+# Clone the repository into the geek0thek folder (adjust your repository URL if needed)
+sudo git clone <url-of-git-repo> geek0thek
 
-# Donner la propriété du dossier à votre utilisateur courant
+# Give ownership of the folder to your current user
 sudo chown -R $USER:$USER /opt/geek0thek
 cd /opt/geek0thek
 ```
 
-#### 3. Configuration du fichier `.env`
+#### 3. Configuring the `.env` file
 
-Le projet fournit un modèle de configuration. Dupliquez-le pour créer votre fichier `.env` actif :
+The project ships with a configuration template. Duplicate it to create your active `.env` file:
 
 ```bash
 cp .env.example .env
 ```
 
-Ouvrez le fichier `.env` avec votre éditeur favori (ex. `nano .env`) et adaptez les valeurs clés :
+Open the `.env` file with your favorite editor (e.g. `nano .env`) and adjust the key values:
 
-1. **Sécurité JWT (obligatoire) :** Générez une chaîne aléatoire sécurisée en exécutant la commande suivante dans un autre terminal :
+1. **JWT security (required):** Generate a secure random string by running the following command in another terminal:
 
    ```bash
    openssl rand -hex 64
    ```
 
-   Copiez le résultat et collez-le à la place de la valeur par défaut :
+   Copy the result and paste it in place of the default value:
 
    ```env
-   JWT_SECRET=votre_chaine_aleatoire_generee_ici
+   JWT_SECRET=your_generated_random_string_here
    ```
 
-2. **Paramètres réseau et base de données :** Vérifiez que l'IP d'écoute correspond bien à votre environnement (`votre_adresse_ip_ici`) et que le mot de passe de la base de données vous convient :
+2. **Network and database settings:** Make sure the listening IP matches your environment (`your_ip_address_here`) and that the database password suits you:
 
    ```env
-   APP_HOST_IP=votre_adresse_ip_ici
+   APP_HOST_IP=your_ip_address_here
    APP_PORT=80
    POSTGRES_PASSWORD=your_db_password
-   CORS_ORIGIN=http://votre_adresse_ip_ici
-   APP_URL=http://votre_adresse_ip_ici
+   CORS_ORIGIN=http://your_ip_address_here
+   APP_URL=http://your_ip_address_here
    ```
 
-3. **Clés et jetons optionnels (Discogs, Google Books, Last.fm, GitHub) :** Renseignez vos clés API si vous souhaitez activer les fonctionnalités avancées d'import de métadonnées et l'indicateur de mise à jour GitHub (laissez vide si vous n'en avez pas l'utilité immédiate).
+3. **Optional keys and tokens (Discogs, Google Books, Last.fm, GitHub):** Fill in your API keys if you want to enable the advanced metadata import features and the GitHub update indicator (leave them empty if you don't need them right away).
 
-#### 4. Configuration des dossiers et des permissions de stockage
+#### 4. Configuring storage folders and permissions
 
-Le backend utilise un dossier local pour persister les jaquettes et images de manière sécurisée sur le disque de l'hôte. Préparez ce répertoire :
+The backend uses a local folder to persist sleeves and images securely on the host disk. Prepare this directory:
 
 ```bash
 mkdir -p uploads/vinyls uploads/comics
 
-# Le conteneur backend s'exécute sous l'UID 1000 (utilisateur node).
-# Attribuez les bonnes permissions pour éviter les erreurs d'écriture :
+# The backend container runs as UID 1000 (node user).
+# Set the right permissions to avoid write errors:
 sudo chown -R 1000:1000 uploads
 chmod 775 uploads uploads/vinyls uploads/comics
 ```
 
-#### 5. Authentification au registre GHCR (si les packages ne sont pas publics)
+#### 5. Authenticating to the GHCR registry (if packages are not public)
 
-Les images backend et frontend sont pré-compilées par le workflow GitHub Actions (`docker-publish.yml`) et publiées sur GitHub Container Registry (`ghcr.io`). Si vos packages GitHub ne sont **pas** en visibilité publique, authentifiez-vous sur le serveur de production avec un Personal Access Token (PAT) ayant la permission `read:packages` :
+The backend and frontend images are pre-built by the GitHub Actions workflow (`docker-publish.yml`) and published on GitHub Container Registry (`ghcr.io`). If your GitHub packages are **not** publicly visible, authenticate on the production server with a Personal Access Token (PAT) having the `read:packages` permission:
 
 ```bash
-# CR_PAT = votre PAT GitHub (scope read:packages)
+# CR_PAT = your GitHub PAT (scope read:packages)
 echo $CR_PAT | docker login ghcr.io -u Irwin0812 --password-stdin
 ```
 
-> Si les packages sont publics, cette étape est facultative.
+> If the packages are public, this step is optional.
 
-#### 6. Lancement de l'application avec Docker Compose
+#### 6. Starting the application with Docker Compose
 
-Tout est prêt. Lancez le déploiement en arrière-plan (les images sont tirées depuis GHCR) :
+Everything is ready. Start the deployment in the background (images are pulled from GHCR):
 
 ```bash
 docker compose pull
 docker compose up -d
 ```
 
-#### 7. Vérification du déploiement
+#### 7. Verifying the deployment
 
-Suivez les logs de démarrage pour vous assurer que les services (`db`, `backend`, `frontend`) s'initialisent correctement sans erreur :
+Follow the startup logs to make sure the services (`db`, `backend`, `frontend`) initialize correctly without errors:
 
 ```bash
 docker compose logs -f
 ```
 
-Vérifiez l'état des conteneurs :
+Check the container status:
 
 ```bash
 docker compose ps
 ```
 
-- **Base de données :** À la toute première création, PostgreSQL exécutera automatiquement le script d'initialisation (`database/init.sql`) pour créer les tables et le compte administrateur par défaut.
-- **Accès :** L'application est désormais accessible sur le réseau à l'adresse **`http://votre_adresse_ip_ici`**.
+- **Database:** On the very first creation, PostgreSQL automatically runs the initialization script (`database/init.sql`) to create the tables and the default administrator account.
+- **Access:** The application is now accessible on the network at **`http://your_ip_address_here`**.
 
-### B. Windows — mode natif (sans Docker)
+### B. Windows — native mode (without Docker)
 
-Cette section décrit l'installation **native** de l'application sur une machine Windows : Node.js et PostgreSQL s'exécutent directement sur la machine, sans conteneur. Le projet est structuré en deux dossiers distincts (`backend/` et `frontend/`), chacun disposant de son propre `package.json`.
+This section describes the **native** installation of the application on a Windows machine: Node.js and PostgreSQL run directly on the machine, without containers. The project is structured into two distinct folders (`backend/` and `frontend/`), each with its own `package.json`.
 
-#### Prérequis techniques
+#### Technical prerequisites
 
-| Logiciel | Version | Rôle |
+| Software | Version | Role |
 | --- | --- | --- |
-| **Node.js** | **LTS 20.x ou 22.x** (≥ 20, recommandé : dernière LTS) + npm inclus | Runtime du backend Express et du frontend Vite/React |
-| **PostgreSQL** | **16.x** (Windows x64, installateur officiel EDB) | Base de données locale |
-| **Git for Windows** | Récent | Clonage du dépôt et mises à jour (`git pull`) |
+| **Node.js** | **LTS 20.x or 22.x** (≥ 20, recommended: latest LTS) + bundled npm | Runtime for the Express backend and Vite/React frontend |
+| **PostgreSQL** | **16.x** (Windows x64, official EDB installer) | Local database |
+| **Git for Windows** | recent | Cloning the repository and updates (`git pull`) |
 
-Vérifications rapides dans un terminal **PowerShell** :
+Quick checks in a **PowerShell** terminal:
 
 ```powershell
 node --version    # v20.x / v22.x
 npm --version     # 10.x
-psql --version    # PostgreSQL 16.x (après l'installation)
+psql --version    # PostgreSQL 16.x (after installation)
 git --version
 ```
 
-> **PostgreSQL sur Windows** : téléchargez le package officiel sur le site d'EDB/PostgreSQL. L'installateur configure automatiquement le service Windows « PostgreSQL 16 » au démarrage. Notez bien le mot de passe du superutilisateur `postgres` défini lors de l'installation, il vous sera demandé pour initialiser la base.
+> **PostgreSQL on Windows**: download the official package from the EDB/PostgreSQL website. The installer automatically configures the "PostgreSQL 16" Windows service at startup. Make a note of the `postgres` superuser password set during installation — it will be required to initialize the database.
 
-#### Étape 1 — Récupération du projet
+#### Step 1 — Fetching the project
 
-Placez-vous dans votre dossier de travail (par exemple `C:\Users\votre_utilisateur`) et clonez ou placez les fichiers du projet dans `geek0thek` :
+Move to your working folder (e.g. `C:\Users\your_user`) and clone or place the project files into `geek0thek`:
 
 ```powershell
-cd C:\Users\votre_utilisateur
-git clone <url-du-depot-git> geek0thek
+cd C:\Users\your_user
+git clone <url-of-git-repo> geek0thek
 cd geek0thek
 ```
 
-L'arborescence locale est alors la suivante :
+The local structure is then as follows:
 
 ```text
 geek0thek/
-├── .env.example        # Template des variables d'environnement
-├── database/init.sql   # Schéma et données initiales (seed admin)
-├── uploads/            # Dossier de stockage des jaquettes (créé automatiquement)
-├── backend/            # API Express
-└── frontend/           # Interface React + Vite
+├── .env.example        # Environment variables template
+├── database/init.sql   # Schema and initial data (admin seed)
+├── uploads/            # Sleeve storage folder (created automatically)
+├── backend/            # Express API
+└── frontend/           # React + Vite interface
 ```
 
-#### Étape 2 — Configuration de la base de données PostgreSQL
+#### Step 2 — Configuring the PostgreSQL database
 
-Ouvrez l'outil **psql** (disponible depuis le menu Démarrer ou via le chemin d'installation `C:\Program Files\PostgreSQL\16\bin\psql.exe`) en vous connectant en tant qu'administrateur (`-U postgres`). Saisissez le mot de passe défini à l'installation.
+Open the **psql** tool (available from the Start menu or via the installation path `C:\Program Files\PostgreSQL\16\bin\psql.exe`) and connect as administrator (`-U postgres`). Enter the password set during installation.
 
-Créez l'utilisateur dédié et la base de données (remplacez `votre_mot_de_passe_postgres` par un mot de passe fort de votre choix) :
+Create the dedicated user and the database (replace `your_postgres_password` with a strong password of your choice):
 
 ```sql
-CREATE USER vinyl WITH PASSWORD 'votre_mot_de_passe_postgres';
+CREATE USER vinyl WITH PASSWORD 'your_postgres_password';
 CREATE DATABASE geek0thek OWNER vinyl;
 \q
 ```
 
-Exécutez ensuite le script d'initialisation pour mettre en place le schéma (tables `users`, `vinyls`, `comics`, vues publiques) et le compte administrateur par défaut (`admin` / `admin`) :
+Then run the initialization script to set up the schema (`users`, `vinyls`, `comics` tables, public views) and the default administrator account (`admin` / `admin`):
 
 ```powershell
-psql -U postgres -d geek0thek -f "C:\Users\votre_utilisateur\geek0thek\database\init.sql"
+psql -U postgres -d geek0thek -f "C:\Users\your_user\geek0thek\database\init.sql"
 ```
 
-Vérification de la bonne création des tables :
+Verify that the tables were created correctly:
 
 ```powershell
 psql -U vinyl -d geek0thek -c "\dt"
 ```
 
-> **Chemin psql** : si la commande `psql` n'est pas reconnue directement dans votre terminal, préfixez-la avec le chemin complet de l'exécutable : `"C:\Program Files\PostgreSQL\16\bin\psql.exe"`.
+> **psql path**: if the `psql` command is not recognized directly in your terminal, prefix it with the full executable path: `"C:\Program Files\PostgreSQL\16\bin\psql.exe"`.
 
-#### Étape 3 — Configuration des variables d'environnement
+#### Step 3 — Configuring environment variables
 
-Dupliquez le fichier modèle `.env.example` pour créer votre fichier `.env` actif à la racine du projet :
+Duplicate the `.env.example` template file to create your active `.env` file at the project root:
 
 ```powershell
-cd C:\Users\votre_utilisateur\geek0thek
+cd C:\Users\your_user\geek0thek
 copy .env.example .env
 ```
 
-Ouvrez le fichier `.env` avec votre éditeur et ajustez les paramètres pour le mode natif Windows :
+Open the `.env` file with your editor and adjust the settings for native Windows mode:
 
 ```env
-# --- Base de données PostgreSQL (locale) -------------------------
+# --- PostgreSQL database (local) -------------------------
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=vinyl
-DB_PASSWORD=votre_mot_de_passe_postgres
+DB_PASSWORD=your_postgres_password
 DB_NAME=geek0thek
 
-# --- Backend (API Express) --------------------------------------
+# --- Backend (Express API) --------------------------------------
 PORT=8080
 NODE_ENV=development
-# OBLIGATOIRE : générer une longue chaîne aléatoire (ex: openssl rand -hex 64)
-JWT_SECRET=votre-secret-aleatoire-long-ici
+# REQUIRED: generate a long random string (e.g. openssl rand -hex 64)
+JWT_SECRET=your-long-random-secret-here
 CORS_ORIGIN=http://localhost:5173
 
-# --- Stockage des jaquettes (chemin absolu local) ---------------
-UPLOAD_DIR=C:\Users\votre_utilisateur\geek0thek\uploads
+# --- Sleeve storage (absolute local path) ---------------
+UPLOAD_DIR=C:\Users\your_user\geek0thek\uploads
 MAX_UPLOAD_MB=10
 
-# --- URL publique de l'application ------------------------------
+# --- Public URL of the application ------------------------------
 APP_URL=http://localhost:5173
 ```
 
-#### Étape 4 — Installation des dépendances et lancement
+#### Step 4 — Installing dependencies and starting
 
-Ouvrez **deux terminaux PowerShell séparés** pour lancer le backend et le frontend en parallèle :
+Open **two separate PowerShell terminals** to run the backend and frontend in parallel:
 
-**Terminal 1 — Backend (API Express sur le port 8080) :**
-
-```powershell
-cd C:\Users\votre_utilisateur\geek0thek\backend
-npm install
-npm run dev       # Mode développement avec rechargement automatique
-```
-
-**Terminal 2 — Frontend (Serveur Vite sur le port 5173) :**
+**Terminal 1 — Backend (Express API on port 8080):**
 
 ```powershell
-cd C:\Users\votre_utilisateur\geek0thek\frontend
+cd C:\Users\your_user\geek0thek\backend
 npm install
-npm run dev       # Serveur de dev Vite avec proxy intégré vers le backend
+npm run dev       # Development mode with automatic reload
 ```
 
-L'application est désormais accessible sur votre navigateur à l'adresse **`http://localhost:5173`**. Connectez-vous avec le compte administrateur initial (`admin` / `admin`).
+**Terminal 2 — Frontend (Vite server on port 5173):**
 
-#### Commandes utiles (mode natif Windows)
+```powershell
+cd C:\Users\your_user\geek0thek\frontend
+npm install
+npm run dev       # Vite dev server with built-in proxy to the backend
+```
 
-- **Arrêter les services** : appuyez sur `Ctrl+C` dans chacun des terminaux PowerShell.
-- **Vérifier la santé de l'API** :
+The application is now accessible in your browser at **`http://localhost:5173`**. Log in with the initial administrator account (`admin` / `admin`).
+
+#### Useful commands (native Windows mode)
+
+- **Stop the services**: press `Ctrl+C` in each PowerShell terminal.
+- **Check API health**:
 
   ```powershell
   curl http://localhost:8080/api/health
   ```
 
-- **Sauvegarde de la base de données** :
+- **Back up the database**:
 
   ```powershell
   pg_dump -U vinyl -Fc geek0thek > backup.dump
   ```
 
-- **Mise à jour du code** :
+- **Update the code**:
 
   ```powershell
   git pull
@@ -473,116 +473,116 @@ L'application est désormais accessible sur votre navigateur à l'adresse **`htt
 
 ---
 
-## 💙 Soutenir le projet
+## 💙 Support the project
 
-**Geek0thek est un projet conçu, développé et hébergé en solo, sur fonds propres.**
-L'hébergement (VM, base de données, stockage des couvertures), la maintenance et le développement continu sont entièrement pris en charge par l'auteur.
+**Geek0thek is a solo project — designed, developed and hosted by a single developer, at their own expense.**
+Hosting (VM, database, cover storage), maintenance and ongoing development are entirely funded by the author.
 
-Si cette médiathèque vous est utile et que vous souhaitez contribuer à sa pérennité, vous pouvez faire un **don libre** via PayPal :
+If this media library is useful to you and you'd like to help keep it running, you can make a **free donation** via PayPal:
 
-👉 **[Soutenez le projet en faisant un don via PayPal](https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN)**
+👉 **[Support the project with a PayPal donation](https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN)**
 
-- **Aucun montant minimum ni maximum** : chaque contribution, quelle qu'en soit la taille, est la bienvenue et finance directement l'hébergement et le développement.
-- Le bouton **« Soutenez le projet »** est également disponible en permanence dans le pied de page de l'application (il s'adapte au thème visuel actif).
+- **No minimum or maximum amount**: every contribution, of any size, is welcome and directly funds hosting and development.
+- The **"Support the project"** button is also permanently available in the application footer (it adapts to the active visual theme).
 
-Merci pour votre soutien ! 🙏
-
----
-
-## 🔑 Comment se connecter pour la première fois ?
-
-- **Identifiants de départ :** Pour votre toute première connexion, utilisez le compte par défaut avec le nom d'utilisateur `admin` et le mot de passe `admin`.
-- **Rôle Administrateur :** Ce compte administrateur est le seul qui possède les droits pour créer, modifier ou supprimer d'autres comptes utilisateurs.
-- **Sécurité des mots de passe :** Vos mots de passe ne sont jamais enregistrés en clair : ils sont systématiquement protégés et cryptés grâce à un système de hachage hautement sécurisé (bcrypt).
+Thank you for your support! 🙏
 
 ---
 
-## 🔒 La sécurité lors de la création d'un compte (Onboarding forcé)
+## 🔑 How to log in for the first time?
 
-Si un administrateur vous crée un nouveau compte, l'application vous oblige à sécuriser votre accès dès votre première connexion :
-
-1. **Le blocage temporaire :** Lorsque vous vous connectez avec un compte nouvellement créé par un administrateur, l'accès au reste de l'application est bloqué. Vous êtes automatiquement redirigé vers une page spéciale (**Onboarding**).
-2. **Le changement obligatoire :** Sur cette page, vous devez obligatoirement choisir un nouveau mot de passe (qui doit faire au moins 8 caractères, être différent du provisoire et être saisi deux fois). Vous pouvez également personnaliser votre nom d'utilisateur si vous le souhaitez.
-3. **Le retour à la normale :** Une fois validé, votre nouveau mot de passe est enregistré en toute sécurité, le blocage est levé, et vous accédez directement au tableau de bord de l'application.
-
-> **À noter :** Si un administrateur réinitialise votre mot de passe à l'avenir, cette procédure de sécurité se réenclenchera automatiquement lors de votre connexion suivante.
+- **Starting credentials:** For your very first login, use the default account with username `admin` and password `admin`.
+- **Administrator role:** This administrator account is the only one with the rights to create, modify or delete other user accounts.
+- **Password security:** Your passwords are never stored in plain text: they are systematically protected and encrypted using a highly secure hashing system (bcrypt).
 
 ---
 
-## 📅 Le rappel de sécurité tous les 6 mois (Comptes sans 2FA)
+## 🔒 Security when creating an account (forced onboarding)
 
-Pour vous aider à garder votre compte en sécurité, l'application effectue une vérification automatique régulière :
+If an administrator creates a new account for you, the application forces you to secure your access on your very first login:
 
-- **Un rappel amical par e-mail :** Si vous n'avez pas activé la **double authentification (2FA)** pour protéger votre compte, vous recevrez un e-mail **tous les 6 mois** vous conseillant de changer votre mot de passe et d'activer cette sécurité supplémentaire.
-- **Aucun blocage de votre compte :** Il s'agit uniquement d'une recommandation par e-mail. Cela **ne bloque jamais votre accès** à l'application et ne change pas vos identifiants. Vous pouvez continuer à utiliser votre compte normalement.
-- **Pas de spam :** Le système enregistre la date du dernier envoi pour s'assurer que vous ne receviez **jamais plus d'un e-mail de rappel tous les 6 mois**.
-- **Condition :** Ces e-mails de prévention ne sont envoyés que si le service de messagerie (SMTP) de l'application est configuré par l'administrateur.
+1. **Temporary lockout:** When you log in with an account newly created by an administrator, access to the rest of the application is blocked. You are automatically redirected to a special page (**Onboarding**).
+2. **Mandatory change:** On this page, you must choose a new password (at least 8 characters, different from the temporary one, entered twice). You can also customize your username if you wish.
+3. **Back to normal:** Once validated, your new password is securely stored, the lockout is lifted, and you go straight to the application dashboard.
 
----
-
-## 🔄 L'indicateur automatique de mise à jour (GitHub)
-
-L'application vérifie d'elle-même si une nouvelle version est disponible sur internet :
-
-- **Vérification automatique :** À chaque ouverture de l'application (puis discrètement toutes les 5 minutes), le système compare la version installée sur votre serveur avec la dernière version publiée sur le dépôt GitHub du projet.
-- **Le bouton d'alerte :**
-  - Tant que votre application est parfaitement à jour, **aucun bouton ne s'affiche**.
-  - Dès qu'une nouvelle mise à jour est publiée, un **bouton « Mise à jour disponible »** apparaît en haut à droite de l'écran.
-- **Comment faire la mise à jour ?** En passant votre souris sur ce bouton, une petite bulle s'affiche avec la commande à exécuter sur votre serveur (`git pull && docker compose up -d --build`).
-- **Disparition automatique :** Une fois la mise à jour appliquée sur le serveur, l'application le détecte toute seule et le bouton disparaît automatiquement.
+> **Note:** If an administrator resets your password in the future, this security procedure will automatically re-trigger on your next login.
 
 ---
 
-## ✉️ Configuration des notifications E-mail (SMTP)
+## 📅 The 6-monthly security reminder (accounts without 2FA)
 
-L'application peut envoyer des **notifications par e-mail** automatiques dans les cas suivants :
+To help you keep your account secure, the application performs a regular automatic check:
 
-- **Création de compte par un admin** : le nouvel utilisateur reçoit un e-mail confirmant la création de son compte avec ses accès (identifiant + mot de passe provisoire).
-- **Partage de bibliothèque** : quand un utilisateur ouvre l'accès en consultation à sa collection à un autre utilisateur, ce dernier reçoit un e-mail de notification.
-- **Réinitialisation du mot de passe** (« identifiant / mot de passe oublié ») : le propriétaire du compte reçoit un lien temporaire (jeton à usage unique, validité 1 h).
-- **Rappel de sécurité semestriel (comptes SANS 2FA)** : tous les 6 mois, chaque utilisateur actif qui n'a **pas** activé l'authentification à deux facteurs (2FA) reçoit un e-mail d'**information** l'invitant à changer son mot de passe et à activer la 2FA. Ce rappel est **non bloquant** : il ne bloque jamais l'accès à l'application (voir section *Rappel de sécurité semestriel* ci-dessus).
+- **A friendly e-mail reminder:** If you have not enabled **Two-Factor Authentication (2FA)** to protect your account, you will receive an e-mail **every 6 months** recommending that you change your password and enable this extra security.
+- **No account lockout:** This is only an e-mail recommendation. It **never blocks your access** to the application and does not change your credentials. You can continue using your account normally.
+- **No spam:** The system records the date of the last send to ensure you **never receive more than one reminder e-mail every 6 months**.
+- **Condition:** These preventive e-mails are only sent if the application's mail service (SMTP) has been configured by the administrator.
 
-Ces envois sont pilotés **exclusivement par les variables d'environnement** du fichier `.env` (à la racine du projet). Chaque utilisateur configure ainsi **son propre serveur SMTP** — aucun code à modifier.
+---
 
-### Renseigner vos paramètres SMTP
+## 🔄 The automatic update indicator (GitHub)
 
-Ajoutez (ou complétez) le bloc suivant dans `.env` :
+The application checks by itself whether a new version is available online:
+
+- **Automatic check:** Every time the application is opened (then discreetly every 5 minutes), the system compares the version installed on your server with the latest version published in the project's GitHub repository.
+- **The alert button:**
+  - As long as your application is fully up to date, **no button is displayed**.
+  - As soon as a new update is published, an **"Update available"** button appears at the top right of the screen.
+- **How to update?** Hovering over this button shows a small tooltip with the command to run on your server (`git pull && docker compose up -d --build`).
+- **Automatic disappearance:** Once the update has been applied on the server, the application detects it and the button disappears automatically.
+
+---
+
+## ✉️ E-mail notification configuration (SMTP)
+
+The application can send **automatic e-mail notifications** in the following cases:
+
+- **Account creation by an admin**: the new user receives an e-mail confirming their account creation with their credentials (username + temporary password).
+- **Library sharing**: when a user opens read-only access to their collection for another user, the latter receives a notification e-mail.
+- **Password reset** ("forgot username / password"): the account owner receives a temporary link (single-use token, 1-hour validity).
+- **Semi-annual security reminder (accounts WITHOUT 2FA)**: every 6 months, each active user who has **not** enabled Two-Factor Authentication (2FA) receives an **informational** e-mail inviting them to change their password and enable 2FA. This reminder is **non-blocking**: it never blocks access to the application (see the *Semi-annual security reminder* section above).
+
+These sends are driven **exclusively by the environment variables** in the `.env` file (at the project root). Each user thus configures **their own SMTP server** — no code changes required.
+
+### Filling in your SMTP settings
+
+Add (or complete) the following block in `.env`:
 
 ```env
-# Configuration SMTP pour les notifications par e-mail
-SMTP_HOST=smtp.votre-serveur.com
-SMTP_PORT=465 # ou 587 selon TLS/SSL
-SMTP_USER=votre-email@domaine.com
-SMTP_PASS=votre-mot-de-passe
-SMTP_FROM="Geek0thek <votre-email@domaine.com>"
+# SMTP configuration for e-mail notifications
+SMTP_HOST=smtp.your-server.com
+SMTP_PORT=465 # or 587 depending on TLS/SSL
+SMTP_USER=your-email@domain.com
+SMTP_PASS=your-password
+SMTP_FROM="Geek0thek <your-email@domain.com>"
 ```
 
 | Variable | Description |
 | --- | --- |
-| `SMTP_HOST` | Hôte du serveur SMTP (ex. `smtp.gmail.com`, `mail.exemple.fr`) |
-| `SMTP_PORT` | Port : **465** (TLS/SSL implicite) ou **587** (STARTTLS) |
-| `SMTP_USER` | Identifiant de connexion SMTP (généralement votre adresse e-mail) |
-| `SMTP_PASS` | Mot de passe SMTP (ou « app password » si votre fournisseur l'exige, ex. Gmail) |
-| `SMTP_FROM` | Expéditeur affiché : `« Nom <adresse> »` (optionnel — repli sur `SMTP_USER`) |
+| `SMTP_HOST` | SMTP server host (e.g. `smtp.gmail.com`, `mail.example.com`) |
+| `SMTP_PORT` | Port: **465** (implicit TLS/SSL) or **587** (STARTTLS) |
+| `SMTP_USER` | SMTP login identifier (usually your e-mail address) |
+| `SMTP_PASS` | SMTP password (or "app password" if your provider requires one, e.g. Gmail) |
+| `SMTP_FROM` | Displayed sender: `"Name <address>"` (optional — falls back to `SMTP_USER`) |
 
-> **Port 465 vs 587** : le backend détecte automatiquement le mode de chiffrement à partir du port (`465` → TLS implicite, `587` → STARTTLS). Une surcharge manuelle est possible via `SMTP_SECURE=true|false`.
+> **Port 465 vs 587**: the backend automatically detects the encryption mode from the port (`465` → implicit TLS, `587` → STARTTLS). A manual override is possible via `SMTP_SECURE=true|false`.
 
-### Variables vides = notifications désactivées (sans erreur)
+### Empty variables = notifications disabled (without error)
 
-Si `SMTP_HOST`, `SMTP_USER` ou `SMTP_PASS` restent **vides**, l'application fonctionne **normalement** : les notifications e-mail sont simplement **désactivées** proprement (un avertissement est journalisé en console au démarrage, jamais de crash). L'envoi d'e-mails est **non bloquant** : un échec d'envoi (réseau, authentification, adresse invalide…) ne fait **jamais** échouer l'action qui l'a déclenché (création du compte, partage de la bibliothèque).
+If `SMTP_HOST`, `SMTP_USER` or `SMTP_PASS` remain **empty**, the application works **normally**: e-mail notifications are simply **disabled** cleanly (a warning is logged to the console at startup, never a crash). E-mail sending is **non-blocking**: a send failure (network, authentication, invalid address…) **never** fails the action that triggered it (account creation, library sharing).
 
-### Appliquer la configuration
+### Applying the configuration
 
-Après avoir modifié `.env`, recréez le conteneur backend pour charger les nouvelles variables :
+After modifying `.env`, recreate the backend container to load the new variables:
 
 ```bash
 cd /opt/geek0thek
 docker compose up -d --force-recreate backend
-# ou un redémarrage complet :
+# or a full restart:
 docker compose down && docker compose up -d --build
 ```
 
-Vérification dans les journaux (l'avertissement « SMTP non configuré » doit disparaître) :
+Verify in the logs (the "SMTP not configured" warning should disappear):
 
 ```bash
 docker compose logs -f backend
@@ -590,39 +590,39 @@ docker compose logs -f backend
 
 ---
 
-## 🖥️ Configuration d'un reverse proxy externe (Nginx)
+## 🖥️ External reverse proxy configuration (Nginx)
 
-Le frontend (nginx interne) et le backend (Express `trust proxy = 1`) sont déjà câblés pour recevoir les en-têtes `X-Forwarded-*`. Exemple **nginx** pour un reverse proxy sur la VM (domaine `vinyle.exemple.fr`) :
+The frontend (internal nginx) and the backend (Express `trust proxy = 1`) are already wired to receive the `X-Forwarded-*` headers. Example **nginx** configuration for a reverse proxy on the VM (domain `vinyle.example.com`):
 
 ```nginx
-# 1. Définition du Backend avec Keep-Alive
-upstream stream-[nomchoisipourVM] {
-    server [votre_ip_locale];
-    keepalive 32; # Maintient les connexions ouvertes vers la VM
+# 1. Backend definition with Keep-Alive
+upstream stream-[namechosenforVM] {
+    server [your_local_ip];
+    keepalive 32; # Keeps connections open towards the VM
 }
 
-# 2. Serveur HTTPS Principal
+# 2. Main HTTPS server
 server {
     listen 443 ssl; # managed by Certbot
-    server_name [votre_nom_domaine];
+    server_name [your_domain_name];
 
-    # Uploads volumineux (jaquettes / couvertures BD)
+    # Large uploads (sleeves / comic covers)
     client_max_body_size 15m;
 
-    # Certificats Let's Encrypt (Certbot)
-    ssl_certificate /etc/letsencrypt/live/[votre_nom_domaine]/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/[votre_nom_domaine]/privkey.pem; # managed by Certbot
+    # Let's Encrypt certificates (Certbot)
+    ssl_certificate /etc/letsencrypt/live/[your_domain_name]/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/[your_domain_name]/privkey.pem; # managed by Certbot
     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 
-    # Inclusion de la règle centralisée security.txt
+    # Inclusion of the centralized security.txt rule
     include /etc/nginx/snippets/security-txt.conf;
 
     # Logs
-    access_log /var/log/nginx/[nomchoisipourVM].access.log;
-    error_log  /var/log/nginx/[nomchoisipourVM].error.log;
+    access_log /var/log/nginx/[namechosenforVM].access.log;
+    error_log  /var/log/nginx/[namechosenforVM].error.log;
 
-    # --- EN-TÊTES DE SÉCURITÉ SÉCURISÉS (Proprement déclarés) ---
+    # --- HARDENED SECURITY HEADERS (Properly declared) ---
     add_header Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline';" always;
     #add_header Content-Security-Policy "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline';" always;
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
@@ -634,16 +634,16 @@ server {
     add_header Cross-Origin-Resource-Policy "same-origin" always;
     add_header Cross-Origin-Embedder-Policy "require-corp" always;
 
-    # Communication Proxy avec la VM
+    # Proxy communication with the VM
     location / {
-        proxy_pass http://stream-[nomchoisipourVM];
+        proxy_pass http://stream-[namechosenforVM];
         proxy_redirect default;
 
         # HTTP/1.1 + Keep-Alive
         proxy_http_version 1.1;
         proxy_set_header Connection "";
 
-        # Transmettre les informations complètes du client à la VM interne
+        # Forward the full client information to the internal VM
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -653,21 +653,21 @@ server {
         proxy_headers_hash_max_size 512;
         proxy_headers_hash_bucket_size 128;
 
-        # Support WebSocket (si besoin en amont de l'API)
+        # WebSocket support (if needed upstream of the API)
         proxy_set_header Upgrade           $http_upgrade;
         proxy_set_header Connection        "upgrade";
     }
 }
 
-# 3. Redirection HTTP vers HTTPS propre (Port 80)
+# 3. Clean HTTP to HTTPS redirect (Port 80)
 
 server {
-    if ($host = [votre_nom_domaine]) {
+    if ($host = [your_domain_name]) {
         return 301 https://$host$request_uri;
     } # managed by Certbot
 
 
-    server_name [votre_nom_domaine];
+    server_name [your_domain_name];
     listen 80;
     return 404; # managed by Certbot
 
@@ -675,88 +675,88 @@ server {
 }
 ```
 
-> L'application fonctionne **sans** reverse proxy (HTTP port 80) ; le proxy n'est nécessaire que pour HTTPS/SNI ou un domaine public.
+> The application works **without** a reverse proxy (HTTP port 80); the proxy is only needed for HTTPS/SNI or a public domain.
 
 ---
 
-## 🐳 Commandes Docker Compose utiles
+## 🐳 Useful Docker Compose commands
 
 ```bash
-# Tirer les dernières images depuis GHCR puis démarrer
+# Pull the latest images from GHCR then start
 docker compose pull
 docker compose up -d
 
-# Arrêter tout (les volumes restent : données + uploads)
+# Stop everything (volumes remain: data + uploads)
 docker compose down
 
-# Arrêter et SUPPRIMER les volumes (⚠️ EFFACE base de données)
+# Stop and DELETE the volumes (⚠️ WIPES the database)
 docker compose down -v
 
-# Suivi des journaux
+# Follow the logs
 docker compose logs -f
 docker compose logs -f backend
 
-# Statut
+# Status
 docker compose ps
 
-# Entrer dans un conteneur
+# Enter a container
 docker compose exec backend sh
 docker compose exec db psql -U vinyl -d geek0thek
 
-# Recréer l'admin après un "down -v" (déjà fait par init.sql au 1er boot)
+# Recreate the admin after a "down -v" (already done by init.sql on first boot)
 docker compose up -d db
 
-# Sauvegarde rapide de la base
+# Quick database backup
 docker compose exec db pg_dump -U vinyl -Fc vinyl > backup-$(date +%F).dump
-# Restauration :
+# Restore:
 docker compose exec -T db pg_restore -U vinyl -d geek0thek --clean < backup.dump
 ```
 
 ---
 
-## 🩺 Dépannage
+## 🩺 Troubleshooting
 
-| Symptôme | Cause probable / solution |
+| Symptom | Likely cause / solution |
 | --- | --- |
-| Pages vides après login (navbar visible, aucun bouton *Ajouter*, aucune liste) | `ProtectedRoute` rendait `children` (undefined) en route **layout** sans `<Outlet/>` → corrigé dans `frontend/src/components/ProtectedRoute.jsx`. Rebuild + redéploiement du conteneur frontend : `docker compose up -d --build frontend` + **vidage du cache du navigateur** |
-| `502` sur recherche code-barres | Pas/plus de connexion internet côté serveur (MusicBrainz inaccessibles) → vérifier l'egress réseau de la VM |
-| `429` sur recherche code-barres | Quota MusicBrainz atteint (1 req/s) → réessayer après quelques secondes |
-| `404` sur recherche code-barres | Disque inconnu des deux sources (MusicBrainz ni Discogs) pour cet EAN → saisir la fiche manuellement (un `404` d'une seule source n'est **pas** bloquant : l'autre est renvoyée) |
-| `401` / `403` sur recherche code-barres (Discogs) | `DISCOGS_TOKEN` invalide/expiré ou permission manquante → régénérer le jeton sur <https://www.discogs.com/settings/developers> |
-| `429` sur recherche code-barres (Discogs) | Quota du jeton atteint (défaut 25 min) → patienter, ou ajuster `DISCOGS_RATE_LIMIT_PER_MINUTE` |
-| Fiche sans `discogs_url` / sans `discogs_release_id` | Discogs non configuré (`DISCOGS_TOKEN` vide) ou disque inconnu de Discogs → normal, la fiche MusicBrainz est complète |
-| `502` sur recherche ISBN | Pas/plus de connexion internet côté serveur (Google Books & Open Library inaccessibles) → vérifier egress réseau de la VM |
-| `404` sur recherche ISBN | ISBN inconnu ou non référencé dans Google Books / Open Library → saisir la fiche manuellement |
-| `401` à l'appel d'une API | Jeton expiré → reconnexion |
-| Images `/uploads/...` en 403/404 | Vérifier `chown -R 1000:1000 uploads` + `chmod 775` sur les sous-dossiers `vinyls/` et `comics/` au hôte |
-| La collection n'apparaît pas en publique (vinyles ou BDs) | Le toggle *Visibilité* du propriétaire doit être sur **Publique** |
-| Port 80 occupé sur la VM | Changer `APP_PORT` dans `.env` (ex. `APP_PORT=8080`) |
-| `column "acquired_date" does not exist` à la modification d'un vinyle (form. « DATE D'AJOUT ») | Colonne absente de la table `vinyls` : cause racine connue = **la vue `public_vinyls` (init.sql, `SELECT v.*`)** porte une dépendance PostgreSQL sur l'ancienne colonne `year_acquired`, ce qui bloquait le `DROP COLUMN` en fin de migration et **rollback**ait le `ADD COLUMN acquired_date`. Les deux scripts réparent sans effet de bord : `database/migrations/007_ensure_vinyl_acquired_date.sql` (psql) + auto-migration `vinyls.added-date` (`backend/src/config/db.js`, recrée la vue à l'identique après le drop). `GET /api/health` expose `schema_ok: false` tant que la colonne est absente |
-| `Base de données incomplète (colonne absente)` sur POST/PUT `/api/vinyls` | Même cause : appliquer `docker compose exec -T db psql -U vinyl -d geek0thek -f /dev/stdin < database/migrations/007_ensure_vinyl_acquired_date.sql` puis `docker compose restart backend` ; vérifier les logs de démarrage (`migration appliquée : vinyls.added-date`) |
-| Re-démarrer proprement la base | `docker compose down -v` puis `up -d` (⚠️ efface la base, `init.sql` recrée l'admin) |
+| Empty pages after login (navbar visible, no *Add* button, no lists) | `ProtectedRoute` was rendering `children` (undefined) as a **layout** route without `<Outlet/>` → fixed in `frontend/src/components/ProtectedRoute.jsx`. Rebuild + redeploy the frontend container: `docker compose up -d --build frontend` + **clear the browser cache** |
+| `502` on barcode lookup | No (or lost) internet connection on the server side (MusicBrainz unreachable) → check the VM's network egress |
+| `429` on barcode lookup | MusicBrainz quota reached (1 req/s) → retry after a few seconds |
+| `404` on barcode lookup | Record unknown to both sources (MusicBrainz and Discogs) for this EAN → fill in the record manually (a `404` from a single source is **not** blocking: the other one is returned) |
+| `401` / `403` on barcode lookup (Discogs) | Invalid/expired `DISCOGS_TOKEN` or missing permission → regenerate the token at <https://www.discogs.com/settings/developers> |
+| `429` on barcode lookup (Discogs) | Token quota reached (default 25 min) → wait, or adjust `DISCOGS_RATE_LIMIT_PER_MINUTE` |
+| Record without `discogs_url` / without `discogs_release_id` | Discogs not configured (`DISCOGS_TOKEN` empty) or record unknown to Discogs → normal, the MusicBrainz record is complete |
+| `502` on ISBN lookup | No (or lost) internet connection on the server side (Google Books & Open Library unreachable) → check the VM's network egress |
+| `404` on ISBN lookup | ISBN unknown or not referenced in Google Books / Open Library → fill in the record manually |
+| `401` on an API call | Expired token → log in again |
+| `/uploads/...` images returning 403/404 | Check `chown -R 1000:1000 uploads` + `chmod 775` on the `vinyls/` and `comics/` subfolders on the host |
+| Collection not showing publicly (vinyl or comics) | The owner's *Visibility* toggle must be set to **Public** |
+| Port 80 in use on the VM | Change `APP_PORT` in `.env` (e.g. `APP_PORT=8080`) |
+| `column "acquired_date" does not exist` when editing a vinyl ("ADDED DATE" form) | Column missing from the `vinyls` table: known root cause = **the `public_vinyls` view (init.sql, `SELECT v.*`)** carries a PostgreSQL dependency on the old `year_acquired` column, which blocked the `DROP COLUMN` at the end of the migration and **rolled back** the `ADD COLUMN acquired_date`. Both scripts repair it with no side effects: `database/migrations/007_ensure_vinyl_acquired_date.sql` (psql) + auto-migration `vinyls.added-date` (`backend/src/config/db.js`, recreates the view identically after the drop). `GET /api/health` reports `schema_ok: false` as long as the column is missing |
+| `Incomplete database (missing column)` on POST/PUT `/api/vinyls` | Same cause: run `docker compose exec -T db psql -U vinyl -d geek0thek -f /dev/stdin < database/migrations/007_ensure_vinyl_acquired_date.sql` then `docker compose restart backend`; check the startup logs (`migration applied: vinyls.added-date`) |
+| Cleanly restart the database | `docker compose down -v` then `up -d` (⚠️ wipes the database, `init.sql` recreates the admin) |
 
 ---
 
-## 💙 Soutenir le projet
+## 💙 Support the project
 
-**Geek0thek est un projet conçu, développé et hébergé en solo, sur fonds propres.**
-L'hébergement (VM, base de données, stockage des couvertures), la maintenance et le développement continu sont entièrement pris en charge par l'auteur.
+**Geek0thek is a solo project — designed, developed and hosted by a single developer, at their own expense.**
+Hosting (VM, database, cover storage), maintenance and ongoing development are entirely funded by the author.
 
-Si cette médiathèque vous est utile et que vous souhaitez contribuer à sa pérennité, vous pouvez faire un **don libre** via PayPal :
+If this media library is useful to you and you'd like to help keep it running, you can make a **free donation** via PayPal:
 
-👉 **[Soutenez le projet en faisant un don via PayPal](https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN)**
+👉 **[Support the project with a PayPal donation](https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN)**
 
-- **Aucun montant minimum ni maximum** : chaque contribution, quelle qu'en soit la taille, est la bienvenue et finance directement l'hébergement et le développement.
-- Le bouton **« Soutenez le projet »** est également disponible en permanence dans le pied de page de l'application (il s'adapte au thème visuel actif).
+- **No minimum or maximum amount**: every contribution, of any size, is welcome and directly funds hosting and development.
+- The **"Support the project"** button is also permanently available in the application footer (it adapts to the active visual theme).
 
-Merci pour votre soutien ! 🙏
+Thank you for your support! 🙏
 
 ---
 
-## Licence & Politique de contribution
+## License & contribution policy
 
-Ce logiciel est distribué sous licence **GNU Affero General Public License v3.0 (AGPLv3)**.
+This software is distributed under the **GNU Affero General Public License v3.0 (AGPLv3)** license.
 
-Toutefois, le dépôt officiel **n'accepte aucune contribution externe ni aucune Pull Request** de la part de tiers. Vous êtes totalement libre de forker le projet et de l'utiliser conformément aux termes de la licence AGPLv3, mais aucun code extérieur ne sera fusionné dans la branche principale.
+However, the official repository **accepts no external contributions nor any Pull Request** from third parties. You are completely free to fork the project and use it in accordance with the terms of the AGPLv3 license, but no outside code will be merged into the main branch.
 
-Consultez le fichier [LICENSE](LICENSE) pour plus d'informations.
+See the [LICENSE](LICENSE) file for more information.
