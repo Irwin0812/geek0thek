@@ -42,9 +42,9 @@ function publicUser(row) {
     // Sécurité à la première connexion : TRUE tant que le compte n'a pas
     // changé ses identifiants de première installation (onboarding forcé).
     mustChangePassword: row.must_change_password === true,
-    // Langue préférée (code ISO 639-1) : « fr » en dépit de toute valeur NULL
-    // résiduelle (la colonne est NOT NULL DEFAULT 'fr' depuis la migration).
-    language: row.language || 'fr',
+    // Langue préférée (code ISO 639-1) : « en » en dépit de toute valeur NULL
+    // résiduelle (la colonne est NOT NULL DEFAULT 'en' depuis la migration).
+    language: row.language || 'en',
     // Thème visuel préféré (cf. THEMES) : « dark » en dépit de toute valeur
     // NULL résiduelle (la colonne est NOT NULL DEFAULT 'dark' depuis la
     // migration users.theme). L'ex-clé « light » (thème « Moderne », renommé

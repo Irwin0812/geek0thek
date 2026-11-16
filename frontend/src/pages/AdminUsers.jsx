@@ -51,9 +51,9 @@ const EMPTY = {
   role: 'user',
   phone: '',
   bio: '',
-  // Langue préférée du compte créé (colonne `users.language`) : défaut 'fr'
+  // Langue préférée du compte créé (colonne `users.language`) : défaut 'en'
   // (identique au défaut backend). Valeurs : SUPPORTED_LANGUAGES (i18n.js).
-  language: 'fr',
+  language: 'en',
 }
 
 export default function AdminUsers() {
@@ -135,7 +135,7 @@ export default function AdminUsers() {
         password: form.password,
         passwordConfirm: form.passwordConfirm,
         role: form.role,
-        language: form.language || 'fr',
+        language: form.language || 'en',
         phone: form.phone.trim() || null,
         bio: form.bio.trim() || null,
       })
@@ -165,8 +165,8 @@ export default function AdminUsers() {
       birthDate: u.birthDate ? String(u.birthDate).slice(0, 10) : '',
       address: u.address || '',
       country: u.country || '',
-      // Langue préférée : valeur stockée (mapUser garantit 'fr' si null)
-      language: u.language || 'fr',
+      // Langue préférée : valeur stockée (mapUser garantit 'en' si null)
+      language: u.language || 'en',
       newPassword: '',
     })
     setEditAvatarFile(null)
@@ -309,7 +309,7 @@ export default function AdminUsers() {
         payload.append('phone', editForm.phone.trim())
         payload.append('bio', editForm.bio.trim())
         payload.append('gender', editForm.gender)
-        payload.append('language', editForm.language || 'fr')
+        payload.append('language', editForm.language || 'en')
         payload.append('birthDate', editForm.birthDate)
         payload.append('address', editForm.address.trim())
         payload.append('country', editForm.country.trim())
@@ -327,7 +327,7 @@ export default function AdminUsers() {
           phone: editForm.phone.trim() || null,
           bio: editForm.bio.trim() || null,
           gender: editForm.gender || null,
-          language: editForm.language || 'fr',
+          language: editForm.language || 'en',
           birthDate: editForm.birthDate || null,
           address: editForm.address.trim() || null,
           country: editForm.country.trim() || null,

@@ -37,7 +37,7 @@ const resources = {
 /**
  * Réduit le code détecté (« fr-FR », « en-US »…) au code de langue de base.
  * Retourne null si la langue détectée ne fait pas partie des langues
- * supportées : le fallback `fr` s'applique alors.
+ * supportées : le fallback `en` s'applique alors.
  */
 function convertDetectedLanguage(detected) {
   if (!detected || typeof detected !== 'string') return null
@@ -50,16 +50,19 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    // fr = langue par défaut (et fallback de toutes les autres)
-    lng: 'fr',
-    fallbackLng: 'fr',
+    // en = langue par défaut au premier chargement (et fallback de toutes
+    // les autres) : sans choix explicite enregistré (localStorage ou profil),
+    // l'interface s'initialise en anglais.
+    lng: 'en',
+    fallbackLng: 'en',
     supportedLngs: SUPPORTED_LANGUAGES.map((l) => l.code),
     // « fr-FR » détecté → accepté comme « fr » (géré aussi ci-dessus)
     nonExplicitSupportedLngs: true,
     detection: {
-      // 1. lecture du choix conservé dans localStorage…
-      // 2. sinon détection via navigator (langue du navigateur)
-      order: ['localStorage', 'navigator'],
+      // Lecture UNIQUE du choix explicite conservé dans localStorage
+      // (clé `geek0thek_lang`). La langue du navigateur n'est PAS utilisée :
+      // première visite sans préférence enregistrée → anglais (lng ci-dessus).
+      order: ['localStorage'],
       lookupLocalStorage: 'geek0thek_lang',
       caches: ['localStorage'],
       convertDetectedLanguage,

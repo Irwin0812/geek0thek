@@ -37,8 +37,9 @@ CREATE TABLE IF NOT EXISTS users (
     share_comics   BOOLEAN      NOT NULL DEFAULT TRUE,
     -- Champs enrichis du profil (tous optionnels)
     avatar_url     TEXT,                       -- '/uploads/avatars/xxx.jpg' ou NULL
-    -- Langue préférée de l'utilisateur (code ISO 639-1, défaut : français)
-    language       VARCHAR(5)   NOT NULL DEFAULT 'fr',
+    -- Langue préférée de l'utilisateur (code ISO 639-1, défaut : anglais —
+    -- langue par défaut tant que l'utilisateur n'a pas fait de choix explicite)
+    language       VARCHAR(5)   NOT NULL DEFAULT 'en',
     -- Thème visuel préféré (dark / light / vinyl / comic / comic-books / pastel ;
     -- « cartoon » supprimé, mappé vers « comic-books » au boot par le back-end)
     theme          VARCHAR(50)  NOT NULL DEFAULT 'dark',

@@ -45,9 +45,9 @@ function mapUser(row) {
     // Statut de donateur (soutien au projet) : TRUE dès qu'un don PayPal est
     // enregistré / validé pour le compte (POST /api/users/donation).
     isDonor: row.is_donor === true,
-    // Langue préférée (code ISO 639-1) : « fr » en dépit de toute valeur NULL
-    // résiduelle (la colonne est NOT NULL DEFAULT 'fr' depuis la migration).
-    language: row.language || 'fr',
+    // Langue préférée (code ISO 639-1) : « en » en dépit de toute valeur NULL
+    // résiduelle (la colonne est NOT NULL DEFAULT 'en' depuis la migration).
+    language: row.language || 'en',
     // Thème visuel préféré (cf. THEMES) : « dark » en dépit de toute valeur
     // NULL résiduelle (la colonne est NOT NULL DEFAULT 'dark' depuis la
     // migration users.theme). L'ex-clé « light » (thème « Moderne », renommé
@@ -355,8 +355,8 @@ async function createUser(req, res, next) {
     if (genderValue.error) return res.status(400).json({ error: genderValue.error });
     const bd = cleanBirthDate(birthDate);
     if (bd.error) return res.status(400).json({ error: bd.error });
-    // Langue (facultative) : défaut 'fr' à la création si non fourni.
-    let languageValue = 'fr';
+    // Langue (facultative) : défaut 'en' à la création si non fourni.
+    let languageValue = 'en';
     if (language !== undefined && language !== null && String(language).trim() !== '') {
       const l = cleanLanguage(language);
       if (l.error) return res.status(400).json({ error: l.error });

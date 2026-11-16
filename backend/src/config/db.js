@@ -114,11 +114,13 @@ const MIGRATIONS = [
     ],
   },
   // Langue préférée de l'utilisateur (code ISO 639-1, ex. « fr », « en ») :
-  // NOT NULL DEFAULT 'fr', comme les autres préférences du profil.
+  // NOT NULL DEFAULT 'en' (anglais = langue par défaut tant que l'utilisateur
+  // n'a pas fait de choix explicite), comme les autres préférences du profil.
   {
     name: 'users.language',
     statements: [
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS language VARCHAR(5) NOT NULL DEFAULT 'fr';`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS language VARCHAR(5) NOT NULL DEFAULT 'en';`,
+      `ALTER TABLE users ALTER COLUMN language SET DEFAULT 'en';`,
     ],
   },
   // Thème visuel préféré (dark / library / vinyl / comic / comic-books / neon ;

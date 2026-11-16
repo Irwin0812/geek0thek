@@ -195,8 +195,9 @@ export default function Navbar() {
   /**
    * Au chargement initial / à la connexion : initialise la langue depuis le
    * profil de l'utilisateur connecté. Sans profil (visiteur, écran de
-   * connexion), la langue vient du localStorage (ou du navigateur) via le
-   * LanguageDetector déjà configuré dans i18n.js.
+   * connexion), la langue vient du localStorage via le LanguageDetector déjà
+   * configuré dans i18n.js — ou de l'anglais par défaut si aucun choix
+   * explicite n'y est enregistré (première visite / cache vidé).
    */
   useEffect(() => {
     if (!user || syncingRef.current) return
