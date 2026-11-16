@@ -26,6 +26,7 @@ const discogsRoutes = require('./routes/discogsRoutes');
 const comicRoutes = require('./routes/comicRoutes');
 const isbnRoutes = require('./routes/isbnRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const exportImportRoutes = require('./routes/exportImportRoutes');
 
 const app = express();
 
@@ -64,7 +65,11 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: '1mb' }));
+// Limite 20 Mo : les imports JSON de collection (sauvegardes complètes
+// disques + BD + entités, cf. routes/exportImportRoutes.js) dépassent vite
+// 1 Mo sur une bibliothèque volumineuse — le reste de l'API n'envoie que de
+// petits corps (formulaires), la limite globale reste donc protectrice.
+app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 if (env.nodeEnv !== 'production') {
@@ -329,6 +334,9 @@ app.use('/api/isbn', isbnRoutes);
 // confondus) + compteurs par bibliothèque (route bornée à la collection de
 // l'utilisateur connecté — cf. routes/dashboardRoutes.js).
 app.use('/api/dashboard', dashboardRoutes);
+// Export / import de la collection (JSON complet + CSV par bibliothèque) —
+// menu « Exporter / Importer » du profil (cf. routes/exportImportRoutes.js).
+app.use('/api/export-import', exportImportRoutes);
 
 // 404 — API inconnue
 app.use((req, res) => {

@@ -10,9 +10,10 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import i18n, { SUPPORTED_LANGUAGES } from '../i18n/i18n.js'
 import { useAuth } from '../App'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, ArrowLeftRight } from 'lucide-react'
 import { api, saveSession } from '../services/api.js'
 import Avatar from './Avatar.jsx'
+import ExportImportModal from './ExportImportModal.jsx'
 import { CheckIcon, GlobeIcon } from './icons.jsx'
 import FlagIcon from './FlagIcon.jsx'
 import ThemeIcon from './ThemeIcon.jsx'
@@ -109,6 +110,12 @@ export default function Navbar() {
      savoir). */
   const [langBusy, setLangBusy] = useState(false)
   const [themeSaving, setThemeSaving] = useState(false)
+
+  /* Modale « Exporter / Importer » (menu du profil) : sauvegarde / migration
+     de la collection en JSON (complet + relationnel) et CSV (par bibliothèque,
+     avec correspondance des colonnes à l'import). Rendue au niveau du Navbar
+     (toujours montée tant que l'utilisateur est connecté). */
+  const [exportImportOpen, setExportImportOpen] = useState(false)
 
   /* Utilisateur courant tenu en ref : les handlers async (changement de
      langue / thème) ne lisent jamais une closure périmée. */
@@ -412,6 +419,22 @@ export default function Navbar() {
                     </Link>
                   </div>
 
+                  {/* « Exporter / Importer » : sauvegarde / migration de la
+                      collection (JSON complet + relationnel, CSV par
+                      bibliothèque avec correspondance des colonnes) — ouvre
+                      la modale dédiée (rendue en bas du Navbar). */}
+                  <div className="px-1.5">
+                    <button
+                      type="button"
+                      onClick={() => { setUserMenuOpen(false); setExportImportOpen(true) }}
+                      className={`w-full ${menuItemCls}`}
+                      title={t('navbar.exportImportTitle')}
+                    >
+                      <ArrowLeftRight size={16} aria-hidden="true" className="shrink-0 text-slate-400" />
+                      {t('navbar.exportImport')}
+                    </button>
+                  </div>
+
                   {/* « Thème » : rangée de bascule → SOUS-MENU indenté listant les
                       6 thèmes (ICÔNE spécifique par thème + coche sur le thème actif,
                       cf. src/components/ThemeIcon.jsx). La rangée affiche l'icône +
@@ -662,6 +685,11 @@ export default function Navbar() {
           )}
         </nav>
       )}
+
+      {/* Modale « Exporter / Importer » (menu du profil) : ouverte par la
+          rangée dédiée du menu utilisateur — rendue ici, au niveau du Navbar,
+          pour rester accessible quelle que soit la page courante. */}
+      <ExportImportModal open={exportImportOpen} onClose={() => setExportImportOpen(false)} />
     </header>
   )
 }

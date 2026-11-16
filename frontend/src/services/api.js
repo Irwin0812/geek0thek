@@ -227,6 +227,33 @@ export const api = {
     latest: () => request('/dashboard'),
   },
 
+  // --- Export / Import de la collection (menu « Exporter / Importer ») ---
+  // JSON : sauvegarde COMPLÈTE ET RELATIONNELLE (disques + BD + entités
+  // Artistes/Séries). L'export renvoie l'objet JSON brut (le frontend le
+  // sérialise et le télécharge en fichier — jamais de Blob par l'API).
+  exportImport: {
+    // -> { app, version, exportedAt, vinyls, comics, artists, series }
+    exportJson: () => request('/export-import/export/json'),
+    // body { mode: 'merge' | 'replace', vinyls, comics }
+    // -> { imported: { vinyls, comics }, skipped: { vinyls, comics } }
+    importJson: (payload) => request('/export-import/import/json', { method: 'POST', body: payload }),
+    // -> CSV brut (text/csv + BOM UTF-8) : le frontend le télécharge en fichier.
+    exportCsv: async (collection) => {
+      const token = getToken()
+      const response = await fetch(`/api/export-import/export/csv?collection=${encodeURIComponent(collection)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || `Erreur serveur (${response.status})`)
+      }
+      return response.text()
+    },
+    // body { collection: 'vinyls' | 'comics', mode, rows: [objets à clés canoniques] }
+    // -> { collection, imported, skipped }
+    importCsv: (payload) => request('/export-import/import/csv', { method: 'POST', body: payload }),
+  },
+
   // --- ISBN (Google Books / Open Library) ---
   isbn: {
     lookup: (isbn) => request(`/isbn/lookup/${encodeURIComponent(isbn)}`),
