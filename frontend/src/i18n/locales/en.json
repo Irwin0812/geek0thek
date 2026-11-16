@@ -653,7 +653,7 @@
     "grantedHint": "Toggle on to let a user browse your vinyls and comics; toggle off to revoke access.",
     "colMember": "Member",
     "colLogin": "Login",
-    "colVinyls": "Vinyls",
+    "colVinyls": "Records",
     "colComics": "Comics",
     "colAccess": "Read-only access",
     "accessGranted": "granted",
