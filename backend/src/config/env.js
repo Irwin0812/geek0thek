@@ -149,12 +149,15 @@ const env = {
 
   // GitHub — indicateur de mise à jour (dépôt vs version déployée).
   // GITHUB_REPO : dépôt de référence (défaut Irwin0812/geek0thek).
+  // GITHUB_BRANCH : branche de référence pour la comparaison (défaut « main »)
+  // — surchargeable par instance.
   // GITHUB_TOKEN : jeton personnel OPTIONNEL — sans lui, l'API publique est
   // utilisée (60 req/h par IP, largement suffisant pour une vérification
   // ponctuelle au chargement de l'app). LOCAL_REPO_DIR : répertoire du dépôt
   // git déployé (monté en lecture seule dans le conteneur backend).
   github: {
     repo: process.env.GITHUB_REPO || 'Irwin0812/geek0thek',
+    branch: process.env.GITHUB_BRANCH || 'main',
     token: process.env.GITHUB_TOKEN || '',
     localRepoDir: process.env.LOCAL_REPO_DIR
       ? path.resolve(process.env.LOCAL_REPO_DIR)

@@ -8,10 +8,11 @@
 /**
  * Client GitHub — vérification de mise à jour (dépôt vs version déployée).
  *
- * Compare le commit du code DÉPLOYÉ (résolu localement depuis le dépôt git
- * monté en lecture seule dans le conteneur backend, cf. docker-compose.yml)
- * avec le dernier commit de la branche par défaut du dépôt GitHub
- * (https://github.com/Irwin0812/geek0thek).
+ * Compare le commit du code DÉPLOYÉ (HEAD du dépôt git monté en lecture seule
+ * dans le conteneur backend, cf. docker-compose.yml — avec fallback sur
+ * process.env.GIT_COMMIT / version.json générés au build quand .git est absent
+ * de l'image) avec le dernier commit de la branche de référence (GITHUB_BRANCH,
+ * défaut « main ») du dépôt GitHub (https://github.com/Irwin0812/geek0thek).
  *
  * Règle d'affichage côté frontend : le bouton « Mise à jour disponible »
  * n'apparaît QUE si les deux SHA diffèrent — il disparaît donc automatiquement
@@ -30,6 +31,9 @@ const env = require('../config/env');
 
 // Dépôt GitHub de référence (branche par défaut du dépôt).
 const GITHUB_REPO = env.github.repo;
+// Branche GitHub de référence pour la comparaison (défaut « main ») —
+// surchargeable par instance via GITHUB_BRANCH.
+const GITHUB_BRANCH = env.github.branch;
 const GITHUB_API = 'https://api.github.com';
 
 // Répertoire du dépôt git DÉPLOYÉ : en production le conteneur backend monte
@@ -50,9 +54,15 @@ function readFirstLine(file) {
 }
 
 /**
- * Résout le commit du code déployé : HEAD du dépôt local (réf de la branche
- * courante) — c'est exactement le commit installé par `git pull`. Renvoie
- * { sha, branch } ou null si le dépôt local est absent / illisible (l'endpoint
+ * Résout le commit du code déployé, dans l'ordre :
+ *   1) HEAD du dépôt local (réf de la branche courante) — c'est exactement le
+ *      commit installé par `git pull` (dossier .git monté en lecture seule
+ *      dans le conteneur backend, cf. docker-compose.yml).
+ *   2) Fallback Docker : `process.env.GIT_COMMIT` (injectée au build via
+ *      ARG/ENV GIT_COMMIT dans le Dockerfile) ou le fichier `version.json`
+ *      généré au build ({ "commit": "<sha>" }) — indispensable quand le
+ *      dossier .git est absent de l'image.
+ * Renvoie { sha, branch } ou null si aucune source n'est lisible (l'endpoint
  * renvoie alors status « unknown » et le bouton reste masqué : jamais de faux
  * positif).
  */
@@ -79,6 +89,27 @@ function getDeployedCommit() {
   } catch {
     /* dépôt local absent ou illisible */
   }
+
+  // Fallback Docker : hash injecté au build (ARG/ENV GIT_COMMIT) — le conteneur
+  // ne contient pas de dossier .git, mais l'image est construite depuis un
+  // checkout git précis (GitHub Actions), donc le SHA est connu au build.
+  const envSha = String(process.env.GIT_COMMIT || '').trim().toLowerCase();
+  if (/^[0-9a-f]{7,40}$/.test(envSha)) {
+    return { sha: envSha, branch: GITHUB_BRANCH };
+  }
+
+  // Fallback Docker : version.json généré au build ({ "commit": "<sha>" }).
+  try {
+    const raw = fs.readFileSync(path.join(__dirname, '..', '..', 'version.json'), 'utf8');
+    const parsed = JSON.parse(raw);
+    const fileSha = String((parsed && parsed.commit) || '').trim().toLowerCase();
+    if (/^[0-9a-f]{7,40}$/.test(fileSha)) {
+      return { sha: fileSha, branch: GITHUB_BRANCH };
+    }
+  } catch {
+    /* version.json absent : rien à faire */
+  }
+
   return null;
 }
 
@@ -102,25 +133,23 @@ function readPackedRef(gitDir, refPath) {
 }
 
 /**
- * Dernier commit de la branche par défaut du dépôt GitHub.
- * Renvoie { sha, branch, message } ou null (API injoignable / quota / 404).
+ * Dernier commit de la branche de référence du dépôt GitHub
+ * (GITHUB_BRANCH, défaut « main »). Renvoie { sha, branch, message } ou null
+ * (API injoignable / quota / 404).
  */
 async function getGitHubHead() {
-  const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'Geek0thek' };
+  // User-Agent explicite OBLIGATOIRE : l'API GitHub refuse les requêtes sans
+  // User-Agent (403) — c'était la cause du silence de l'indicateur.
+  const headers = {
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'Geek0thek-App',
+    'Cache-Control': 'no-cache',
+  };
   if (env.github.token) headers.Authorization = `Bearer ${env.github.token}`;
-
-  let repo;
-  try {
-    const res = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}`, { headers });
-    if (!res.ok) return null;
-    repo = await res.json();
-  } catch {
-    return null;
-  }
 
   try {
     const res = await fetch(
-      `${GITHUB_API}/repos/${GITHUB_REPO}/commits?per_page=1`,
+      `${GITHUB_API}/repos/${GITHUB_REPO}/commits/${encodeURIComponent(GITHUB_BRANCH)}?per_page=1`,
       { headers }
     );
     if (!res.ok) return null;
@@ -128,7 +157,7 @@ async function getGitHubHead() {
     if (!commit || !commit.sha) return null;
     return {
       sha: commit.sha.toLowerCase(),
-      branch: repo.default_branch,
+      branch: GITHUB_BRANCH,
       message: (commit.commit && commit.commit.message || '').split('\n')[0],
     };
   } catch {
@@ -143,7 +172,11 @@ async function getGitHubHead() {
  * le footer masque alors complètement le libellé « Version: … ».
  */
 async function getLatestRelease() {
-  const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'Geek0thek' };
+  const headers = {
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'Geek0thek-App',
+    'Cache-Control': 'no-cache',
+  };
   if (env.github.token) headers.Authorization = `Bearer ${env.github.token}`;
 
   try {

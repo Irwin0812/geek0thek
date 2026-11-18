@@ -22,7 +22,7 @@ import { api } from '../services/api.js'
  *    DIFFÈRE du dernier commit de la branche par défaut du dépôt GitHub
  *    (Irwin0812/geek0thek). Tant que les deux versions sont identiques, le
  *    bouton reste invisible — et il DISPARAÎT AUTOMATIQUEMENT après une mise
- *    à jour effective (`git pull && docker compose up -d --build`), car les
+ *    à jour effective (`git pull && docker compose pull && docker compose up -d`), car les
  *    deux SHA redeviennent alors égaux.
  *  - Vérification au CHARGEMENT de l'application (une seule requête) +
  *    re-vérification discrète toutes les 5 minutes : si l'admin met à jour

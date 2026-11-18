@@ -306,7 +306,7 @@ app.get('/api/health', async (req, res) => {
 // commit de la branche par défaut du dépôt GitHub (Irwin0812/geek0thek).
 // Le frontend n'affiche son bouton « Mise à jour disponible » QUE si
 // updateAvailable est TRUE — il disparaît donc automatiquement après un
-// `git pull && docker compose up -d --build` (les deux SHA redeviennent
+// `git pull && docker compose pull && docker compose up -d` (les deux SHA redeviennent
 // identiques). Jamais d'erreur renvoyée : en cas de doute (API GitHub
 // injoignable, quota atteint, dépôt local absent), updateAvailable = false.
 // ------------------------------------------------------------

@@ -528,7 +528,7 @@ The application checks by itself whether a new version is available online:
 - **The alert button:**
   - As long as your application is fully up to date, **no button is displayed**.
   - As soon as a new update is published, an **"Update available"** button appears at the top right of the screen.
-- **How to update?** Hovering over this button shows a small tooltip with the command to run on your server (`git pull && docker compose up -d --build`).
+- **How to update?** Hovering over this button shows a small tooltip with the command to run on your server (`git pull && docker compose pull && docker compose up -d`).
 - **Automatic disappearance:** Once the update has been applied on the server, the application detects it and the button disappears automatically.
 
 ---

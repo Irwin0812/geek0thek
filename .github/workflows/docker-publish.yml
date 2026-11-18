@@ -43,6 +43,11 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
+          # GIT_COMMIT : hash du commit déployé, injecté dans l'image (ENV +
+          # version.json) pour l'indicateur « Mise à jour disponible » quand le
+          # dossier .git est absent du conteneur.
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
           tags: ghcr.io/${{ steps.var.outputs.username }}/geek0thek-backend:latest
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend

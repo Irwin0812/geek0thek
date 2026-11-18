@@ -27,7 +27,7 @@
   "update": {
     "available": "Actualización disponible",
     "tooltipTitle": "¿Cómo actualizar?",
-    "tooltipSteps": "Ejecutar git pull + docker compose up -d --build para actualizar:"
+    "tooltipSteps": "Ejecutar git pull + docker compose pull + docker compose up -d para actualizar:"
   },
   "collection": {
     "searchPlaceholder": "Buscar en mi colección…",
