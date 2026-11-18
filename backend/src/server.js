@@ -313,6 +313,20 @@ app.get('/api/health', async (req, res) => {
 app.get('/api/version', async (req, res) => {
   try {
     const status = await getUpdateStatus();
+    // Diagnostic : journaliser TOUJOURS la valeur exacte renvoyée — si le
+    // bouton « Mise à jour disponible » ne s'affiche pas, les logs du
+    // conteneur backend (docker logs geek0thek-backend) révèlent immédiatement
+    // quelle source a fourni localCommit (dépôt .git monté / GIT_COMMIT /
+    // version.json) et pourquoi la comparaison a échoué (status « unknown »).
+    console.log(
+      '[version]',
+      JSON.stringify({
+        status: status.status,
+        updateAvailable: status.updateAvailable,
+        localCommit: status.deployed ? status.deployed.sha : null,
+        remoteCommit: status.github ? status.github.sha : null,
+      })
+    );
     return res.json(status);
   } catch (err) {
     console.error('[version] vérification GitHub impossible :', err.message);

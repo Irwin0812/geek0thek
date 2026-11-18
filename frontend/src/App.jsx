@@ -219,6 +219,12 @@ export default function App() {
             pages et sections (Mes Disques, Mes BD, …), JAMAIS à l'intérieur
             d'une modale. Visible uniquement après 300 px de défilement. */}
         {user && <TopButton />}
+        {/* BOUTON « MISE À JOUR DISPONIBLE » GLOBAL : monté une SEULE fois dans
+            le layout (frère de TopButton) — présent sur toutes les pages
+            authentifiées, jamais à l'intérieur d'une modale. N'apparaît QUE si
+            /api/version indique updateAvailable = TRUE (commit déployé ≠ HEAD
+            GitHub) ; disparaît automatiquement après une mise à jour effective. */}
+        {user && <UpdateButton />}
         <Footer />
       </div>
       </DisplayProvider>
