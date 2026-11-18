@@ -148,8 +148,10 @@ async function getGitHubHead() {
   if (env.github.token) headers.Authorization = `Bearer ${env.github.token}`;
 
   try {
+    // Endpoint LISTE filtré par branche (paramètre sha=) : renvoie un TABLEAU
+    // de commits (contrairement à /commits/{ref} qui renvoie un objet unique).
     const res = await fetch(
-      `${GITHUB_API}/repos/${GITHUB_REPO}/commits/${encodeURIComponent(GITHUB_BRANCH)}?per_page=1`,
+      `${GITHUB_API}/repos/${GITHUB_REPO}/commits?per_page=1&sha=${encodeURIComponent(GITHUB_BRANCH)}`,
       { headers }
     );
     if (!res.ok) return null;
