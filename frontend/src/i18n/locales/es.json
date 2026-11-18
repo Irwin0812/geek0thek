@@ -26,6 +26,7 @@
   },
   "update": {
     "available": "Actualización disponible",
+    "availableWith": "Actualización {{version}} disponible",
     "tooltipTitle": "¿Cómo actualizar?",
     "tooltipSteps": "Ejecutar git pull + docker compose pull + docker compose up -d para actualizar:"
   },

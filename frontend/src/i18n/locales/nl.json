@@ -26,6 +26,7 @@
   },
   "update": {
     "available": "Update beschikbaar",
+    "availableWith": "Update {{version}} beschikbaar",
     "tooltipTitle": "Hoe te updaten?",
     "tooltipSteps": "Voer git pull + docker compose pull + docker compose up -d uit om te updaten:"
   },

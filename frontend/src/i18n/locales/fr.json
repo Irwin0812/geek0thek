@@ -26,6 +26,7 @@
   },
   "update": {
     "available": "Mise à jour disponible",
+    "availableWith": "Mise à jour {{version}} disponible",
     "tooltipTitle": "Comment mettre à jour ?",
     "tooltipSteps": "Faire un git pull + docker compose pull + docker compose up -d pour mettre à jour :"
   },

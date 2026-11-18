@@ -6,174 +6,85 @@
  * the Free Software Foundation, either version 3 of the License.
  */
 /**
- * Client GitHub — vérification de mise à jour (dépôt vs version déployée).
+ * Client GitHub — vérification de mise à jour (GitHub Releases).
  *
- * Compare le commit du code DÉPLOYÉ (HEAD du dépôt git monté en lecture seule
- * dans le conteneur backend, cf. docker-compose.yml — avec fallback sur
- * process.env.GIT_COMMIT / version.json générés au build quand .git est absent
- * de l'image) avec le dernier commit de la branche de référence (GITHUB_BRANCH,
- * défaut « main ») du dépôt GitHub (https://github.com/Irwin0812/geek0thek).
+ * Compare la version LOCALE de l'application (variable d'environnement
+ * APP_VERSION, sinon le champ « version » du package.json du backend) avec
+ * le tag de la dernière Release officielle publiée sur GitHub
+ * (https://api.github.com/repos/<repo>/releases/latest).
  *
  * Règle d'affichage côté frontend : le bouton « Mise à jour disponible »
- * n'apparaît QUE si les deux SHA diffèrent — il disparaît donc automatiquement
- * après un `git pull && docker compose up -d --build` (le commit déployé
- * rejoint alors la HEAD de GitHub).
+ * n'apparaît QUE si une Release est publiée avec un numéro de version
+ * supérieur (ou différent) de la version installée localement — il ne se
+ * déclenche plus à chaque commit sur main. Il disparaît automatiquement
+ * après une mise à jour effective (la version locale rejoint le tag).
  *
- * Tolérance aux pannes : AUCUNE erreur ne remonte au client. Si le dépôt local
- * est absent (ex. build sans .git), si l'API GitHub est injoignable, ou si le
- * quota est atteint, l'endpoint renvoie { status: 'unknown', updateAvailable:
- * false } : le bouton reste simplement masqué (jamais de faux positif).
+ * Tolérance aux pannes : AUCUNE erreur ne remonte au client. Si aucune
+ * release n'est publiée (404 « No releases published »), si l'API GitHub est
+ * injoignable ou si le quota est atteint, l'endpoint renvoie { status:
+ * 'unknown', updateAvailable: false } : le bouton reste simplement masqué
+ * (jamais de faux positif).
  */
 
-const fs = require('fs');
-const path = require('path');
 const env = require('../config/env');
 
-// Dépôt GitHub de référence (branche par défaut du dépôt).
+// Dépôt GitHub de référence (releases officielles).
 const GITHUB_REPO = env.github.repo;
-// Branche GitHub de référence pour la comparaison (défaut « main ») —
-// surchargeable par instance via GITHUB_BRANCH.
-const GITHUB_BRANCH = env.github.branch;
 const GITHUB_API = 'https://api.github.com';
 
-// Répertoire du dépôt git DÉPLOYÉ : en production le conteneur backend monte
-// /opt/geek0thek (racine du repo sur la VM) en lecture seule sur /repo —
-// c'est exactement le commit que `git pull` a installé. En développement
-// local, on retombe sur le dépôt courant (backend/..).
-const LOCAL_REPO_DIR = env.github.localRepoDir;
-
-/** Lit une ligne de fichier texte (tolère CRLF / BOM), null si absent. */
-function readFirstLine(file) {
-  try {
-    const raw = fs.readFileSync(file, 'utf8');
-    const line = raw.split(/\r?\n/, 1)[0];
-    return line.replace(/^\uFEFF/, '').trim() || null;
-  } catch {
-    return null;
-  }
+/** Normalise une chaîne de version : retire le préfixe « v » et les espaces. */
+function normalizeVersion(raw) {
+  return String(raw || '').replace(/^v/i, '').trim();
 }
 
 /**
- * Résout le commit du code déployé, dans l'ordre :
- *   1) HEAD du dépôt local (réf de la branche courante) — c'est exactement le
- *      commit installé par `git pull` (dossier .git monté en lecture seule
- *      dans le conteneur backend, cf. docker-compose.yml).
- *   2) Fallback Docker : `process.env.GIT_COMMIT` (injectée au build via
- *      ARG/ENV GIT_COMMIT dans le Dockerfile) ou le fichier `version.json`
- *      généré au build ({ "commit": "<sha>" }) — indispensable quand le
- *      dossier .git est absent de l'image.
- * Renvoie { sha, branch } ou null si aucune source n'est lisible (l'endpoint
- * renvoie alors status « unknown » et le bouton reste masqué : jamais de faux
- * positif).
+ * Version locale de l'application : variable d'environnement APP_VERSION en
+ * priorité, sinon le champ « version » du package.json du backend.
+ * Renvoie la version normalisée (ex. « 1.2.0 ») ou '' si introuvable.
  */
-function getDeployedCommit() {
-  const gitDir = path.join(LOCAL_REPO_DIR, '.git');
+function getLocalVersion() {
+  const fromEnv = normalizeVersion(process.env.APP_VERSION);
+  if (fromEnv) return fromEnv;
   try {
-    const headRef = readFirstLine(path.join(gitDir, 'HEAD'));
-    if (headRef && headRef.startsWith('ref:')) {
-      // « ref: refs/heads/main » → chemin de la réf relatif à .git.
-      const refPath = headRef.replace(/^ref:\s*/, '').trim();
-      const branch = refPath.replace(/^refs\/heads\//, '');
-      // 1) Réf « loose » (.git/refs/heads/<branch>) — le cas normal après un
-      //    `git pull`. 2) Sinon réf « packée » (.git/packed-refs) — cas courant
-      //    après un `git gc` / `git pack-refs`.
-      let sha = readFirstLine(path.join(gitDir, refPath));
-      if (!sha || !/^[0-9a-f]{40}$/i.test(sha)) {
-        const packed = readPackedRef(gitDir, refPath);
-        if (packed) sha = packed;
-      }
-      if (sha && /^[0-9a-f]{40}$/i.test(sha)) {
-        return { sha: sha.toLowerCase(), branch };
-      }
-    }
+    // eslint-disable-next-line global-require
+    const pkg = require('../../package.json');
+    return normalizeVersion(pkg.version);
   } catch {
-    /* dépôt local absent ou illisible */
+    return '';
   }
-
-  // Fallback Docker : hash injecté au build (ARG/ENV GIT_COMMIT) — le conteneur
-  // ne contient pas de dossier .git, mais l'image est construite depuis un
-  // checkout git précis (GitHub Actions), donc le SHA est connu au build.
-  const envSha = String(process.env.GIT_COMMIT || '').trim().toLowerCase();
-  if (/^[0-9a-f]{7,40}$/.test(envSha)) {
-    return { sha: envSha, branch: GITHUB_BRANCH };
-  }
-
-  // Fallback Docker : version.json généré au build ({ "commit": "<sha>" }).
-  try {
-    const raw = fs.readFileSync(path.join(__dirname, '..', '..', 'version.json'), 'utf8');
-    const parsed = JSON.parse(raw);
-    const fileSha = String((parsed && parsed.commit) || '').trim().toLowerCase();
-    if (/^[0-9a-f]{7,40}$/.test(fileSha)) {
-      return { sha: fileSha, branch: GITHUB_BRANCH };
-    }
-  } catch {
-    /* version.json absent : rien à faire */
-  }
-
-  return null;
 }
 
 /**
- * Cherche une réf dans .git/packed-refs (format « <sha> refs/heads/<branch> »),
- * en ignorant les lignes de commentaire (#). Renvoie la SHA ou null.
+ * Comparaison de versions sémantiques : renvoie true si `remote` est
+ * SUPÉRIEURE à `local`. Si les deux chaînes sont parseables en semver
+ * (x.y.z), comparaison numérique composante par composante ; sinon repli sur
+ * l'inégalité stricte des chaînes normalisées.
  */
-function readPackedRef(gitDir, refPath) {
-  try {
-    const raw = fs.readFileSync(path.join(gitDir, 'packed-refs'), 'utf8');
-    for (const line of raw.split(/\r?\n/)) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      const [sha, ref] = trimmed.split(/\s+/);
-      if (ref === refPath && /^[0-9a-f]{40}$/i.test(sha)) return sha;
+function isRemoteNewer(remote, local) {
+  const parse = (v) => v.split('.').map((p) => parseInt(p, 10));
+  const r = parse(remote);
+  const l = parse(local);
+  if (r.length >= 2 && l.length >= 2 && r.every(Number.isFinite) && l.every(Number.isFinite)) {
+    for (let i = 0; i < Math.max(r.length, l.length); i++) {
+      const a = r[i] || 0;
+      const b = l[i] || 0;
+      if (a !== b) return a > b;
     }
-  } catch {
-    /* packed-refs absent : rien à faire */
+    return false; // versions égales
   }
-  return null;
+  return remote !== local;
 }
 
 /**
- * Dernier commit de la branche de référence du dépôt GitHub
- * (GITHUB_BRANCH, défaut « main »). Renvoie { sha, branch, message } ou null
- * (API injoignable / quota / 404).
- */
-async function getGitHubHead() {
-  // User-Agent explicite OBLIGATOIRE : l'API GitHub refuse les requêtes sans
-  // User-Agent (403) — c'était la cause du silence de l'indicateur.
-  const headers = {
-    Accept: 'application/vnd.github+json',
-    'User-Agent': 'Geek0thek-App',
-    'Cache-Control': 'no-cache',
-  };
-  if (env.github.token) headers.Authorization = `Bearer ${env.github.token}`;
-
-  try {
-    // Endpoint LISTE filtré par branche (paramètre sha=) : renvoie un TABLEAU
-    // de commits (contrairement à /commits/{ref} qui renvoie un objet unique).
-    const res = await fetch(
-      `${GITHUB_API}/repos/${GITHUB_REPO}/commits?per_page=1&sha=${encodeURIComponent(GITHUB_BRANCH)}`,
-      { headers }
-    );
-    if (!res.ok) return null;
-    const [commit] = await res.json();
-    if (!commit || !commit.sha) return null;
-    return {
-      sha: commit.sha.toLowerCase(),
-      branch: GITHUB_BRANCH,
-      message: (commit.commit && commit.commit.message || '').split('\n')[0],
-    };
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Dernière Release officielle du dépôt GitHub (tag, ex. « v1.0.0 »).
- * Renvoie { tag } ou null si AUCUNE release n'est publiée (404 — état
- * « No releases published »), l'API est injoignable ou le quota est atteint :
- * le footer masque alors complètement le libellé « Version: … ».
+ * Dernière Release officielle du dépôt GitHub.
+ * Renvoie { tag, version } ou null : aucune release publiée (« No releases
+ * published » → 404), API injoignable, quota atteint… Dans ce cas le bouton
+ * reste masqué et le footer masque son libellé « Version: … » (jamais
+ * d'erreur affichée).
  */
 async function getLatestRelease() {
+  // User-Agent explicite OBLIGATOIRE : l'API GitHub refuse les requêtes sans
+  // User-Agent (403).
   const headers = {
     Accept: 'application/vnd.github+json',
     'User-Agent': 'Geek0thek-App',
@@ -183,38 +94,47 @@ async function getLatestRelease() {
 
   try {
     const res = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/releases/latest`, { headers });
-    if (!res.ok) return null; // 404 = aucune release publiée
+    if (!res.ok) return null; // 404 = « No releases published »
     const release = await res.json();
     if (!release || !release.tag_name) return null;
-    return { tag: release.tag_name };
+    const version = normalizeVersion(release.tag_name);
+    return { tag: release.tag_name, version };
   } catch {
     return null;
   }
 }
 
 /**
- * Statut de mise à jour : compare le commit déployé au HEAD GitHub.
- *   - updateAvailable : TRUE uniquement si les deux SHA sont connus et DIFFÉRENTS.
- *   - status : 'ok' (comparaison possible) | 'unknown' (impossible — bouton masqué).
- *   - release : { tag } de la dernière Release GitHub officielle, ou null si
- *     aucune release publiée (le footer masque alors le libellé de version).
+ * Statut de mise à jour : compare la version locale au tag de la dernière
+ * Release GitHub.
+ *   - updateAvailable : TRUE uniquement si une release est publiée et que sa
+ *     version est supérieure (ou différente) de la version locale.
+ *   - status : 'ok' (comparaison possible) | 'unknown' (impossible — bouton
+ *     masqué).
+ *   - localVersion / remoteVersion : versions normalisées (sans « v »).
+ *   - release : { tag, version } ou null (aucune publiée — le footer masque
+ *     alors son libellé « Version: … »).
  */
 async function getUpdateStatus() {
-  const [deployed, remote, release] = await Promise.all([
-    Promise.resolve(getDeployedCommit()),
-    getGitHubHead(),
-    getLatestRelease(),
-  ]);
+  const localVersion = getLocalVersion();
+  const release = await getLatestRelease();
 
-  if (!deployed || !remote) {
-    return { status: 'unknown', updateAvailable: false, deployed: null, github: null, release };
+  if (!release || !localVersion) {
+    return {
+      status: 'unknown',
+      updateAvailable: false,
+      localVersion: localVersion || null,
+      remoteVersion: null,
+      release,
+    };
   }
 
+  const updateAvailable = isRemoteNewer(release.version, localVersion);
   return {
     status: 'ok',
-    updateAvailable: deployed.sha !== remote.sha,
-    deployed: { sha: deployed.sha, shortSha: deployed.sha.slice(0, 7), branch: deployed.branch },
-    github: { sha: remote.sha, shortSha: remote.sha.slice(0, 7), branch: remote.branch, message: remote.message },
+    updateAvailable,
+    localVersion,
+    remoteVersion: release.version,
     release,
   };
 }
