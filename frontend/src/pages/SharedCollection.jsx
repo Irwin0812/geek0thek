@@ -234,7 +234,7 @@ export default function SharedCollection() {
         <DisplayProvider scope={DISPLAY_SCOPES.disks}>
           <div className="space-y-6">
             {/* Barre d'actions : compteur → recherche → vue. AUCUN bouton « Ajouter ». */}
-            <div className="cb-actions flex flex-wrap items-center gap-3">
+            <div className="cb-actions flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3">
               <CollectionCounter type="disks" groups={filteredVinylGroups.length} items={vinyls.length} />
               <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
               <ViewToolbar />
@@ -262,7 +262,7 @@ export default function SharedCollection() {
         <DisplayProvider scope={DISPLAY_SCOPES.comics}>
           <div className="space-y-6">
             {/* Barre d'actions : compteur → recherche → vue. AUCUN bouton « Ajouter ». */}
-            <div className="cb-actions flex flex-wrap items-center gap-3">
+            <div className="cb-actions flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3">
               <CollectionCounter type="comics" groups={filteredComicGroups.length} items={comics.length} />
               <CollectionSearch value={q} onChange={(e) => setQ(e.target.value)} />
               <ViewToolbar />
@@ -329,7 +329,7 @@ function SharedVinylsView({ vinyls, q, letter, openGroup, onOpenGroup, onResetLe
     }),
     [cardView, settings.showTitle, settings.showYear]
   )
-  const gridCls = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+  const gridCls = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'
   const openDetailCb = useCallback((v) => onDetail(v), [onDetail])
 
   // Nom AFFICHÉ du groupe niveau 2 : « Divers » si non étiqueté, sinon son nom.
@@ -479,7 +479,7 @@ function SharedComicsView({ comics, q, letter, openGroup, onOpenGroup, onResetLe
     }),
     [cardView, settings.showTitle, settings.showYear]
   )
-  const gridCls = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+  const gridCls = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'
   const openDetailCb = useCallback((c) => onDetail(c), [onDetail])
 
   // Nom AFFICHÉ du groupe (série) au niveau 2 : « Hors série » si non étiquetée.

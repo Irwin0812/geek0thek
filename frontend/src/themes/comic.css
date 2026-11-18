@@ -426,8 +426,8 @@
   z-index: 30;
   background: linear-gradient(90deg, var(--cb-orange) 0%, var(--cb-mustard) 34%, var(--cb-cyan) 67%, var(--cb-bordeaux) 100%);
 }
-/* Panneau mobile de la barre haute (liste sous md:hidden) : même encre profonde. */
-[data-theme='comic'] .cb-navbar nav.md\:hidden {
+/* Panneau mobile de la barre haute (liste sous lg:hidden) : même encre profonde. */
+[data-theme='comic'] .cb-navbar nav.lg\:hidden {
   background: var(--cb-ink);
 }
 

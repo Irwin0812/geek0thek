@@ -271,8 +271,8 @@ html[data-theme='vinyl'] {
   letter-spacing: 0.03em;
 }
 
-/* Menu mobile (liste sous la barre, md:hidden) : Becker Black NF. */
-[data-theme='vinyl'] .cb-navbar nav.md\:hidden {
+/* Menu mobile (liste sous la barre, lg:hidden) : Becker Black NF. */
+[data-theme='vinyl'] .cb-navbar nav.lg\:hidden {
   font-family: var(--vinyl-font-nav);
   letter-spacing: 0.03em;
 }
@@ -402,7 +402,7 @@ html[data-theme='vinyl'] {
 }
 
 /* ---- BARRE MOBILE (liste sous la barre) : même lettrage années 80 ---- */
-[data-theme='vinyl'] .cb-navbar nav.md\:hidden {
+[data-theme='vinyl'] .cb-navbar nav.lg\:hidden {
   background: rgba(26, 17, 8, 0.92);
 }
 

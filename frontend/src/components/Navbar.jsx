@@ -252,8 +252,8 @@ export default function Navbar() {
           LOGO → « Tableau de bord » / « Mes Disques » / « Mes BD » /
           « Autres Collections » → MENU UTILISATEUR (avatar, à droite).
           h-24 (anc. h-20) : barre encore légèrement plus haute pour le confort. */}
-      <div className="w-full px-4 h-24 flex items-center justify-center gap-4">
-        <div className="flex min-w-0 max-w-full items-center gap-3 md:gap-4">
+      <div className="w-full px-4 h-16 lg:h-24 flex items-center justify-center gap-2 lg:gap-4">
+        <div className="flex min-w-0 max-w-full items-center gap-2 lg:gap-4">
           {/* --- Logo --- */}
           <Link to="/" className="flex shrink-0 items-center gap-2.5 group">
             <span className="relative h-9 w-9 grid place-items-center rounded-full bg-night-800 border border-night-600 group-hover:border-gold-500/50 transition">
@@ -265,14 +265,14 @@ export default function Navbar() {
               <span className="cb-logo block font-extrabold tracking-wide text-white">
                 GEEK<span className="text-gold-400">0THEK</span>
               </span>
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-white">
+              <span className="hidden lg:block text-[10px] font-semibold uppercase tracking-[0.2em] text-white">
                 {t('navbar.collections')}
               </span>
             </span>
           </Link>
 
           {/* --- Liens principaux (masqués sur mobile : menu ☰ sous la barre) --- */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1">
             <NavLink to="/" end className={linkClass}>{t('navbar.dashboard')}</NavLink>
             <NavLink to="/collection" className={linkClass}>{t('navbar.myVinyls')}</NavLink>
             <NavLink to="/comics" className={linkClass}>{t('navbar.myComics')}</NavLink>
@@ -631,7 +631,7 @@ export default function Navbar() {
                 passent par le menu déroulant de l'avatar, accessible sur toutes
                 les tailles d'écran. */}
             <button
-              className="md:hidden btn-ghost !py-1.5 !px-3"
+              className="lg:hidden btn-ghost !py-1.5 !px-3"
               onClick={() => setMenuOpen((v) => !v)}
               aria-label={t('navbar.menu')}
             >
@@ -642,7 +642,7 @@ export default function Navbar() {
       </div>
 
       {menuOpen && (
-        <nav className="md:hidden border-t border-night-700/70 px-4 py-3 flex flex-col gap-1 bg-night-900/95">
+        <nav className="lg:hidden border-t border-night-700/70 px-4 py-3 flex flex-col gap-1 bg-night-900/95">
           <NavLink to="/" end className={linkClass}>{t('navbar.dashboard')}</NavLink>
           <NavLink to="/collection" className={linkClass}>{t('navbar.myVinyls')}</NavLink>
           <NavLink to="/comics" className={linkClass}>{t('navbar.myComics')}</NavLink>

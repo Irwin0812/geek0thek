@@ -168,7 +168,7 @@ export default function App() {
   return (
     <AuthContext.Provider value={auth}>
       <DisplayProvider>
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col max-w-full overflow-x-hidden">
         {user && <Navbar />}
         {/* pb-20 : marge compensatoire du pied de page FIXÉ (Footer.jsx —
             fixed bottom-0) : le contenu ne passe jamais sous la barre. */}

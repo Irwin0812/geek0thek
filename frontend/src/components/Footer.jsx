@@ -22,18 +22,20 @@ import { api } from '../services/api.js'
  * par-dessus. Le <main> du layout (App.jsx) porte un padding-bottom
  * compensatoire (pb-20) pour que le contenu ne passe jamais sous la barre.
  *
- * GRILLE RIGIDE À 3 COLONNES STRICTES (grid grid-cols-3 items-center w-full px-4) :
- *   - COLONNE 1 (gauche — justify-self-start / text-left) : « Soutenez le
- *     projet ! » (gras, couleur du thème actif via --accent-strong ; jaune
- *     moutarde pour le thème BD via comic.css) suivi immédiatement de
- *     l'image/bouton PayPal (/img/paypal.png). Aucun élément ne déborde.
- *   - COLONNE 2 (centre exact — justify-self-center / text-center) :
- *     UNIQUEMENT la mention « Geek0thek - Bibliothèque de collections par
- *     GERARTS Irwin - 2026 », parfaitement centrée au milieu de l'écran.
- *   - COLONNE 3 (droite — justify-self-end / text-right) : UNIQUEMENT le
- *     libellé de version « Version: <tag release> » (jaune pour le thème BD),
- *     collé strictement à l'extrême droite. Masqué COMPLÈTEMENT tant qu'aucune
- *     Release GitHub officielle n'est publiée (« No releases published »).
+ * LAYOUT RESPONSIVE (flex flex-col md:flex-row, w-full px-4) :
+ *   - MOBILE / TABLETTE (< md) : les 3 blocs s'empilent verticalement
+ *     (flex-col), centrés (text-center) — aucun débordement horizontal.
+ *   - DESKTOP (>= md) : disposition en une ligne (md:flex-row) :
+ *     BLOC 1 (gauche) : « Soutenez le projet ! » (gras, couleur du thème
+ *     actif via --accent-strong ; jaune moutarde pour le thème BD via
+ *     comic.css) suivi immédiatement de l'image/bouton PayPal
+ *     (/img/paypal.png). Aucun élément ne déborde.
+ *     BLOC 2 (centre) : UNIQUEMENT la mention « Geek0thek - Bibliothèque de
+ *     collections par GERARTS Irwin - 2026 », centrée au milieu de l'écran.
+ *     BLOC 3 (droite) : UNIQUEMENT le libellé de version « Version: <tag
+ *     release> » (jaune pour le thème BD), collé strictement à l'extrême
+ *     droite. Masqué COMPLÈTEMENT tant qu'aucune Release GitHub officielle
+ *     n'est publiée (« No releases published »).
  *
  * TOUTES les chaînes visibles sont internationalisées via useTranslation()
  * (clé « footer.* » présente dans les 6 dictionnaires de langues).
@@ -71,17 +73,17 @@ export default function Footer() {
   // variable --accent-strong (inline), forcée en jaune moutarde par comic.css.
   return (
     <footer className="cb-footer fixed bottom-0 left-0 right-0 z-30 border-t border-night-700/70 bg-night-950/85 backdrop-blur">
-      {/* GRILLE RIGIDE À 3 COLONNES STRICTES : chaque colonne occupe exactement
-          1/3 de la largeur (grid-cols-3) — le centre est mathématiquement au
-          milieu de l'écran, aucun chevauchement possible. */}
-      <div className="w-full px-4 py-3 grid grid-cols-3 items-center text-xs text-slate-400">
-        {/* COLONNE 1 — GAUCHE : « Soutenez le projet ! » + bouton PayPal,
-            alignés strictement à gauche. Toujours visible. */}
+      {/* RESPONSIVE : empilement vertical centré sur mobile/tablette,
+          disposition en une ligne (3 blocs) à partir de md — aucun
+          débordement horizontal possible. */}
+      <div className="w-full px-4 py-3 flex flex-col md:flex-row md:items-center gap-3 text-xs text-slate-400">
+        {/* BLOC 1 — GAUCHE (desktop) : « Soutenez le projet ! » + bouton PayPal,
+            alignés à gauche sur desktop, centrés sur mobile. Toujours visible. */}
         <a
           href="https://www.paypal.com/donate/?hosted_button_id=Y7LQW3UKPY5VN"
           target="_blank"
           rel="noopener noreferrer"
-          className="cb-footer-donate justify-self-start text-left inline-flex items-center gap-3 min-w-0 transition-all duration-200 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded-xl"
+          className="cb-footer-donate justify-self-start inline-flex items-center gap-3 min-w-0 justify-center md:justify-start text-left transition-all duration-200 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded-xl"
         >
           <span
             className="font-bold text-base whitespace-nowrap"
@@ -100,16 +102,16 @@ export default function Footer() {
           />
         </a>
 
-        {/* COLONNE 2 — CENTRE EXACT : mention de crédit UNIQUEMENT (footer.copyright),
-            centrée au milieu de l'écran. */}
-        <div className="justify-self-center text-center leading-relaxed whitespace-nowrap">
+        {/* BLOC 2 — CENTRE : mention de crédit UNIQUEMENT (footer.copyright),
+            centrée ; le texte peut passer à la ligne sur mobile. */}
+        <div className="text-center leading-relaxed">
           {t('footer.copyright')}
         </div>
 
-        {/* COLONNE 3 — DROITE : libellé de version UNIQUEMENT, collé strictement
-            à l'extrême droite. */}
+        {/* BLOC 3 — DROITE (desktop) : libellé de version UNIQUEMENT, collé
+            strictement à l'extrême droite ; centré sur mobile. */}
         <span
-          className="cb-footer-version justify-self-end text-right font-bold text-sm whitespace-nowrap"
+          className="cb-footer-version text-center md:text-right font-bold text-sm whitespace-nowrap"
           style={{ color: 'var(--accent-strong)' }}
           title="Version (release GitHub)"
         >

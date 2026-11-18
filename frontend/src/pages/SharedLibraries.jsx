@@ -136,11 +136,11 @@ export default function SharedLibraries() {
           <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wider text-slate-500 border-b border-night-600/60">
-                <th className="px-4 py-3">{t('sharedLibraries.colMember')}</th>
-                <th className="px-4 py-3">{t('sharedLibraries.colLogin')}</th>
-                <th className="px-4 py-3">{t('sharedLibraries.colVinyls')}</th>
-                <th className="px-4 py-3">{t('sharedLibraries.colComics')}</th>
-                <th className="px-4 py-3 text-right">{t('sharedLibraries.colAccess')}</th>
+                <th className="px-4 py-3 whitespace-nowrap">{t('sharedLibraries.colMember')}</th>
+                <th className="px-4 py-3 whitespace-nowrap">{t('sharedLibraries.colLogin')}</th>
+                <th className="px-4 py-3 whitespace-nowrap">{t('sharedLibraries.colVinyls')}</th>
+                <th className="px-4 py-3 whitespace-nowrap">{t('sharedLibraries.colComics')}</th>
+                <th className="px-4 py-3 text-right whitespace-nowrap">{t('sharedLibraries.colAccess')}</th>
               </tr>
             </thead>
             <tbody>
@@ -149,7 +149,7 @@ export default function SharedLibraries() {
                 const busy = busyId === u.id
                 return (
                   <tr key={u.id} className="border-b border-night-700/50 hover:bg-night-700/20">
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <Avatar user={u} size={36} />
                         <div>
@@ -158,10 +158,10 @@ export default function SharedLibraries() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-mono text-slate-300">{u.login}</td>
-                    <td className="px-4 py-3 text-slate-300">{u.vinylCount ?? '—'}</td>
-                    <td className="px-4 py-3 text-slate-300">{u.comicCount ?? '—'}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 font-mono text-slate-300 whitespace-nowrap">{u.login}</td>
+                    <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{u.vinylCount ?? '—'}</td>
+                    <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{u.comicCount ?? '—'}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
                       {/* Interrupteur d'autorisation (lecture seule) : actif =
                           accès accordé. Le backend applique le contrôle via
                           canConsult sur les routes de lecture des collections. */}

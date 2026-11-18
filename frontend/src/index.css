@@ -5,10 +5,13 @@
 @layer base {
   html {
     color-scheme: dark;
+    /* Verrou global anti-débordement horizontal (mobile / tablette) : aucun
+       élément ne peut plus forcer un scroll horizontal sur toute la page. */
+    overflow-x: hidden;
   }
 
   body {
-    @apply bg-night-950 text-slate-200 antialiased;
+    @apply bg-night-950 text-slate-200 antialiased max-w-full overflow-x-hidden;
     background-image:
       radial-gradient(1200px 600px at 80% -10%, rgba(212, 162, 78, 0.08), transparent 60%),
       radial-gradient(900px 500px at -10% 110%, rgba(80, 120, 220, 0.07), transparent 60%);

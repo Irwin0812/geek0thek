@@ -253,7 +253,7 @@ html[data-theme='library'] {
 }
 
 /* Menu mobile (sous la barre) : même fond brun que la barre haute. */
-[data-theme='library'] .cb-navbar nav.md\:hidden {
+[data-theme='library'] .cb-navbar nav.lg\:hidden {
   background: rgba(30, 20, 16, 0.92);
   border-top-color: var(--lib-moutarde);
 }

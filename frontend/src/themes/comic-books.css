@@ -903,10 +903,10 @@
   paint-order: stroke fill;
 }
 
-/* C) Panneau mobile de la barre haute (liste ☮ sous md:hidden) : planche
+/* C) Panneau mobile de la barre haute (liste ☮ sous lg:hidden) : planche
    bleu électrique PROFOND assortie, au lieu du voile night-900 d'origine —
    bordure supérieure conservée par-dessus en liseré encre net. */
-[data-theme='comic-books'] .cb-navbar nav.md\:hidden {
+[data-theme='comic-books'] .cb-navbar nav.lg\:hidden {
   background: var(--cb-electric-deep);
 }
 

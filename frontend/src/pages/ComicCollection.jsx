@@ -183,7 +183,7 @@ function ComicCollectionView() {
     }),
     [cardView, settings.showTitle, settings.showYear]
   )
-  const gridCls = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+  const gridCls = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'
   // Nom AFFICHÉ du groupe (série) au niveau 2 : « Hors série » si non étiqueté, sinon le nom.
   const currentGroupName = currentGroup
     ? (currentGroup.isUnlabeled ? t('collection.groupNoSeries') : currentGroup.name)
@@ -231,7 +231,7 @@ function ComicCollectionView() {
             de forcer le bouton à passer sous la toolbar. Layout strictement aligné sur la page Disques. */}
         {/* cb-actions : barre d'actions — le thème Comic Books y flashe le bouton
             « Ajouter » en jaune « splash » (thèmes/comic-books.css). */}
-        <div className="cb-actions flex flex-wrap items-center gap-3">
+        <div className="cb-actions flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3">
           {/* Compteur de collection « X séries — Y albums » : à GAUCHE de la
               barre de recherche (gras + ombrage noir ; jaune liseré d'encre sous
               le thème Comic Books — cf. CollectionCounter / index.css). */}
