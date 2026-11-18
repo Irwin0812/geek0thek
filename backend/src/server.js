@@ -301,13 +301,15 @@ app.get('/api/health', async (req, res) => {
 });
 
 // ------------------------------------------------------------
-// Indicateur de mise à jour : compare la version LOCALE de l'application
-// (APP_VERSION ou package.json du backend) au tag de la dernière Release
-// officielle publiée sur GitHub (releases/latest). Le frontend n'affiche son
-// bouton « Mise à jour disponible » QUE si updateAvailable est TRUE — il ne
-// se déclenche plus à chaque commit sur main, uniquement quand une nouvelle
-// Release est publiée. Jamais d'erreur renvoyée : en cas de doute (aucune
-// release, API GitHub injoignable, quota atteint), updateAvailable = false.
+// Indicateur de mise à jour : compare le SHA du commit LOCAL (embarqué dans
+// l'image Docker via GIT_COMMIT) au dernier commit publié sur la branche main
+// de GitHub (commits/main). Le frontend n'affiche son bouton « Mise à jour
+// disponible » QUE si updateAvailable est TRUE — il apparaît dès qu'un nouveau
+// commit est poussé sur main et disparaît automatiquement après
+// `docker compose pull && docker compose up -d --remove-orphans` (le nouveau
+// conteneur embarque le SHA distant). Jamais d'erreur renvoyée : en cas de
+// doute (SHA local inconnu, API GitHub injoignable, quota atteint),
+// updateAvailable = false.
 // ------------------------------------------------------------
 app.get('/api/version', async (req, res) => {
   try {
@@ -315,20 +317,20 @@ app.get('/api/version', async (req, res) => {
     // Diagnostic : journaliser TOUJOURS la valeur exacte renvoyée — si le
     // bouton « Mise à jour disponible » ne s'affiche pas, les logs du
     // conteneur backend (docker logs geek0thek-backend) révèlent immédiatement
-    // la version locale lue et le tag de la dernière release comparés.
+    // le SHA local embarqué et le dernier commit distant comparés.
     console.log(
       '[version]',
       JSON.stringify({
         status: status.status,
         updateAvailable: status.updateAvailable,
-        localVersion: status.localVersion || null,
-        remoteVersion: status.remoteVersion || null,
+        localCommit: status.localCommit || null,
+        remoteCommit: status.remoteCommit || null,
       })
     );
     return res.json(status);
   } catch (err) {
     console.error('[version] vérification GitHub impossible :', err.message);
-    return res.json({ status: 'unknown', updateAvailable: false, localVersion: null, remoteVersion: null, release: null });
+    return res.json({ status: 'unknown', updateAvailable: false, localCommit: null, remoteCommit: null, commit: null });
   }
 });
 

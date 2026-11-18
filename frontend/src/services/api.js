@@ -73,11 +73,12 @@ async function request(path, { method = 'GET', body, isForm = false } = {}) {
 }
 
 export const api = {
-  // --- Version / mise à jour (dépôt GitHub vs version déployée) ---
-  // Renvoie { status: 'ok' | 'unknown', updateAvailable, deployed?, github? } :
-  // le bouton « Mise à jour disponible » s'affiche UNIQUEMENT si
-  // updateAvailable est TRUE (les deux commits diffèrent). En cas de doute
-  // (API GitHub injoignable, quota atteint…), le backend renvoie
+  // --- Version / mise à jour (SHA local embarqué vs dernier commit main) ---
+  // Renvoie { status: 'ok' | 'unknown', updateAvailable, localCommit?,
+  // remoteCommit? } : le bouton « Mise à jour disponible » s'affiche
+  // UNIQUEMENT si updateAvailable est TRUE (le SHA de l'image Docker en cours
+  // diffère du dernier commit publié sur main). En cas de doute (SHA local
+  // inconnu, API GitHub injoignable, quota atteint…), le backend renvoie
   // updateAvailable: false — jamais de faux positif.
   version: () => request('/version'),
 

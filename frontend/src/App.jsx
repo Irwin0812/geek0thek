@@ -222,8 +222,9 @@ export default function App() {
         {/* BOUTON « MISE À JOUR DISPONIBLE » GLOBAL : monté une SEULE fois dans
             le layout (frère de TopButton) — présent sur toutes les pages
             authentifiées, jamais à l'intérieur d'une modale. N'apparaît QUE si
-            /api/version indique updateAvailable = TRUE (commit déployé ≠ HEAD
-            GitHub) ; disparaît automatiquement après une mise à jour effective. */}
+            /api/version indique updateAvailable = TRUE (SHA local embarqué ≠
+            dernier commit main GitHub) ; disparaît automatiquement après
+            `docker compose pull && docker compose up -d --remove-orphans`. */}
         {user && <UpdateButton />}
         <Footer />
       </div>

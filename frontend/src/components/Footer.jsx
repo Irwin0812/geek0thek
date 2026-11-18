@@ -31,10 +31,10 @@ import { api } from '../services/api.js'
  *     (/img/paypal.png), alignés à gauche.
  *     BLOC 2 (centre) : colonne centrée — ligne 1 : copyright
  *     (« Geek0thek - Bibliothèque de collections par GERARTS Irwin - 2026 »)
- *     suivi de « Version: <tag release> » en doré (--accent-strong) ; la
- *     version est masquée tant qu'aucune Release GitHub officielle n'est
- *     publiée. (Ligne 2 : bouton « Gestion des cookies » — uniquement sur la
- *     démo / selon la configuration active.)
+ *     suivi de « Version: <sha commit local> » en doré (--accent-strong) ; la
+ *     version est masquée tant que le SHA local embarqué dans l'image Docker
+ *     n'est pas connu. (Ligne 2 : bouton « Gestion des cookies » — uniquement
+ *     sur la démo / selon la configuration active.)
  *     BLOC 3 (droite) : le lien « Obtenez Geek0thek » (footer.getApp) vers le
  *     dépôt GitHub, aligné à droite (md:text-right), jamais tronqué.
  *
@@ -48,10 +48,11 @@ import { api } from '../services/api.js'
 
 export default function Footer() {
   const { t } = useTranslation()
-  // Version de la webapp = tag de la dernière Release GitHub officielle
-  // (ex. « v1.2 »). Une seule requête au montage ; jamais d'erreur affichée :
-  // si aucune release n'est publiée, ou si l'API GitHub est injoignable /
-  // quota atteint, le libellé « Version: … » reste totalement masqué.
+  // Version de la webapp = SHA du commit LOCAL embarqué dans l'image Docker
+  // en cours d'exécution (ex. « a1b2c3d »). Une seule requête au montage ;
+  // jamais d'erreur affichée : si le SHA local est inconnu, ou si l'API
+  // GitHub est injoignable / quota atteint, le libellé « Version: … » reste
+  // totalement masqué.
   const [version, setVersion] = useState('')
 
   useEffect(() => {
@@ -59,8 +60,8 @@ export default function Footer() {
     api
       .version()
       .then((data) => {
-        if (!cancelled && data && data.release && data.release.tag) {
-          setVersion(data.release.tag)
+        if (!cancelled && data && data.localCommit) {
+          setVersion(data.localCommit.slice(0, 7))
         }
       })
       .catch(() => {
@@ -121,7 +122,7 @@ export default function Footer() {
                 <span
                   className="cb-footer-version font-semibold"
                   style={{ color: 'var(--accent-strong)' }}
-                  title="Version (release GitHub)"
+                  title="Version (commit local embarqué dans l'image Docker)"
                 >
                   Version: {version}
                 </span>

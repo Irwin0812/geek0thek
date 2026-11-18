@@ -6,136 +6,154 @@
  * the Free Software Foundation, either version 3 of the License.
  */
 /**
- * Client GitHub — vérification de mise à jour (GitHub Releases).
+ * Client GitHub — détection des nouveaux commits sur la branche main.
  *
- * Compare la version LOCALE de l'application (variable d'environnement
- * APP_VERSION, sinon le champ « version » du package.json du backend) avec
- * le tag de la dernière Release officielle publiée sur GitHub
- * (https://api.github.com/repos/<repo>/releases/latest).
+ * Compare le SHA du commit LOCAL (embarqué dans l'image Docker en cours
+ * d'exécution) avec le dernier commit publié sur la branche de référence
+ * (https://api.github.com/repos/<repo>/commits/main).
+ *
+ * Source du SHA local, par ordre de priorité :
+ *   1. process.env.GIT_COMMIT — injecté dans l'image au build par GitHub
+ *      Actions (--build-arg GIT_COMMIT=${{ github.sha }}, cf. Dockerfile) ;
+ *   2. /app/version.json — généré au build (2e source de vérité embarquée) ;
+ *   3. `git rev-parse HEAD` dans LOCAL_REPO_DIR — fallback local quand le
+ *      conteneur monte le .git du dépôt déployé en lecture seule.
  *
  * Règle d'affichage côté frontend : le bouton « Mise à jour disponible »
- * n'apparaît QUE si une Release est publiée avec un numéro de version
- * supérieur (ou différent) de la version installée localement — il ne se
- * déclenche plus à chaque commit sur main. Il disparaît automatiquement
- * après une mise à jour effective (la version locale rejoint le tag).
+ * n'apparaît QUE si le SHA local est valide (≠ 'unknown') et DIFFÉRENT du
+ * dernier commit distant (comparaison normalisée en minuscules). Dès que
+ * l'admin exécute `docker compose pull && docker compose up -d
+ * --remove-orphans`, le nouveau conteneur démarre avec GIT_COMMIT === SHA
+ * distant : la comparaison devient égale et le bouton disparaît
+ * automatiquement.
  *
- * Tolérance aux pannes : AUCUNE erreur ne remonte au client. Si aucune
- * release n'est publiée (404 « No releases published »), si l'API GitHub est
- * injoignable ou si le quota est atteint, l'endpoint renvoie { status:
- * 'unknown', updateAvailable: false } : le bouton reste simplement masqué
- * (jamais de faux positif).
+ * Tolérance aux pannes : AUCUNE erreur ne remonte au client. Si le SHA local
+ * est introuvable, si l'API GitHub est injoignable ou si le quota est atteint,
+ * l'endpoint renvoie { status: 'unknown', updateAvailable: false } : le
+ * bouton reste simplement masqué (jamais de faux positif).
  */
+
+const { execFileSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 const env = require('../config/env');
 
-// Dépôt GitHub de référence (releases officielles).
+// Dépôt GitHub de référence (branche main).
 const GITHUB_REPO = env.github.repo;
+const GITHUB_BRANCH = env.github.branch;
 const GITHUB_API = 'https://api.github.com';
 
-/** Normalise une chaîne de version : retire le préfixe « v » et les espaces. */
-function normalizeVersion(raw) {
-  return String(raw || '').replace(/^v/i, '').trim();
+/** Normalise un SHA : minuscules, sans espaces. */
+function normalizeSha(raw) {
+  return String(raw || '').trim().toLowerCase();
+}
+
+/** Un SHA est « valide » s'il ressemble à un hash git (7+ hexadécimaux). */
+function isValidSha(sha) {
+  return /^[0-9a-f]{7,40}$/.test(normalizeSha(sha));
 }
 
 /**
- * Version locale de l'application : variable d'environnement APP_VERSION en
- * priorité, sinon le champ « version » du package.json du backend.
- * Renvoie la version normalisée (ex. « 1.2.0 ») ou '' si introuvable.
+ * SHA du commit local embarqué dans l'image Docker :
+ *   1. process.env.GIT_COMMIT (build-arg GitHub Actions) ;
+ *   2. /app/version.json (généré au build par le Dockerfile) ;
+ *   3. `git rev-parse HEAD` dans LOCAL_REPO_DIR (fallback local — .git monté
+ *      en lecture seule dans le conteneur backend).
+ * Renvoie le SHA normalisé (minuscules) ou '' si introuvable.
  */
-function getLocalVersion() {
-  const fromEnv = normalizeVersion(process.env.APP_VERSION);
-  if (fromEnv) return fromEnv;
+function getLocalCommit() {
+  const fromEnv = normalizeSha(process.env.GIT_COMMIT);
+  if (isValidSha(fromEnv)) return fromEnv;
+
   try {
-    // eslint-disable-next-line global-require
-    const pkg = require('../../package.json');
-    return normalizeVersion(pkg.version);
+    const versionFile = path.join(__dirname, '..', '..', 'version.json');
+    const parsed = JSON.parse(fs.readFileSync(versionFile, 'utf8'));
+    const fromFile = normalizeSha(parsed && parsed.commit);
+    if (isValidSha(fromFile)) return fromFile;
   } catch {
-    return '';
+    /* version.json absent ou illisible : on tente le fallback git */
   }
-}
 
-/**
- * Comparaison de versions sémantiques : renvoie true si `remote` est
- * SUPÉRIEURE à `local`. Si les deux chaînes sont parseables en semver
- * (x.y.z), comparaison numérique composante par composante ; sinon repli sur
- * l'inégalité stricte des chaînes normalisées.
- */
-function isRemoteNewer(remote, local) {
-  const parse = (v) => v.split('.').map((p) => parseInt(p, 10));
-  const r = parse(remote);
-  const l = parse(local);
-  if (r.length >= 2 && l.length >= 2 && r.every(Number.isFinite) && l.every(Number.isFinite)) {
-    for (let i = 0; i < Math.max(r.length, l.length); i++) {
-      const a = r[i] || 0;
-      const b = l[i] || 0;
-      if (a !== b) return a > b;
+  try {
+    const repoDir = env.github.localRepoDir;
+    if (repoDir && fs.existsSync(path.join(repoDir, '.git'))) {
+      const sha = execFileSync('git', ['rev-parse', 'HEAD'], {
+        cwd: repoDir,
+        encoding: 'utf8',
+        timeout: 5000,
+      }).trim();
+      if (isValidSha(sha)) return normalizeSha(sha);
     }
-    return false; // versions égales
+  } catch {
+    /* .git absent ou git indisponible : aucun SHA local */
   }
-  return remote !== local;
+
+  return '';
 }
 
 /**
- * Dernière Release officielle du dépôt GitHub.
- * Renvoie { tag, version } ou null : aucune release publiée (« No releases
- * published » → 404), API injoignable, quota atteint… Dans ce cas le bouton
- * reste masqué et le footer masque son libellé « Version: … » (jamais
- * d'erreur affichée).
+ * Dernier commit publié sur la branche de référence (main).
+ * Renvoie { sha, message, url } ou null : API GitHub injoignable, quota
+ * atteint, dépôt introuvable… Dans ce cas le bouton reste masqué et jamais
+ * d'erreur affichée.
  */
-async function getLatestRelease() {
+async function getLatestCommit() {
   // User-Agent explicite OBLIGATOIRE : l'API GitHub refuse les requêtes sans
-  // User-Agent (403).
+  // User-Agent (403). Cache-Control: no-cache pour ne jamais servir un commit
+  // obsolète depuis un cache intermédiaire.
   const headers = {
-    Accept: 'application/vnd.github+json',
+    Accept: 'application/vnd.github.v3+json',
     'User-Agent': 'Geek0thek-App',
     'Cache-Control': 'no-cache',
   };
   if (env.github.token) headers.Authorization = `Bearer ${env.github.token}`;
 
   try {
-    const res = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/releases/latest`, { headers });
-    if (!res.ok) return null; // 404 = « No releases published »
-    const release = await res.json();
-    if (!release || !release.tag_name) return null;
-    const version = normalizeVersion(release.tag_name);
-    return { tag: release.tag_name, version };
+    const res = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/commits/${GITHUB_BRANCH}`, { headers });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || !data.sha) return null;
+    return {
+      sha: normalizeSha(data.sha),
+      message: String((data.commit && data.commit.message) || '').split('\n')[0],
+      url: data.html_url || `https://github.com/${GITHUB_REPO}/commits/${GITHUB_BRANCH}`,
+    };
   } catch {
     return null;
   }
 }
 
 /**
- * Statut de mise à jour : compare la version locale au tag de la dernière
- * Release GitHub.
- *   - updateAvailable : TRUE uniquement si une release est publiée et que sa
- *     version est supérieure (ou différente) de la version locale.
+ * Statut de mise à jour : compare le SHA local (image Docker en cours) au
+ * dernier commit distant de la branche main.
+ *   - updateAvailable : TRUE uniquement si le SHA local est valide (≠
+ *     'unknown') et DIFFÉRENT du SHA distant (comparaison minuscules).
  *   - status : 'ok' (comparaison possible) | 'unknown' (impossible — bouton
  *     masqué).
- *   - localVersion / remoteVersion : versions normalisées (sans « v »).
- *   - release : { tag, version } ou null (aucune publiée — le footer masque
- *     alors son libellé « Version: … »).
+ *   - localCommit / remoteCommit : SHAs normalisés (minuscules) ou null.
  */
 async function getUpdateStatus() {
-  const localVersion = getLocalVersion();
-  const release = await getLatestRelease();
+  const localCommit = getLocalCommit();
+  const remote = await getLatestCommit();
 
-  if (!release || !localVersion) {
+  if (!remote || !isValidSha(localCommit)) {
     return {
       status: 'unknown',
       updateAvailable: false,
-      localVersion: localVersion || null,
-      remoteVersion: null,
-      release,
+      localCommit: isValidSha(localCommit) ? localCommit : null,
+      remoteCommit: remote ? remote.sha : null,
+      commit: remote,
     };
   }
 
-  const updateAvailable = isRemoteNewer(release.version, localVersion);
+  const updateAvailable = localCommit !== remote.sha;
   return {
     status: 'ok',
     updateAvailable,
-    localVersion,
-    remoteVersion: release.version,
-    release,
+    localCommit,
+    remoteCommit: remote.sha,
+    commit: remote,
   };
 }
 

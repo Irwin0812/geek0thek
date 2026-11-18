@@ -5,12 +5,14 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# Hash du commit déployé (injecté au build par GitHub Actions via
-# --build-arg GIT_COMMIT=${{ github.sha }}) : l'indicateur « Mise à jour
-# disponible » (/api/version) le lit en fallback quand le dossier .git est
-# absent de l'image (cf. backend/src/utils/githubClient.js).
-ARG GIT_COMMIT=""
-ENV GIT_COMMIT=${GIT_COMMIT}
+# SHA exact du commit qui a généré cette image (injecté au build par GitHub
+# Actions via --build-arg GIT_COMMIT=${{ github.sha }}) : l'indicateur « Mise à
+# jour disponible » (/api/version) compare ce SHA au dernier commit de la
+# branche main sur GitHub. Fallback local : si la variable vaut « unknown » ou
+# est absente, le backend tente `git rev-parse HEAD` (cf.
+# backend/src/utils/githubClient.js).
+ARG GIT_COMMIT=unknown
+ENV GIT_COMMIT=$GIT_COMMIT
 
 # Dépendances d'abord (cache des couches)
 COPY package*.json ./

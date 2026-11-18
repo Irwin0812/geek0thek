@@ -14,22 +14,23 @@ import { api } from '../services/api.js'
  * BOUTON GLOBAL « MISE À JOUR DISPONIBLE » — coin supérieur droit.
  *
  *  - Montage UNIQUE au niveau du layout principal (App.jsx, frère de
- *    <TopButton />) : présent sur TOUTES les pages authentifiées, MASQUÉ sur
- *    l'écran de connexion (pas de Navbar) et JAMAIS à l'intérieur des modales.
+ *    <TopButton />) : présent sur TOUTES les pages authentifiées (admins),
+ *    MASQUÉ sur l'écran de connexion (pas de Navbar) et JAMAIS à l'intérieur
+ *    des modales.
  *  - CONDITION D'AFFICHAGE : le bouton n'apparaît QUE si l'API /api/version
- *    indique updateAvailable = TRUE, c'est-à-dire qu'une nouvelle Release
- *    GitHub officielle est publiée avec un numéro de version supérieur (ou
- *    différent) de la version installée localement (APP_VERSION / package.json
- *    du backend). Il ne se déclenche plus à chaque commit sur main — et il
- *    DISPARAÎT AUTOMATIQUEMENT après une mise à jour effective (la version
- *    locale rejoint le tag de la release).
- *  - Le libellé affiche le numéro de la nouvelle release : « Mise à jour
- *    v1.3.0 disponible » (clé i18n update.availableWith, interpolation {{version}}).
+ *    indique updateAvailable = TRUE, c'est-à-dire que le SHA du commit LOCAL
+ *    (embarqué dans l'image Docker en cours d'exécution via GIT_COMMIT) est
+ *    différent du dernier commit publié sur la branche main de GitHub. Il
+ *    apparaît dès qu'un nouveau commit est poussé sur main et DISPARAÎT
+ *    AUTOMATIQUEMENT après `docker compose pull && docker compose up -d
+ *    --remove-orphans` : le nouveau conteneur embarque le SHA distant, la
+ *    comparaison devient égale.
  *  - Vérification au CHARGEMENT de l'application (une seule requête) +
- *    re-vérification discrète toutes les 5 minutes : si l'admin met à jour
- *    pendant que la page reste ouverte, le bouton disparaît sans rechargement.
- *  - Jamais d'erreur affichée : aucune release publiée, API GitHub injoignable
- *    ou quota atteint → updateAvailable = false (bouton masqué, jamais de faux
+ *    re-vérification discrète toutes les 5 minutes (300 000 ms) : si l'admin
+ *    met à jour pendant que la page reste ouverte, le bouton disparaît sans
+ *    rechargement.
+ *  - Jamais d'erreur affichée : SHA local inconnu, API GitHub injoignable ou
+ *    quota atteint → updateAvailable = false (bouton masqué, jamais de faux
  *    positif).
  *  - Forme RECTANGULAIRE À BORDS ARRONDIS (rounded-xl), tons AMBRE / OR CHAUD
  *    du thème Geek0thek — cohérent avec le bouton « TOP » (bg-amber-500,
@@ -37,13 +38,12 @@ import { api } from '../services/api.js'
  *    en BLEU FLASHY via l'ID `#update-button` (cf. themes/comic-books.css).
  *  - INFOBULLE AU SURVOL : petite bulle explicative (tooltip) indiquant la
  *    commande de mise à jour standard — « git pull && docker compose pull &&
- *    docker compose up -d ».
+ *    docker compose up -d --remove-orphans ».
  */
 
 export default function UpdateButton() {
   const { t } = useTranslation()
   const [updateAvailable, setUpdateAvailable] = useState(false)
-  const [remoteVersion, setRemoteVersion] = useState('')
   const [tooltipOpen, setTooltipOpen] = useState(false)
 
   /* Vérification de version au CHARGEMENT + re-vérification discrète toutes
@@ -56,7 +56,6 @@ export default function UpdateButton() {
         const data = await api.version()
         if (!cancelled) {
           setUpdateAvailable(Boolean(data && data.updateAvailable))
-          setRemoteVersion(String((data && data.remoteVersion) || ''))
         }
       } catch {
         /* jamais d'erreur affichée : bouton masqué en cas de doute */
@@ -74,12 +73,6 @@ export default function UpdateButton() {
   const closeTooltip = () => setTooltipOpen(false)
 
   if (!updateAvailable) return null
-
-  /* Libellé avec le numéro de la nouvelle release : « Mise à jour v1.3.0
-     disponible » — repli sur le libellé générique si la version est absente. */
-  const label = remoteVersion
-    ? t('update.availableWith', { version: `v${remoteVersion}` })
-    : t('update.available')
 
   return (
     <div
@@ -102,7 +95,7 @@ export default function UpdateButton() {
         <span className="mb-1 block font-semibold text-gold-300">{t('update.tooltipTitle')}</span>
         {t('update.tooltipSteps')}
         <code className="mt-1.5 block rounded bg-night-950/80 px-2 py-1 font-mono text-[11px] leading-snug text-gold-200">
-          git pull &amp;&amp; docker compose pull &amp;&amp; docker compose up -d
+          git pull &amp;&amp; docker compose pull &amp;&amp; docker compose up -d --remove-orphans
         </code>
       </div>
 
@@ -111,7 +104,7 @@ export default function UpdateButton() {
         id="update-button"
         type="button"
         onClick={() => window.location.reload()}
-        aria-label={label}
+        aria-label={t('update.available')}
         tabIndex={0}
         className="relative flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950 shadow-[0_10px_25px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.18)_inset] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-amber-400 hover:shadow-[0_0_20px_rgba(251,191,36,0.6),0_4px_14px_rgba(251,191,36,0.4),0_0_0_1px_rgba(255,255,255,0.35)_inset] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
       >
@@ -122,7 +115,7 @@ export default function UpdateButton() {
           className="pointer-events-none absolute -inset-1.5 rounded-xl bg-amber-400/60 opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-70"
         />
         <RefreshCw size={16} strokeWidth={2.75} aria-hidden="true" className="relative" />
-        <span className="relative whitespace-nowrap">{label}</span>
+        <span className="relative whitespace-nowrap">{t('update.available')}</span>
       </button>
     </div>
   )
