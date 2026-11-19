@@ -7,7 +7,7 @@
  */
 const { query, pool } = require('../config/db');
 const { toVinylDto } = require('./vinylController');
-const { toComicDto } = require('./comicController');
+const { toComicDto, COMIC_FORMAT_KEYS, COMIC_COLLECTION_KEYS, normalizeComicChoice } = require('./comicController');
 const { normalizeArtistName } = require('../utils/musicBrainzClient');
 const { normalizeSeriesName } = require('../utils/seriesService');
 
@@ -408,6 +408,10 @@ function buildComicValues(item) {
       const s = String(item.isbn || '').replace(/[^0-9Xx]/g, '').trim();
       return s || null;
     })(),
+    // « Format » / « Collection » : clés normalisées indépendantes de la
+    // langue (null si absentes ou inconnues — colonnes nullable).
+    format: normalizeComicChoice(item.format, COMIC_FORMAT_KEYS),
+    collection: normalizeComicChoice(item.collection, COMIC_COLLECTION_KEYS),
     synopsis: textOrNull(item.synopsis),
     condition: textOrNull(item.condition) || 'Bon état',
     isSpecialEdition: asBoolean(item.is_special_edition ?? item.isSpecialEdition, false),
@@ -465,14 +469,14 @@ async function importComicRows(client, userId, items) {
       const seriesId = values.series ? await resolveSeriesId(client, values.series) : null;
       await client.query(
         `INSERT INTO comics (user_id, cover_url, title, series, tome_number, authors,
-                             illustrators, publisher, release_date, genre, isbn, synopsis,
+                             illustrators, publisher, release_date, genre, isbn, format, collection, synopsis,
                              series_id, series_image, condition, is_special_edition, is_signed, added_date)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
-                 COALESCE($18, CURRENT_DATE))`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
+                 COALESCE($20, CURRENT_DATE))`,
         [
           userId, values.coverUrl, values.title, values.series, values.tomeNumber,
           values.authors, values.illustrators, values.publisher, values.releaseDate,
-          values.genre, values.isbn, values.synopsis, seriesId, values.seriesImage,
+          values.genre, values.isbn, values.format, values.collection, values.synopsis, seriesId, values.seriesImage,
           values.condition, values.isSpecialEdition, values.isSigned, values.addedDate,
         ]
       );
@@ -501,7 +505,7 @@ const VINYL_CSV_FIELDS = [
 
 const COMIC_CSV_FIELDS = [
   'title', 'series', 'tome_number', 'authors', 'illustrators', 'publisher',
-  'release_date', 'genre', 'isbn', 'synopsis', 'condition',
+  'release_date', 'genre', 'isbn', 'format', 'collection', 'synopsis', 'condition',
   'is_special_edition', 'is_signed', 'added_date', 'cover_url', 'series_image',
 ];
 
@@ -544,6 +548,8 @@ function comicToCsvRow(dto) {
     release_date: toIsoDate(dto.releaseDate) || dto.releaseDate,
     genre: dto.genre,
     isbn: dto.isbn,
+    format: dto.format,
+    collection: dto.collection,
     synopsis: dto.synopsis,
     condition: dto.condition,
     is_special_edition: dto.isSpecialEdition,

@@ -695,6 +695,28 @@ const MIGRATIONS = [
        WHERE u.is_public = TRUE AND u.share_vinyls = TRUE;`,
     ],
   },
+  // FORMAT & COLLECTION (BD) — deux nouveaux champs « menu déroulant » du
+  // formulaire BD : comics.format (Broché / Cartonné / Relié) et
+  // comics.collection (Coffret / Intégrale). Clés normalisées INDÉPENDANTES
+  // de la langue stockées en base ('broche', 'cartonne', 'relie' / 'coffret',
+  // 'integrale') : l'affichage est traduit selon la langue de l'utilisateur.
+  // Nullable : menu vide (placeholder) = NULL. La vue public_comics
+  // (SELECT c.*) porte une dépendance sur CHAQUE colonne de comics : on la
+  // retire d'abord et on la recrée à l'identique (même pattern que les
+  // migrations « series.table » / « schema.widen-text-columns »).
+  {
+    name: 'comics.format-collection',
+    statements: [
+      'DROP VIEW IF EXISTS public_comics;',
+      'ALTER TABLE comics ADD COLUMN IF NOT EXISTS format VARCHAR(50);',
+      'ALTER TABLE comics ADD COLUMN IF NOT EXISTS collection VARCHAR(50);',
+      `CREATE OR REPLACE VIEW public_comics AS
+       SELECT c.*, u.first_name, u.last_name
+       FROM comics c
+       JOIN users u ON u.id = c.user_id
+       WHERE u.is_public = TRUE AND u.share_comics = TRUE;`,
+    ],
+  },
 ];
 
 /**

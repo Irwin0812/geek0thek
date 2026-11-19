@@ -159,6 +159,12 @@ CREATE TABLE IF NOT EXISTS comics (
     release_date  VARCHAR(50),
     genre         TEXT,
     isbn          VARCHAR(20) UNIQUE,
+    -- « Format » / « Collection » (menus déroulants du formulaire BD) : clés
+    -- normalisées INDÉPENDANTES de la langue ('broche', 'cartonne', 'relie' /
+    -- 'coffret', 'integrale') — l'affichage est traduit côté frontend.
+    -- Nullable : menu vide (placeholder) = NULL.
+    format        VARCHAR(50),
+    collection    VARCHAR(50),
     synopsis      TEXT,
     -- ENTITÉ SÉRIE (image / logo) : id de l'entité series (dédupliquée par
     -- nom normalisé, table créée plus bas — migration 007/009) + image

@@ -38,6 +38,26 @@ function normalizeGenre(value) {
   return GENRE_OPTIONS.includes(s) ? s : DEFAULT_GENRE
 }
 
+// Clés normalisées INDÉPENDANTES de la langue des champs « Format » et
+// « Collection » (stockées telles quelles en base, colonnes comics.format /
+// comics.collection) : l'affichage est traduit via i18n (comicForm.formats.*
+// / comicForm.collections.*) selon la langue de l'utilisateur.
+const FORMAT_KEYS = ['broche', 'cartonne', 'relie']
+const COLLECTION_KEYS = ['coffret', 'integrale']
+
+// Garantit qu'une valeur chargée (édition) correspond bien à une clé du menu :
+// les clés connues sont conservées, toute autre valeur (vide, NULL en base…)
+// retombe sur '' (placeholder vide — jamais de valeur inventée).
+function normalizeFormat(value) {
+  const s = String(value || '').trim()
+  return FORMAT_KEYS.includes(s) ? s : ''
+}
+
+function normalizeCollection(value) {
+  const s = String(value || '').trim()
+  return COLLECTION_KEYS.includes(s) ? s : ''
+}
+
 const EMPTY = {
   title: '',
   series: '',
@@ -48,6 +68,10 @@ const EMPTY = {
   releaseDate: '',
   genre: DEFAULT_GENRE,
   isbn: '',
+  // Menus déroulants « Format » / « Collection » : '' = placeholder vide
+  // (colonne NULL en base) — même comportement que le select de couleur vinyle.
+  format: '',
+  collection: '',
   synopsis: '',
   addedDate: todayIso(),
   isSpecialEdition: false,
@@ -132,6 +156,19 @@ export default function AddComic() {
   const [origin] = useState(() => location.state?.from || null)
   const { t } = useTranslation()
 
+  // Options « Format » / « Collection » : libellé traduit (i18n). L'ordre des
+  // options est FIXE (ordre des clés normalisées — broché/cartonné/relié et
+  // coffret/intégrale, alphabétique en français) : la clé stockée en base reste
+  // la même quelle que soit la langue d'affichage.
+  const formatOptions = useMemo(
+    () => FORMAT_KEYS.map((key) => ({ key, label: t(`comicForm.formats.${key}`) })),
+    [t]
+  )
+  const collectionOptions = useMemo(
+    () => COLLECTION_KEYS.map((key) => ({ key, label: t(`comicForm.collections.${key}`) })),
+    [t]
+  )
+
   const [form, setForm] = useState(EMPTY)
   const [file, setFile] = useState(null)
   // Image / logo de la SÉRIE (colonne comics.series_image) : fichier choisi par
@@ -185,6 +222,10 @@ export default function AddComic() {
           // par défaut « Bande Dessinée » est sélectionnée.
           genre: normalizeGenre(c.genre),
           isbn: c.isbn || '',
+          // Menus « Format » / « Collection » : clé normalisée conservée si
+          // connue, sinon placeholder vide (jamais de valeur inventée).
+          format: normalizeFormat(c.format),
+          collection: normalizeCollection(c.collection),
           synopsis: c.synopsis || '',
           // DATE D'AJOUT : remplie par le backend à la création, modifiable ici.
           addedDate: c.addedDate ? String(c.addedDate).slice(0, 10) : todayIso(),
@@ -495,6 +536,10 @@ export default function AddComic() {
           release_date: form.releaseDate || null,
           genre: form.genre || null,
           isbn: form.isbn || null,
+          // Menus « Format » / « Collection » : clé normalisée (ou null si
+          // placeholder vide — la colonne reste NULL en base).
+          format: form.format || null,
+          collection: form.collection || null,
           synopsis: form.synopsis || null,
           // DATE D'AJOUT : remplie à la création (défaut = aujourd'hui),
           // modifiable dans le formulaire.
@@ -523,6 +568,10 @@ export default function AddComic() {
           release_date: form.releaseDate || null,
           genre: form.genre || null,
           isbn: form.isbn || null,
+          // Menus « Format » / « Collection » : clé normalisée (ou null si
+          // placeholder vide — la colonne reste NULL en base).
+          format: form.format || null,
+          collection: form.collection || null,
           synopsis: form.synopsis || null,
           added_date: form.addedDate || null,
           is_special_edition: form.isSpecialEdition,
@@ -839,11 +888,35 @@ export default function AddComic() {
               placeholder="9782205007664"
             />
           </Field>
+          {/* Format (menu déroulant) : clé normalisée indépendante de la langue
+              stockée en base (comics.format) ; libellé traduit via i18n et
+              trié ALPHABÉTIQUEMENT dans la langue d'affichage courante.
+              Placeholder vide par défaut (colonne NULL si rien choisi). */}
+          <Field label={t('comicForm.formatField')}>
+            <select className="input" value={form.format} onChange={set('format')}>
+              <option value="">{t('comicForm.selectPlaceholder')}</option>
+              {formatOptions.map(({ key, label }) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+          </Field>
           {/* Remplace l'ancien champ « État » : date d'ajout de la BD à la
               collection (défaut = date du jour lors de la création, modifiable).
               Stockée en base dans comics.added_date (DATE). */}
           <Field label={t('comicForm.addedDateField')}>
             <input className="input" type="date" value={form.addedDate} onChange={set('addedDate')} />
+          </Field>
+          {/* Collection (menu déroulant) : clé normalisée indépendante de la
+              langue stockée en base (comics.collection) ; libellé traduit via
+              i18n et trié ALPHABÉTIQUEMENT dans la langue d'affichage courante.
+              Placeholder vide par défaut (colonne NULL si rien choisi). */}
+          <Field label={t('comicForm.collectionField')}>
+            <select className="input" value={form.collection} onChange={set('collection')}>
+              <option value="">{t('comicForm.selectPlaceholder')}</option>
+              {collectionOptions.map(({ key, label }) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
           </Field>
         </div>
 

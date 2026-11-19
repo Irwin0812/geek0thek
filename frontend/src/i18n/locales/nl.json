@@ -106,6 +106,8 @@
     "fieldReleaseDate": "Releasedatum",
     "fieldAddedDate": "Toegevoegd op",
     "fieldIsbn": "ISBN",
+    "fieldFormat": "Formaat",
+    "fieldCollection": "Collectie",
     "noImage": "Geen afbeelding",
     "coverAltVinyl": "Hoes — {{title}} ({{artist}})",
     "coverAltComic": "Omslag — {{title}}",
@@ -252,6 +254,18 @@
       "Autres": "Overig"
     },
     "isbnField": "ISBN",
+    "formatField": "Formaat",
+    "formats": {
+      "broche": "Paperback",
+      "cartonne": "Hardcover",
+      "relie": "Gebonden"
+    },
+    "collectionField": "Collectie",
+    "collections": {
+      "coffret": "Boxset",
+      "integrale": "Integraal"
+    },
+    "selectPlaceholder": "Selecteren…",
     "addedDateField": "Datum van toevoeging",
     "synopsisField": "Synopsis (optioneel)",
     "specialEdition": "Speciale editie",

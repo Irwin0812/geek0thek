@@ -31,7 +31,7 @@ function addDateFr(value) {
 }
 
 export default function ItemDetailModal({ type, item, onClose, onEdit }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   if (!item) return null
 
   const isVinyl = type === 'vinyl'
@@ -105,6 +105,11 @@ export default function ItemDetailModal({ type, item, onClose, onEdit }) {
         [t('collection.fieldPublisher'), item.publisher],
         [t('collection.fieldReleaseDate'), item.releaseDate ? String(item.releaseDate).slice(0, 10) : null],
         [t('collection.fieldGenre'), item.genre],
+        // « Format » / « Collection » : clés normalisées INDÉPENDANTES de la
+        // langue en base (comics.format / comics.collection) — affichage
+        // traduit selon la langue de l'utilisateur (jamais la clé brute).
+        [t('collection.fieldFormat'), item.format && i18n.exists(`comicForm.formats.${item.format}`) ? t(`comicForm.formats.${item.format}`) : null],
+        [t('collection.fieldCollection'), item.collection && i18n.exists(`comicForm.collections.${item.collection}`) ? t(`comicForm.collections.${item.collection}`) : null],
         // Remplace l'ancien champ « État » : date d'ajout à la collection.
         [t('collection.fieldAddedDate'), item.addedDate ? addDateFr(item.addedDate) : null],
         [t('collection.fieldIsbn'), item.isbn],

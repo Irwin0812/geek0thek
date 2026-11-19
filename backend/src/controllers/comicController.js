@@ -344,6 +344,22 @@ function conservableSeriesImage(storedValue, coverValue) {
   return seriesImageUrlOf({ series_image: storedValue, cover_url: coverValue });
 }
 
+// Clés normalisées INDÉPENDANTES de la langue des champs « Format » et
+// « Collection » (menus déroulants du formulaire BD) : ce sont CES clés qui
+// sont stockées en base (comics.format / comics.collection, VARCHAR(50)) —
+// l'affichage est traduit côté frontend selon la langue de l'utilisateur.
+const COMIC_FORMAT_KEYS = ['broche', 'cartonne', 'relie'];
+const COMIC_COLLECTION_KEYS = ['coffret', 'integrale'];
+
+/**
+ * Normalise une valeur « Format » / « Collection » : clé connue conservée,
+ * toute autre valeur (vide, inconnue, NULL) -> null (colonne nullable).
+ */
+function normalizeComicChoice(value, keys) {
+  const s = String(value || '').trim().toLowerCase();
+  return keys.includes(s) ? s : null;
+}
+
 /**
  * Passage de la ligne SQL (snake_case) au DTO consommé par le frontend.
  */
@@ -371,6 +387,10 @@ function toComicDto(row) {
     releaseDate: row.release_date,
     genre: row.genre,
     isbn: row.isbn,
+    // « Format » / « Collection » : clés normalisées indépendantes de la
+    // langue (null si menu vide) — le frontend traduit l'affichage.
+    format: row.format || null,
+    collection: row.collection || null,
     synopsis: row.synopsis,
     // Conservé pour rétro-compat d'affichage (le formulaire ne le gère plus :
     // il a été remplacé par la date d'ajout).
@@ -406,6 +426,10 @@ function cleanComic(body) {
     releaseDate: body.release_date || body.releaseDate ? String(body.release_date || body.releaseDate).trim() : null,
     genre: body.genre ? String(body.genre).trim() : null,
     isbn: body.isbn ? String(body.isbn).replace(/[^0-9Xx]/g, '').trim() || null : null,
+    // « Format » / « Collection » (menus déroulants) : clés normalisées
+    // indépendantes de la langue ; menu vide -> null (colonne nullable).
+    format: normalizeComicChoice(body.format, COMIC_FORMAT_KEYS),
+    collection: normalizeComicChoice(body.collection, COMIC_COLLECTION_KEYS),
     synopsis: body.synopsis ? String(body.synopsis).trim() : null,
     // « Livre dédicacé » (case à cocher) : booléen is_signed.
     isSigned: asBoolean(body.is_signed ?? body.isSigned),
@@ -791,10 +815,10 @@ async function createComic(req, res, next) {
     const { rows } = await query(
       `INSERT INTO comics (user_id, cover_url, title, series, tome_number,
                            authors, illustrators, publisher, release_date,
-                           genre, isbn, synopsis, is_special_edition, is_signed, added_date,
+                           genre, isbn, format, collection, synopsis, is_special_edition, is_signed, added_date,
                            series_id, series_image)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-               COALESCE($15, CURRENT_DATE), $16, $17)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+               COALESCE($17, CURRENT_DATE), $18, $19)
        RETURNING *`,
       [
         req.user.id,
@@ -808,6 +832,9 @@ async function createComic(req, res, next) {
         values.releaseDate,
         values.genre,
         values.isbn,
+        // « Format » / « Collection » : clés normalisées (null si menu vide).
+        values.format,
+        values.collection,
         values.synopsis,
         values.isSpecialEdition,
         values.isSigned,
@@ -1130,12 +1157,12 @@ async function updateComic(req, res, next) {
     const updated = await query(
       `UPDATE comics SET cover_url=$1, title=$2, series=$3, tome_number=$4,
                           authors=$5, illustrators=$6, publisher=$7, release_date=$8,
-                          genre=$9, isbn=$10, synopsis=$11,
-                          is_special_edition=$12, is_signed=$13,
-                          added_date=COALESCE($14, added_date),
-                          series_id=COALESCE($15, series_id),
-                          series_image=COALESCE($16, series_image)
-       WHERE id=$17 RETURNING *`,
+                          genre=$9, isbn=$10, format=$11, collection=$12, synopsis=$13,
+                          is_special_edition=$14, is_signed=$15,
+                          added_date=COALESCE($16, added_date),
+                          series_id=COALESCE($17, series_id),
+                          series_image=COALESCE($18, series_image)
+       WHERE id=$19 RETURNING *`,
       [
         coverUrl,
         values.title,
@@ -1147,6 +1174,10 @@ async function updateComic(req, res, next) {
         values.releaseDate,
         values.genre,
         values.isbn,
+        // « Format » / « Collection » : écrits EXPLICITEMENT (pas de COALESCE) —
+        // le menu vide (placeholder) DOIT pouvoir remettre la colonne à NULL.
+        values.format,
+        values.collection,
         values.synopsis,
         values.isSpecialEdition,
         values.isSigned,
@@ -1405,10 +1436,10 @@ async function importComicByIsbn(req, res, next) {
     const { rows } = await query(
       `INSERT INTO comics (user_id, cover_url, title, series, tome_number,
                            authors, illustrators, publisher, release_date,
-                           genre, isbn, synopsis, is_special_edition, is_signed, added_date,
+                           genre, isbn, format, collection, synopsis, is_special_edition, is_signed, added_date,
                            series_id, series_image)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-               COALESCE($15, CURRENT_DATE), $16, $17)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+               COALESCE($17, CURRENT_DATE), $18, $19)
        RETURNING *`,
       [
         req.user.id,
@@ -1422,6 +1453,9 @@ async function importComicByIsbn(req, res, next) {
         values.releaseDate,
         values.genre,
         values.isbn,
+        // « Format » / « Collection » : clés normalisées (null si menu vide).
+        values.format,
+        values.collection,
         values.synopsis,
         values.isSpecialEdition || false,
         values.isSigned || false,
@@ -1495,6 +1529,12 @@ module.exports = {
   deleteComic,
   importComicByIsbn,
   toComicDto,
+  // Clés normalisées + normaliseur des champs « Format » / « Collection » :
+  // réutilisés par l'export/import (buildComicValues) pour ne stocker que des
+  // clés valides en base.
+  COMIC_FORMAT_KEYS,
+  COMIC_COLLECTION_KEYS,
+  normalizeComicChoice,
   // Résolveur du visuel global de série (util + smoke tests) : réutilisation
   // d'une image déjà référencée, sinon recherche auto (Open Library séries /
   // Google Books, nom de série seul), repli forcé img/no_title.jpg.

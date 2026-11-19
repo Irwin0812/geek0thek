@@ -106,6 +106,8 @@
     "fieldReleaseDate": "Erscheinungsdatum",
     "fieldAddedDate": "Hinzugefügt am",
     "fieldIsbn": "ISBN",
+    "fieldFormat": "Format",
+    "fieldCollection": "Sammlung",
     "noImage": "Kein Bild",
     "coverAltVinyl": "Hülle — {{title}} ({{artist}})",
     "coverAltComic": "Cover — {{title}}",
@@ -252,6 +254,18 @@
       "Autres": "Andere"
     },
     "isbnField": "ISBN",
+    "formatField": "Format",
+    "formats": {
+      "broche": "Taschenbuch",
+      "cartonne": "Hardcover",
+      "relie": "Gebunden"
+    },
+    "collectionField": "Sammlung",
+    "collections": {
+      "coffret": "Schuber",
+      "integrale": "Gesamtausgabe"
+    },
+    "selectPlaceholder": "Auswählen…",
     "addedDateField": "Hinzugefügt am",
     "synopsisField": "Handlung (optional)",
     "specialEdition": "Sonderausgabe",
