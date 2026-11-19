@@ -31,16 +31,22 @@ import { api } from '../services/api.js'
  *     (/img/paypal.png), alignés à gauche.
  *     BLOC 2 (centre) : colonne centrée — ligne 1 : copyright
  *     (« Geek0thek - Bibliothèque de collections par GERARTS Irwin - 2026 »)
- *     suivi de « Version: <sha commit local> » en doré (--accent-strong) ; la
- *     version est masquée tant que le SHA local embarqué dans l'image Docker
- *     n'est pas connu. (Ligne 2 : bouton « Gestion des cookies » — uniquement
- *     sur la démo / selon la configuration active.)
- *     BLOC 3 (droite) : le lien « Obtenez Geek0thek » (footer.getApp) vers le
- *     dépôt GitHub, aligné à droite (md:text-right), jamais tronqué.
+ *     suivi de « Commit: <sha commit local> » dans le MÊME flux typographique
+ *     que le copyright (aucune couleur/graisse particulière — un seul style
+ *     uniforme) ; le commit est masqué tant que le SHA local embarqué dans
+ *     l'image Docker n'est pas connu. (Ligne 2 : bouton « Gestion des cookies »
+ *     — uniquement sur la démo / selon la configuration active.)
+ *     BLOC 3 (droite) : le lien « Version: <nom de la dernière release GitHub> »
+ *     (footer.version + releaseName dynamique de /api/version, ex. « Version:
+ *     Geek0thek v1.2 ») vers https://github.com/Irwin0812/geek0thek/releases/
+ *     latest, aligné à droite (md:text-right), jamais tronqué, en accent doré
+ *     (--accent-strong).
  *
- * TYPOGRAPHIE UNIFIÉE : « Soutenez le projet ! » et « Version: <tag> » partagent
- * exactement les mêmes classes de taille/graisse (text-xs sm:text-sm
- * font-semibold) et la même couleur d'accent (--accent-strong).
+ * TYPOGRAPHIE UNIFIÉE : « Soutenez le projet ! » et « Version: <release> »
+ * partagent exactement les mêmes classes de taille/graisse (text-xs sm:text-sm
+ * font-semibold) et la même couleur d'accent (--accent-strong). Le libellé
+ * central « Commit: <sha> » est volontairement NEUTRE (même police, taille,
+ * graisse et couleur que le copyright adjacent).
  *
  * TOUTES les chaînes visibles sont internationalisées via useTranslation()
  * (clé « footer.* » présente dans les 6 dictionnaires de langues).
@@ -51,17 +57,24 @@ export default function Footer() {
   // Version de la webapp = SHA du commit LOCAL embarqué dans l'image Docker
   // en cours d'exécution (ex. « a1b2c3d »). Une seule requête au montage ;
   // jamais d'erreur affichée : si le SHA local est inconnu, ou si l'API
-  // GitHub est injoignable / quota atteint, le libellé « Version: … » reste
+  // GitHub est injoignable / quota atteint, le libellé « Commit: … » reste
   // totalement masqué.
   const [version, setVersion] = useState('')
+  // Nom de la dernière release GitHub (ex. « Geek0thek v1.2 ») — fourni par
+  // /api/version (releases/latest, cache mémoire 10 min côté backend).
+  const [releaseName, setReleaseName] = useState('')
 
   useEffect(() => {
     let cancelled = false
     api
       .version()
       .then((data) => {
-        if (!cancelled && data && data.localCommit) {
+        if (cancelled || !data) return
+        if (data.localCommit) {
           setVersion(data.localCommit.slice(0, 7))
+        }
+        if (data.releaseName) {
+          setReleaseName(data.releaseName)
         }
       })
       .catch(() => {
@@ -75,9 +88,10 @@ export default function Footer() {
   // cb-footer : accroche charte « Comic Books » (thèmes/comic.css) — pied de
   // page bordeaux qui s'accorde à la barre haute. Inerte ailleurs. Les thèmes
   // « Médiathèque » / « Comic Books » recolorent .cb-footer div / a ; les
-  // libellés « Soutenez le projet ! », « Version: <tag> » et « Obtenez
-  // Geek0thek » utilisent la variable --accent-strong (inline), forcée en
-  // jaune moutarde par comic.css.
+  // libellés « Soutenez le projet ! » et « Version: <release> » utilisent la
+  // variable --accent-strong (inline), forcée en jaune moutarde par comic.css.
+  // Le libellé central « Commit: <sha> » reste volontairement neutre (même
+  // style que le copyright adjacent).
   return (
     <footer className="cb-footer fixed bottom-0 left-0 right-0 z-30 border-t border-night-700/70 bg-night-950/85 backdrop-blur">
       {/* RESPONSIVE : empilement vertical centré sur mobile/tablette,
@@ -109,9 +123,10 @@ export default function Footer() {
           />
         </a>
 
-        {/* BLOC 2 — CENTRE : colonne centrée. Ligne 1 : copyright + « Version:
-            <tag> » en doré (masquée si aucune release). Le texte peut passer à
-            la ligne sur mobile sans débordement. */}
+        {/* BLOC 2 — CENTRE : colonne centrée. Ligne 1 : copyright + « Commit:
+            <sha> » dans le MÊME flux typographique que le copyright (aucune
+            classe de couleur/graisse supplémentaire — un seul style uniforme).
+            Le commit est masqué tant que le SHA local n'est pas connu. */}
         <div className="flex flex-col items-center text-center gap-1">
           <span className="leading-relaxed">
             {t('footer.copyright')}
@@ -119,30 +134,27 @@ export default function Footer() {
               <>
                 {' '}
                 —{' '}
-                <span
-                  className="cb-footer-version font-semibold"
-                  style={{ color: 'var(--accent-strong)' }}
-                  title="Version (commit local embarqué dans l'image Docker)"
-                >
-                  Version: {version}
+                <span title="Commit local embarqué dans l'image Docker">
+                  {t('footer.commit')}: {version}
                 </span>
               </>
             ) : ''}
           </span>
         </div>
 
-        {/* BLOC 3 — DROITE (desktop) : lien « Obtenez Geek0thek » vers le dépôt
-            GitHub, aligné à droite (md:text-right), jamais tronqué ; centré sur
-            mobile. Même style visuel que la mention de version (accent doré). */}
+        {/* BLOC 3 — DROITE (desktop) : lien « Version: <nom de la dernière
+            release GitHub> » (ex. « Version: Geek0thek v1.2 ») vers la page
+            releases/latest du dépôt, aligné à droite (md:text-right), jamais
+            tronqué ; centré sur mobile. Accent doré (--accent-strong). */}
         <a
-          href="https://github.com/Irwin0812/geek0thek"
+          href="https://github.com/Irwin0812/geek0thek/releases/latest"
           target="_blank"
           rel="noopener noreferrer"
           className="cb-footer-version text-center md:text-right text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded-xl"
           style={{ color: 'var(--accent-strong)' }}
-          title={t('footer.getApp')}
+          title={t('footer.version')}
         >
-          {t('footer.getApp')}
+          {t('footer.version')}: {releaseName}
         </a>
       </div>
     </footer>

@@ -698,7 +698,8 @@
     "support": "Support the project!",
     "paypal": "Donate with PayPal",
     "copyright": "Geek0thek - Collection library by GERARTS Irwin - 2026",
-    "getApp": "Get Geek0thek",
+    "commit": "Commit",
+    "version": "Version",
     "cookies": "Manage cookies"
   }
 }

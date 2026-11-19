@@ -124,6 +124,48 @@ async function getLatestCommit() {
   }
 }
 
+// ------------------------------------------------------------
+// Dernière release GitHub (nom affiché dans le footer, ex. « Geek0thek v1.2 »).
+// Cache mémoire de 10 minutes : l'API publique GitHub est limitée à 60 req/h
+// par IP — le cache évite d'épuiser le quota quand /api/version est appelé
+// régulièrement (footer + bouton « Mise à jour disponible »).
+// ------------------------------------------------------------
+const RELEASE_CACHE_TTL_MS = 10 * 60 * 1000;
+let releaseCache = { value: null, fetchedAt: 0 };
+
+/**
+ * Nom de la dernière release GitHub : `releases/latest` du dépôt de
+ * référence. Renvoie le nom de la release (`name`, fallback `tag_name`) ou
+ * null si l'API est injoignable / quota atteint — jamais d'erreur remontée.
+ * Résultat mis en cache 10 minutes (cf. RELEASE_CACHE_TTL_MS).
+ */
+async function getLatestReleaseName() {
+  const now = Date.now();
+  if (releaseCache.value && now - releaseCache.fetchedAt < RELEASE_CACHE_TTL_MS) {
+    return releaseCache.value;
+  }
+
+  // User-Agent explicite OBLIGATOIRE : l'API GitHub refuse les requêtes sans
+  // User-Agent (403).
+  const headers = {
+    Accept: 'application/vnd.github.v3+json',
+    'User-Agent': 'Geek0thek-App',
+  };
+  if (env.github.token) headers.Authorization = `Bearer ${env.github.token}`;
+
+  try {
+    const res = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/releases/latest`, { headers });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const name = (data && (data.name || data.tag_name)) || null;
+    if (!name) return null;
+    releaseCache = { value: String(name), fetchedAt: now };
+    return releaseCache.value;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Statut de mise à jour : compare le SHA local (image Docker en cours) au
  * dernier commit distant de la branche main.
@@ -135,7 +177,12 @@ async function getLatestCommit() {
  */
 async function getUpdateStatus() {
   const localCommit = getLocalCommit();
-  const remote = await getLatestCommit();
+  // Commit distant + dernière release GitHub interrogés EN PARALLÈLE (une
+  // seule latence réseau) ; le nom de release est mis en cache 10 minutes.
+  const [remote, releaseName] = await Promise.all([
+    getLatestCommit(),
+    getLatestReleaseName(),
+  ]);
 
   if (!remote || !isValidSha(localCommit)) {
     return {
@@ -144,6 +191,7 @@ async function getUpdateStatus() {
       localCommit: isValidSha(localCommit) ? localCommit : null,
       remoteCommit: remote ? remote.sha : null,
       commit: remote,
+      releaseName,
     };
   }
 
@@ -154,7 +202,8 @@ async function getUpdateStatus() {
     localCommit,
     remoteCommit: remote.sha,
     commit: remote,
+    releaseName,
   };
 }
 
-module.exports = { getUpdateStatus, GITHUB_REPO };
+module.exports = { getUpdateStatus, getLatestReleaseName, GITHUB_REPO };

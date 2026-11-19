@@ -314,6 +314,10 @@ app.get('/api/health', async (req, res) => {
 app.get('/api/version', async (req, res) => {
   try {
     const status = await getUpdateStatus();
+    // Nom de la dernière release GitHub (footer, ex. « Geek0thek v1.2 ») :
+    // fallback statique si l'API GitHub est injoignable / quota atteint — le
+    // footer n'affiche JAMAIS un libellé vide.
+    const releaseName = status.releaseName || 'Geek0thek v1.2';
     // Diagnostic : journaliser TOUJOURS la valeur exacte renvoyée — si le
     // bouton « Mise à jour disponible » ne s'affiche pas, les logs du
     // conteneur backend (docker logs geek0thek-backend) révèlent immédiatement
@@ -325,12 +329,13 @@ app.get('/api/version', async (req, res) => {
         updateAvailable: status.updateAvailable,
         localCommit: status.localCommit || null,
         remoteCommit: status.remoteCommit || null,
+        releaseName,
       })
     );
-    return res.json(status);
+    return res.json({ ...status, releaseName });
   } catch (err) {
     console.error('[version] vérification GitHub impossible :', err.message);
-    return res.json({ status: 'unknown', updateAvailable: false, localCommit: null, remoteCommit: null, commit: null });
+    return res.json({ status: 'unknown', updateAvailable: false, localCommit: null, remoteCommit: null, commit: null, releaseName: 'Geek0thek v1.2' });
   }
 });
 
