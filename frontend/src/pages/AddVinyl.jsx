@@ -911,7 +911,10 @@ export default function AddVinyl() {
             genre: payload.genre || f.genre,
             label: payload.label || f.label,
             releaseDate: payload.releaseDate || f.releaseDate,
-            barcode: payload.barcode || f.barcode,
+            // Le code-barres provient EXCLUSIVEMENT du résultat sélectionné :
+            // s'il est absent, le champ est VIDÉ — jamais de résidu d'un scan
+            // ou d'une saisie antérieure (recherche infructueuse).
+            barcode: payload.barcode || '',
             mbid: payload.mbid || f.mbid,
             discogsReleaseId: payload.discogsReleaseId || f.discogsReleaseId,
             discogsUrl: payload.discogsUrl || f.discogsUrl,

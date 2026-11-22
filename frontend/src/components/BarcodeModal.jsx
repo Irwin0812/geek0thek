@@ -397,7 +397,10 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
               className="btn-primary"
               onClick={() => {
                 // MÊME mapping vers le formulaire AddVinyl que le mode code-barres.
-                const barcode = String(result.barcode || code).replace(/\D/g, '')
+                // JAMAIS de repli sur `code` (saisie code-barres antérieure) :
+                // si le résultat de la recherche ne porte pas d'EAN, le champ
+                // est vidé — un scan infructueux ne doit jamais contaminer la fiche.
+                const barcode = String(result.barcode || '').replace(/\D/g, '')
                 const payload = {
                   barcode: /^\d{8,14}$/.test(barcode) ? barcode : '',
                   artist: result.artist,
