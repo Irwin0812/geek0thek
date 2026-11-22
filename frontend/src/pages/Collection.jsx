@@ -68,6 +68,13 @@ function CollectionView() {
   const [openGroup, setOpenGroup] = useState(() => location.state?.openGroup || null)
   // Lettre active du filtre alphabétique (#, A–Z), null = aucun filtre.
   const [letter, setLetter] = useState(() => location.state?.letter || null)
+  // ÉDITION RAPIDE DU GENRE MUSICAL sur la fiche artiste (niveau 2) : brouillon
+  // du champ « Style / genre musical » + case de propagation PONCTUELLE aux
+  // autres albums de l'artiste (activée par défaut — action de batch UPDATE
+  // demandée à la sauvegarde, jamais un verrouillage ni une règle permanente).
+  const [artistGenreDraft, setArtistGenreDraft] = useState('')
+  const [propagateArtistGenre, setPropagateArtistGenre] = useState(true)
+  const [artistGenreSaving, setArtistGenreSaving] = useState(false)
 
   useEffect(() => {
     if (location.state?.toastKey) {
@@ -136,6 +143,60 @@ function CollectionView() {
   const addForGroup = (group) => {
     const artist = group.name === NO_ARTIST_LABEL ? '' : group.name
     navigate(`/vinyles/nouveau?prefill=1&artist=${encodeURIComponent(artist)}`, { state: { from: { path: '/collection', view: viewRef.current } } })
+  }
+
+  // Édition rapide du genre musical de l'artiste ouvert (niveau 2) : le brouillon
+  // est initialisé au genre courant du groupe (genre du premier disque étiqueté,
+  // sinon vide) à chaque ouverture de groupe. La case de propagation reste
+  // ACTIVÉE PAR DÉFAUT — c'est une action ponctuelle demandée à la sauvegarde.
+  useEffect(() => {
+    if (!currentGroup) return
+    const first = currentGroup.items.find((v) => v.genre && String(v.genre).trim())
+    setArtistGenreDraft(first ? String(first.genre).trim() : '')
+    setPropagateArtistGenre(true)
+    setArtistGenreSaving(false)
+  }, [openGroup]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Sauvegarde du genre de l'artiste ouvert : écriture sur le disque de
+      référence (premier disque étiqueté, sinon le premier du groupe) +
+      propagation PONCTUELLE aux autres albums si la case est cochée. */
+  const saveArtistGenre = async () => {
+    if (!currentGroup || currentGroup.items.length === 0) return
+    const target = currentGroup.items.find((v) => v.genre && String(v.genre).trim()) || currentGroup.items[0]
+    const genre = artistGenreDraft.trim()
+    setArtistGenreSaving(true)
+    try {
+      await api.vinyls.update(target.id, {
+        artist: target.artist,
+        title: target.title,
+        track_count: target.trackCount ?? 0,
+        tracklist: target.tracklist || null,
+        genre: genre || null,
+        label: target.label || null,
+        release_date: target.releaseDate || null,
+        barcode: target.barcode || null,
+        mbid: target.mbid || null,
+        discogs_release_id: target.discogsReleaseId != null ? String(target.discogsReleaseId) : null,
+        discogs_url: target.discogsUrl || null,
+        lastfm_url: target.lastfmUrl || null,
+        acquired_date: target.addedDate ? String(target.addedDate).slice(0, 10) : null,
+        notes: target.notes || null,
+        disc_type: target.discType || 'Vinyle',
+        is_picture_disc: Boolean(target.isPictureDisc),
+        discs_count: target.discsCount ?? 1,
+        color: target.color || 'Noir',
+        // Propagation PONCTUELLE (batch UPDATE) aux autres albums de l'artiste —
+        // jamais un verrouillage ni une règle permanente.
+        propagate_genre: Boolean(propagateArtistGenre),
+      })
+      setToast({ key: 'collection.updatedVinyl', params: null })
+      setTimeout(() => setToast(null), 3500)
+      load()
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setArtistGenreSaving(false)
+    }
   }
 
   // ------- Vue pilotée par les préférences d'affichage (grille / liste) -------
@@ -305,6 +366,43 @@ function CollectionView() {
               {t('collection.addForArtist')}
             </button>
           </div>
+
+          {/* ÉDITION RAPIDE DU GENRE MUSICAL de l'artiste ouvert : champ
+              directement modifiable + case de propagation PONCTUELLE aux
+              autres albums (activée par défaut — batch UPDATE demandé à la
+              sauvegarde, jamais un verrouillage ni une règle permanente). */}
+          {!currentGroup.isUnlabeled && currentGroup.items.length > 0 && (
+            <div className="card p-4 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                <div className="sm:flex-1 max-w-sm">
+                  <label className="label">{t('vinylForm.genreField')}</label>
+                  <input
+                    className="input"
+                    value={artistGenreDraft}
+                    onChange={(e) => setArtistGenreDraft(e.target.value)}
+                    placeholder="Progressive Rock"
+                  />
+                </div>
+                <label className="flex cursor-pointer items-center gap-2 text-[12px] leading-snug text-slate-400 select-none">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-gold-500"
+                    checked={propagateArtistGenre}
+                    onChange={(e) => setPropagateArtistGenre(e.target.checked)}
+                  />
+                  {t('vinylForm.propagateGenre')}
+                </label>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={artistGenreSaving}
+                  onClick={saveArtistGenre}
+                >
+                  {artistGenreSaving ? t('common.saving') : t('common.save')}
+                </button>
+              </div>
+            </div>
+          )}
 
           {currentGroup.items.length === 0 ? (
             <div className="grid grid-cols-1 gap-4">

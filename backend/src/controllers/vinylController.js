@@ -653,46 +653,12 @@ async function defaultGenreOfArtist(artistName) {
 }
 
 /**
- * Renvoie le GENRE DE RÉFÉRENCE d'un artiste : le genre du TOUT PREMIER disque
- * de cet artiste déjà stocké en base — le plus ancien par ordre d'insertion
- * (created_at, puis id). null si l'artiste n'a encore aucun disque, ou si son
- * premier disque n'a pas de genre. Lecture seule, non bloquante : toute panne
- * (base non migrée « artists »…) renvoie null — le contrôleur retombe alors sur
- * le genre fourni par le formulaire (CAS A).
- * Rattachement des disques à l'artiste : lignes rattachées à l'ENTITÉ
- * (`artist_id`) + lignes legacy sans entité par nom strict — mêmes cibles que
- * syncArtistEntity.
- * @param {string} artistName nom d'affichage tel qu'enregistré sur le disque
- * @returns {Promise<string|null>} genre du tout premier disque, ou null.
- */
-async function firstDiscGenreOfArtist(artistName) {
-  const name = String(artistName || '').trim();
-  if (!name) return null;
-  try {
-    const artistId = await findArtistId(name);
-    const { rows } = await query(
-      `SELECT genre FROM vinyls
-       WHERE ((artist_id IS NOT NULL AND artist_id = $1)
-              OR (artist_id IS NULL AND btrim(artist) = $2))
-         AND genre IS NOT NULL AND btrim(genre) <> ''
-       ORDER BY created_at ASC, id ASC
-       LIMIT 1`,
-      [artistId, name]
-    );
-    return rows[0] && rows[0].genre ? String(rows[0].genre).trim() : null;
-  } catch {
-    // Base non migrée (table `artists` absente) : aucun genre de référence.
-    return null;
-  }
-}
-
-/**
  * PROPAGATION PONCTUELLE du genre musical à TOUS les disques d'un artiste —
  * action de mise à jour explicite demandée par le formulaire (« Appliquer ce
  * genre à tous les albums de cet artiste/groupe ») : UPDATE en base du champ
  * `genre` de toutes les lignes rattachées au même artiste (entité `artist_id`
  * + lignes legacy sans entité par nom strict — mêmes cibles que
- * syncArtistEntity / firstDiscGenreOfArtist), tous users.
+ * syncArtistEntity), tous users.
  *  - C'EST une action ponctuelle : elle n'installe AUCUN verrouillage ni règle
  *    automatique permanente — chaque disque reste modifiable individuellement
  *    par la suite (aucun ré-écrasement automatique des éditions ultérieures) ;
@@ -1002,39 +968,31 @@ async function createVinyl(req, res, next) {
       return res.status(400).json({ error });
     }
     // --------------------------------------------------------------
-    // PROPAGATION DU GENRE MUSICAL — règle définitive (vérification
-    // préalable EN BASE avant l'INSERT) :
-    //   CAS A — PREMIER DISQUE de l'artiste (aucun disque déjà enregistré
-    //   pour ce nom, tous users) : le genre importé par l'API et laissé tel
-    //   quel, ou saisi / modifié manuellement par l'utilisateur, est
-    //   enregistré tel quel. Il devient la RÉFÉRENCE IMMUEBLE de l'artiste.
-    //   CAS B — DISQUES SUIVANTS (l'artiste possède déjà au moins un disque)
-    //   : le genre renvoyé par l'API / le formulaire est IGNORÉ ; le nouveau
-    //   disque reçoit AUTOMATIQUEMENT le genre du TOUT PREMIER disque de cet
-    //   artiste déjà stocké en base (le plus ancien par created_at, puis id).
-    //   RÈGLE ABSOLUE : les genres des disques déjà présents dans la
-    //   collection ne sont JAMAIS mis à jour, modifiés ou écrasés — la
-    //   propagation s'applique uniquement EN CASCADE DESCENDANTE vers les
-    //   nouveaux ajouts (aucun UPDATE de genre sur les lignes existantes).
+    // GENRE MUSICAL — édition libre + propagation PONCTUELLE optionnelle :
+    //   - le genre saisi / importé est TOUJOURS enregistré tel quel sur le
+    //     disque courant (édition directe après import ou création d'artiste) ;
+    //   - si le formulaire n'en fournit pas : repli sur le genre porté par
+    //     l'ENTITÉ Artiste (table `artists`) — lecture seule, non bloquante
+    //     (base non migrée -> null : aucun pré-remplissage) ;
+    //   - DRAPEAU `propagate_genre` / `applyToArtistAlbums` (case « Appliquer
+    //     ce genre à tous les albums de cet artiste/groupe ») : le genre est
+    //     propagé EN BATCH à TOUS les autres disques du même artiste — action
+    //     ponctuelle demandée par l'utilisateur, PAS un verrouillage ni une
+    //     règle permanente (chaque disque reste modifiable individuellement
+    //     ensuite, sans propagation).
     // --------------------------------------------------------------
     // DRAPEAU DE PROPAGATION EXPLICITE (checkbox du formulaire « Appliquer ce
     // genre à tous les albums de cet artiste/groupe ») : le genre saisi est
-    // conservé tel quel (jamais remplacé par la référence du premier disque)
-    // et, APRÈS l'INSERT, propagé à TOUS les autres disques de l'artiste —
-    // action PONCTUELLE sans verrouillage ni règle permanente (chaque disque
-    // reste modifiable individuellement par la suite).
+    // conservé tel quel et, APRÈS l'INSERT, propagé à TOUS les autres disques
+    // de l'artiste — action PONCTUELLE sans verrouillage ni règle permanente
+    // (chaque disque reste modifiable individuellement par la suite).
     const propagateGenre = asBoolean(
-      req.body.propagate_genre ?? req.body.propagateGenre ?? false
+      req.body.propagate_genre ?? req.body.propagateGenre ?? req.body.applyToArtistAlbums ?? false
     );
-    const existingGenre = await firstDiscGenreOfArtist(values.artist);
-    if (!propagateGenre && existingGenre) {
-      // CAS B : artiste déjà référencé -> le genre du formulaire / de l'API
-      // est ignoré, celui du tout premier disque est imposé au nouveau disque.
-      values.genre = existingGenre;
-    } else if (!values.genre) {
-      // CAS A (premier disque) sans genre fourni : repli sur le genre porté
-      // par l'ENTITÉ Artiste (table `artists`) — lecture seule, non bloquante
-      // (base non migrée -> null : aucun pré-remplissage).
+    if (!values.genre) {
+      // Sans genre fourni : repli sur le genre porté par l'ENTITÉ Artiste
+      // (table `artists`) — lecture seule, non bloquante (base non migrée ->
+      // null : aucun pré-remplissage).
       values.genre = await defaultGenreOfArtist(values.artist);
     }
     const coverUrl = await resolveCover(req);
@@ -1221,30 +1179,28 @@ async function createVinyl(req, res, next) {
       ]
     );
     // --------------------------------------------------------------
-    // GENRE DE RÉFÉRENCE DE L'ARTISTE (table `artists`) : seul le CAS A —
-    // PREMIER DISQUE de l'artiste — écrit le genre sur l'ENTITÉ Artiste : il
-    // devient la référence immuable des futurs albums. CAS B : l'entité est
-    // JAMAIS retouchée (le genre du tout premier disque reste la référence —
-    // jamais mis à jour, modifié ou écrasé). SANS retoucher les disques déjà
-    // enregistrés (ni celui-ci, ni aucun autre). Non bloquant : toute panne ne
-    // doit jamais empêcher la création du disque — le genre reste écrit sur la
-    // ligne courante par l'INSERT ci-dessus.
+    // GENRE DE L'ARTISTE (table `artists`) : le genre du disque courant est
+    // conservé sur l'ENTITÉ Artiste — source du pré-remplissage des futurs
+    // albums de cet artiste. Avec le drapeau `propagate_genre` : PROPAGATION
+    // PONCTUELLE en batch à TOUS les autres disques du même artiste (action
+    // explicite de l'utilisateur — jamais un verrouillage ni une règle
+    // permanente). Non bloquant : toute panne ne doit jamais empêcher la
+    // création du disque — le genre reste écrit sur la ligne courante par
+    // l'INSERT ci-dessus.
     // --------------------------------------------------------------
-    if (!existingGenre && values.genre) {
+    if (values.genre) {
       try {
-        await syncArtistGenre(values.artist, values.genre);
+        if (propagateGenre) {
+          await propagateGenreToArtist(values.artist, values.genre);
+        } else {
+          await syncArtistGenre(values.artist, values.genre);
+        }
       } catch (err) {
         console.warn(
           `[genre] Propagation du genre « ${values.genre} » à l'artiste « ${values.artist} » impossible :`,
           err.message
         );
       }
-    }
-    // PROPAGATION EXPLICITE demandée par le formulaire : le genre saisi est
-    // appliqué à TOUS les disques de l'artiste (tous users) — mise à jour
-    // PONCTUELLE, sans verrouillage ni règle automatique permanente.
-    if (propagateGenre && values.genre) {
-      await propagateGenreToArtist(values.artist, values.genre);
     }
     return res.status(201).json({ vinyl: toVinylDto(rows[0]) });
   } catch (err) {
@@ -1339,42 +1295,34 @@ async function updateVinyl(req, res, next) {
     }
 
     // --------------------------------------------------------------
-    // PROPAGATION DU GENRE MUSICAL — règle définitive (vérification
-    // préalable EN BASE avant l'UPDATE) :
-    //   CAS A — PREMIER DISQUE de l'artiste (aucun AUTRE disque déjà
-    //   enregistré pour ce nom, tous users) : le genre importé par l'API et
-    //   laissé tel quel, ou saisi / modifié manuellement par l'utilisateur,
-    //   est enregistré tel quel. Il devient la RÉFÉRENCE IMMUEBLE de
-    //   l'artiste.
-    //   CAS B — DISQUES SUIVANTS (l'artiste possède déjà au moins un AUTRE
-    //   disque) : le genre renvoyé par l'API / le formulaire est IGNORÉ ; le
-    //   disque reçoit AUTOMATIQUEMENT le genre du TOUT PREMIER disque de cet
-    //   artiste déjà stocké en base (le plus ancien par created_at, puis id).
-    //   RÈGLE ABSOLUE : les genres des disques déjà présents dans la
-    //   collection ne sont JAMAIS mis à jour, modifiés ou écrasés — la
-    //   propagation s'applique uniquement EN CASCADE DESCENDANTE vers les
-    //   nouveaux ajouts (aucun UPDATE de genre sur les lignes existantes).
+    // GENRE MUSICAL — édition libre + propagation PONCTUELLE optionnelle :
+    //   - le genre saisi / importé est TOUJOURS enregistré tel quel sur le
+    //     disque édité (édition directe après import ou création d'artiste) ;
+    //   - si le formulaire n'en fournit pas : repli sur le genre porté par
+    //     l'ENTITÉ Artiste (table `artists`) — lecture seule, non bloquante
+    //     (base non migrée -> null : aucun pré-remplissage) ;
+    //   - DRAPEAU `propagate_genre` / `applyToArtistAlbums` (case « Appliquer
+    //     ce genre à tous les albums de cet artiste/groupe ») : le genre est
+    //     propagé EN BATCH à TOUS les autres disques du même artiste — action
+    //     ponctuelle demandée par l'utilisateur, PAS un verrouillage ni une
+    //     règle permanente (chaque disque reste modifiable individuellement
+    //     ensuite, sans propagation).
     // --------------------------------------------------------------
     // DRAPEAU DE PROPAGATION EXPLICITE (checkbox du formulaire « Appliquer ce
     // genre à tous les albums de cet artiste/groupe ») : le genre saisi est
-    // conservé tel quel (jamais remplacé par la référence du premier disque)
-    // et, APRÈS l'UPDATE, propagé à TOUS les autres disques de l'artiste —
-    // action PONCTUELLE sans verrouillage ni règle permanente (chaque disque
-    // reste modifiable individuellement par la suite). Sans le drapeau : mise
-    // à jour UNIQUEMENT du disque ciblé (WHERE id = $1) — modification
-    // ponctuelle ultérieure garantie, jamais ré-écrasée automatiquement.
+    // conservé tel quel et, APRÈS l'UPDATE, propagé à TOUS les autres disques
+    // de l'artiste — action PONCTUELLE sans verrouillage ni règle permanente
+    // (chaque disque reste modifiable individuellement par la suite). Sans le
+    // drapeau : mise à jour UNIQUEMENT du disque ciblé (WHERE id = $1) —
+    // modification ponctuelle ultérieure garantie, jamais ré-écrasée
+    // automatiquement.
     const propagateGenre = asBoolean(
-      req.body.propagate_genre ?? req.body.propagateGenre ?? false
+      req.body.propagate_genre ?? req.body.propagateGenre ?? req.body.applyToArtistAlbums ?? false
     );
-    const existingGenre = await firstDiscGenreOfArtist(values.artist);
-    if (!propagateGenre && existingGenre) {
-      // CAS B : artiste déjà référencé -> le genre du formulaire / de l'API
-      // est ignoré, celui du tout premier disque est imposé au disque édité.
-      values.genre = existingGenre;
-    } else if (!values.genre) {
-      // CAS A (premier disque) sans genre fourni : repli sur le genre porté
-      // par l'ENTITÉ Artiste (table `artists`) — lecture seule, non bloquante
-      // (base non migrée -> null : aucun pré-remplissage).
+    if (!values.genre) {
+      // Sans genre fourni : repli sur le genre porté par l'ENTITÉ Artiste
+      // (table `artists`) — lecture seule, non bloquante (base non migrée ->
+      // null : aucun pré-remplissage).
       values.genre = await defaultGenreOfArtist(values.artist);
     }
 
@@ -1742,18 +1690,22 @@ async function updateVinyl(req, res, next) {
     }
 
     // --------------------------------------------------------------
-    // GENRE DE RÉFÉRENCE DE L'ARTISTE (table `artists`) : seul le CAS A —
-    // PREMIER DISQUE de l'artiste — écrit le genre sur l'ENTITÉ Artiste : il
-    // devient la référence immuable des futurs albums. CAS B : l'entité est
-    // JAMAIS retouchée (le genre du tout premier disque reste la référence —
-    // jamais mis à jour, modifié ou écrasé). SANS retoucher les disques déjà
-    // enregistrés (ni celui-ci, ni aucun autre). Non bloquant : toute panne ne
-    // doit jamais empêcher la modification du disque — le genre reste écrit sur
-    // la ligne courante par l'UPDATE principal ci-dessus.
+    // GENRE DE L'ARTISTE (table `artists`) : le genre du disque édité est
+    // conservé sur l'ENTITÉ Artiste — source du pré-remplissage des futurs
+    // albums de cet artiste. Avec le drapeau `propagate_genre` : PROPAGATION
+    // PONCTUELLE en batch à TOUS les autres disques du même artiste (action
+    // explicite de l'utilisateur — jamais un verrouillage ni une règle
+    // permanente). Non bloquant : toute panne ne doit jamais empêcher la
+    // modification du disque — le genre reste écrit sur la ligne courante par
+    // l'UPDATE principal ci-dessus.
     // --------------------------------------------------------------
-    if (!existingGenre && values.genre) {
+    if (values.genre) {
       try {
-        await syncArtistGenre(values.artist, values.genre);
+        if (propagateGenre) {
+          await propagateGenreToArtist(values.artist, values.genre);
+        } else {
+          await syncArtistGenre(values.artist, values.genre);
+        }
       } catch (err) {
         console.warn(
           `[genre] Propagation du genre « ${values.genre} » à l'artiste « ${values.artist} » impossible :`,
@@ -1761,13 +1713,6 @@ async function updateVinyl(req, res, next) {
         );
       }
     }
-    // PROPAGATION EXPLICITE demandée par le formulaire : le genre saisi est
-    // appliqué à TOUS les disques de l'artiste (tous users) — mise à jour
-    // PONCTUELLE, sans verrouillage ni règle automatique permanente.
-    if (propagateGenre && values.genre) {
-      await propagateGenreToArtist(values.artist, values.genre);
-    }
-
     return res.json({ vinyl: toVinylDto(finalRow) });
   } catch (err) {
     if (err instanceof MusicBrainzError) {
