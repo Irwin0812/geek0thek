@@ -58,10 +58,22 @@ function normalizeCollection(value) {
   return COLLECTION_KEYS.includes(s) ? s : ''
 }
 
+// TOTAL D'ALBUMS de la série (menu déroulant 1–99 du formulaire, vide = « non
+// renseigné ») : plus aucun comptage automatique Open Library / Google Books —
+// la valeur est saisie MANUELLEMENT et écrite sur l'entité Série
+// (series.total_albums) par le backend. '' = placeholder vide (colonne NULL).
+const TOTAL_ALBUMS_OPTIONS = Array.from({ length: 99 }, (_, i) => String(i + 1))
+
+function normalizeTotalAlbums(value) {
+  const n = Number.parseInt(String(value ?? '').trim(), 10)
+  return Number.isInteger(n) && n >= 1 && n <= 99 ? String(n) : ''
+}
+
 const EMPTY = {
   title: '',
   series: '',
   tomeNumber: '',
+  totalAlbums: '',
   authors: '',
   illustrators: '',
   publisher: '',
@@ -213,6 +225,10 @@ export default function AddComic() {
           title: c.title || '',
           series: c.series || '',
           tomeNumber: c.tomeNumber || '',
+          // TOTAL D'ALBUMS de la série (saisi manuellement, menu 1–99) : valeur
+          // stockée sur l'entité Série (series.total_albums) renvoyée par le
+          // backend ; null/absent -> placeholder vide (jamais de pré-sélection).
+          totalAlbums: normalizeTotalAlbums(c.totalAlbums),
           authors: c.authors || '',
           illustrators: c.illustrators || '',
           publisher: c.publisher || '',
@@ -530,6 +546,10 @@ export default function AddComic() {
           title: form.title,
           series: form.series || null,
           tome_number: form.tomeNumber || null,
+          // TOTAL D'ALBUMS de la série (menu 1–99) : '' (placeholder vide) ->
+          // null -> le backend ne réécrit PAS series.total_albums (le total
+          // éventuel déjà saisi pour cette série est conservé).
+          total_albums: form.totalAlbums || null,
           authors: form.authors,
           illustrators: form.illustrators || null,
           publisher: form.publisher,
@@ -562,6 +582,10 @@ export default function AddComic() {
           title: form.title,
           series: form.series || null,
           tome_number: form.tomeNumber || null,
+          // TOTAL D'ALBUMS de la série (menu 1–99) : null (placeholder vide) ->
+          // le backend ne réécrit PAS series.total_albums (le total éventuel
+          // déjà saisi pour cette série est conservé).
+          total_albums: form.totalAlbums || null,
           authors: form.authors,
           illustrators: form.illustrators || null,
           publisher: form.publisher,
@@ -848,9 +872,25 @@ export default function AddComic() {
               ))}
             </datalist>
           </Field>
-          <Field label={t('comicForm.tomeField')}>
-            <input className="input" value={form.tomeNumber} onChange={set('tomeNumber')} placeholder="1" />
-          </Field>
+          {/* « TOME / NUMÉRO » (rétréci) + TOTAL D'ALBUMS de la série : menu
+              déroulant 1–99 placé à sa droite, option vide par défaut (aucune
+              pré-sélection quand le total n'est pas renseigné). La valeur est
+              saisie MANUELLEMENT — plus aucun comptage automatique Open
+              Library / Google Books — et écrite sur l'entité Série
+              (series.total_albums) par le backend. */}
+          <div className="flex gap-2 items-end">
+            <Field label={t('comicForm.tomeField')}>
+              <input className="input !w-24" value={form.tomeNumber} onChange={set('tomeNumber')} placeholder="1" />
+            </Field>
+            <Field label={t('comicForm.totalAlbumsField')}>
+              <select className="input flex-1" value={form.totalAlbums} onChange={set('totalAlbums')}>
+                <option value="">{t('comicForm.selectPlaceholder')}</option>
+                {TOTAL_ALBUMS_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </Field>
+          </div>
           <Field label={t('comicForm.authorsField')}>
             <input className="input" value={form.authors} onChange={set('authors')} placeholder="Hugo Pratt" required />
           </Field>

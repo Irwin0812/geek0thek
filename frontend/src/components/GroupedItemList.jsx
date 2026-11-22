@@ -157,11 +157,23 @@ const GroupRow = memo(function GroupRow({ type, group, open, onToggle, actions, 
           <span className="min-w-0 flex-1 truncate font-semibold text-slate-100" title={displayName}>
             {displayName}
           </span>
+          {/* BD : « X albums sur Y albums » quand le TOTAL D'ALBUMS de la série
+              est renseigné (group.totalAlbums > 0, saisi MANUELLEMENT dans le
+              formulaire — menu 1–99) ; sinon repli sur le compteur « X tomes ».
+              Disques : inchangé. Composition albumsCount(owned) + seriesTotalOf
+              + albumsCount(total) : singulier/pluriel gérés par la clé
+              albumsCount existante (par langue). */}
           <span
             className="shrink-0 rounded border border-night-500/60 bg-night-700/80 px-1.5 py-0.5 text-[11px] font-medium text-slate-300"
-            title={t(isVinyl ? 'collection.albumsCount' : 'collection.tomesCount', { count })}
+            title={isVinyl
+              ? t('collection.albumsCount', { count })
+              : !group.totalAlbums
+                ? t('collection.tomesCount', { count })
+                : `${t('collection.albumsCount', { count })} ${t('collection.seriesTotalOf')} ${t('collection.albumsCount', { count: group.totalAlbums })}`}
           >
-            {t(isVinyl ? 'collection.albumsCount' : 'collection.tomesCount', { count })}
+            {isVinyl || !group.totalAlbums
+              ? t(isVinyl ? 'collection.albumsCount' : 'collection.tomesCount', { count })
+              : `${t('collection.albumsCount', { count })} ${t('collection.seriesTotalOf')} ${t('collection.albumsCount', { count: group.totalAlbums })}`}
           </span>
 
           {/* Chevron — même motif (▾ en transition) que les menus de la Navbar */}

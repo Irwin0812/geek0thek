@@ -306,8 +306,16 @@ function ComicCollectionView() {
                 <h2 className="cb-group-title text-xl font-extrabold text-white" title={currentGroupName}>
                   {currentGroupName}
                 </h2>
+                {/* « X albums sur Y albums » quand le TOTAL D'ALBUMS de la
+                    série est renseigné (saisi MANUELLEMENT dans le formulaire,
+                    menu 1–99 — series.total_albums) ; sinon repli sur le simple
+                    compteur « X albums ». Composition albumsCount(owned) +
+                    seriesTotalOf + albumsCount(total) : singulier/pluriel gérés
+                    par la clé albumsCount existante (par langue). */}
                 <p className="text-sm text-slate-400">
-                  {t('collection.albumsCount', { count: currentGroup.items.length })}
+                  {currentGroup.totalAlbums
+                    ? `${t('collection.albumsCount', { count: currentGroup.items.length })} ${t('collection.seriesTotalOf')} ${t('collection.albumsCount', { count: currentGroup.totalAlbums })}`
+                    : t('collection.albumsCount', { count: currentGroup.items.length })}
                   {currentGroup.items[0]?.authors ? ` — ${currentGroup.items[0].authors}` : ''}
                 </p>
               </div>
@@ -385,6 +393,10 @@ function ComicCollectionView() {
                 // sur cette tuile de série ; les tomes individuels restent sur leur
                 // couverture d'album `coverUrl`.
                 seriesImage={g.seriesImage}
+                // TOTAL D'ALBUMS de la série (series.total_albums — saisi
+                // MANUELLEMENT dans le formulaire, menu 1–99) : sous-titre
+                // « X albums sur Y albums » ; null -> repli « X albums ».
+                totalAlbums={g.totalAlbums}
                 view={cardView}
                 showTitle={settings.showTitle}
                 isUnlabeled={g.isUnlabeled}

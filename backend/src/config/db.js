@@ -717,6 +717,20 @@ const MIGRATIONS = [
        WHERE u.is_public = TRUE AND u.share_comics = TRUE;`,
     ],
   },
+
+  // TOTAL D'ALBUMS d'une SÉRIE (BD) — series.total_albums : nombre d'albums de
+  // la série, saisi MANUELLEMENT dans le formulaire « Ajouter / modifier une
+  // BD » (menu déroulant 1–99, vide = null ; écriture non bloquante par le
+  // contrôleur comics). Nullable : null = jamais renseigné (l'affichage
+  // retombe sur le simple compteur « X albums » possédés).
+  // La vue public_comics (SELECT c.*) ne dépend QUE de comics : aucune
+  // recréation nécessaire ici.
+  {
+    name: 'series.total-albums',
+    statements: [
+      'ALTER TABLE series ADD COLUMN IF NOT EXISTS total_albums INTEGER;',
+    ],
+  },
 ];
 
 /**

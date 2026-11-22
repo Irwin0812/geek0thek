@@ -361,6 +361,18 @@ function normalizeComicChoice(value, keys) {
 }
 
 /**
+ * Normalise le TOTAL D'ALBUMS de la série saisi MANUELLEMENT dans le
+ * formulaire (menu déroulant 1–99, vide = « non renseigné ») : entier 1..99
+ * conservé, toute autre valeur (vide, hors plage, non numérique) -> null
+ * (colonne series.total_albums nullable — l'affichage retombe sur le simple
+ * compteur « X albums » possédés).
+ */
+function normalizeTotalAlbums(value) {
+  const n = Number.parseInt(String(value ?? '').trim(), 10);
+  return Number.isInteger(n) && n >= 1 && n <= 99 ? n : null;
+}
+
+/**
  * Passage de la ligne SQL (snake_case) au DTO consommé par le frontend.
  */
 function toComicDto(row) {
@@ -405,6 +417,48 @@ function toComicDto(row) {
 }
 
 /**
+ * Enrichit une liste de DTO BD avec le TOTAL D'ALBUMS de leur série
+ * (series.total_albums, saisi MANUELLEMENT dans le formulaire « Ajouter /
+ * modifier une BD » — menu 1–99, vide = null) :
+ *  - `totalAlbums` : total saisi par série (null si jamais renseigné) ;
+ *  - `ownedCount`  : tomes possédés dans CETTE collection (tous users — l'entité
+ *    Série est globale, comme l'image de série).
+ * Lecture seule, non bloquante : toute panne (base non migrée « series… »)
+ * laisse les champs à null et la liste reste servie.
+ */
+async function withSeriesTotals(dtos) {
+  const byName = new Map();
+  for (const dto of dtos) {
+    const name = String(dto.series || '').trim();
+    if (!name) continue;
+    if (!byName.has(name)) byName.set(name, { seriesId: null, owned: 0 });
+    const entry = byName.get(name);
+    entry.owned += 1;
+    if (entry.seriesId == null) {
+      try {
+        const ent = await findSeries(name);
+        if (ent) entry.seriesId = ent.seriesId;
+      } catch {}
+    }
+  }
+  const totals = new Map();
+  for (const [name, entry] of byName) {
+    if (entry.seriesId == null) continue;
+    try {
+      const { rows } = await query('SELECT total_albums FROM series WHERE id = $1', [entry.seriesId]);
+      const v = rows[0] && rows[0].total_albums != null ? Number(rows[0].total_albums) : null;
+      if (v != null) totals.set(name, v);
+    } catch {}
+  }
+  for (const dto of dtos) {
+    const name = String(dto.series || '').trim();
+    dto.totalAlbums = name ? totals.get(name) || null : null;
+    dto.ownedCount = name ? byName.get(name).owned : 0;
+  }
+  return dtos;
+}
+
+/**
  * Valide les champs d'une BD. Retourne { error } ou { values }.
  */
 function cleanComic(body) {
@@ -437,6 +491,10 @@ function cleanComic(body) {
     // collection (AAAA-MM-JJ). Peut être null -> le SQL insère CURRENT_DATE.
     addedDate: parseAddedDate(body.added_date || body.addedDate),
     isSpecialEdition: asBoolean(body.is_special_edition ?? body.isSpecialEdition),
+    // TOTAL D'ALBUMS de la série (menu déroulant 1–99 du formulaire, vide =
+    // null) : écrit sur l'ENTITÉ Série (series.total_albums) par le contrôleur
+    // — plus aucun comptage automatique Open Library / Google Books.
+    totalAlbums: normalizeTotalAlbums(body.total_albums ?? body.totalAlbums),
   };
   return { values };
 }
@@ -553,7 +611,7 @@ async function listMyComics(req, res, next) {
     }
     sql += ' ORDER BY created_at DESC';
     const { rows } = await query(sql, params);
-    return res.json({ comics: rows.map(toComicDto), total: rows.length });
+    return res.json({ comics: await withSeriesTotals(rows.map(toComicDto)), total: rows.length });
   } catch (err) {
     return next(err);
   }
@@ -587,7 +645,7 @@ async function listComicsByUser(req, res, next) {
     );
     const owner = ownerRows[0] || { id: userId, login: '—', firstName: '', lastName: '' };
     return res.json({
-      comics: rows.map(toComicDto),
+      comics: await withSeriesTotals(rows.map(toComicDto)),
       total: rows.length,
       owner: {
         id: owner.id,
@@ -662,7 +720,24 @@ async function getComic(req, res, next) {
     if (!canEditItem(req.user, rows[0].user_id) && !(await canConsult(req.user, rows[0].user_id, 'comics'))) {
       return res.status(403).json({ error: 'Seul le propriétaire, un administrateur ou un utilisateur autorisé en consultation peut consulter cette BD.' });
     }
-    return res.json({ comic: toComicDto(rows[0]) });
+    const dto = toComicDto(rows[0]);
+    // Total publié de la série + tomes possédés PAR CE USER dans la série.
+    try {
+      const name = String(dto.series || '').trim();
+      if (name) {
+        const ent = await findSeries(name);
+        if (ent) {
+          const { rows: sRows } = await query('SELECT total_albums FROM series WHERE id = $1', [ent.seriesId]);
+          dto.totalAlbums = sRows[0] && sRows[0].total_albums != null ? Number(sRows[0].total_albums) : null;
+          const { rows: cRows } = await query(
+            `SELECT COUNT(*) AS n FROM comics WHERE user_id = $1 AND (series_id = $2 OR (series_id IS NULL AND btrim(series) = $3))`,
+            [rows[0].user_id, ent.seriesId, name]
+          );
+          dto.ownedCount = Number(cRows[0].n || 0);
+        }
+      }
+    } catch {}
+    return res.json({ comic: dto });
   } catch (err) {
     return next(err);
   }
@@ -805,6 +880,23 @@ async function createComic(req, res, next) {
     if (seriesImage && coverUrl && stripOrigin(seriesImage) === stripOrigin(coverUrl)) {
       console.warn(`[serie] Refus d'inscrire la couverture du tome dans series_image (${seriesImage}) : colonne laissée NULL.`);
       seriesImage = null;
+    }
+
+    // TOTAL D'ALBUMS de la série — SAISI MANUELLEMENT dans le formulaire
+    // (menu déroulant 1–99, vide = « non renseigné ») : écrit sur l'ENTITÉ
+    // Série (series.total_albums). NON BLOQUANT : tout échec (base non migrée
+    // « series… ») laisse la valeur courante en place — la création de la BD
+    // n'est JAMAIS bloquée. Menu vide -> aucune écriture (le total éventuel
+    // déjà saisi pour cette série est conservé).
+    if (values.series && seriesId != null && values.totalAlbums != null) {
+      try {
+        await query('UPDATE series SET total_albums = $1, updated_at = now() WHERE id = $2', [
+          values.totalAlbums,
+          seriesId,
+        ]);
+      } catch (err) {
+        console.warn(`[serie] Écriture du total d'albums ignorée (« ${values.series} ») :`, err.message);
+      }
     }
 
     // ⚠ added_date / acquired_date (vinyls) : NOT NULL DEFAULT CURRENT_DATE.
@@ -1284,6 +1376,22 @@ async function updateComic(req, res, next) {
       } catch {}
     }
 
+    // TOTAL D'ALBUMS de la série — SAISI MANUELLEMENT dans le formulaire
+    // (menu déroulant 1–99, vide = « non renseigné ») : écrit sur l'ENTITÉ
+    // Série (series.total_albums). NON BLOQUANT : tout échec (base non migrée
+    // « series… ») laisse la valeur courante en place. Menu vide -> aucune
+    // écriture (le total éventuel déjà saisi pour cette série est conservé).
+    if (row.series && row.series_id != null && values.totalAlbums != null) {
+      try {
+        await query('UPDATE series SET total_albums = $1, updated_at = now() WHERE id = $2', [
+          values.totalAlbums,
+          row.series_id,
+        ]);
+      } catch (err) {
+        console.warn(`[serie] Écriture du total d'albums ignorée (« ${row.series} ») :`, err.message);
+      }
+    }
+
     return res.json({ comic: toComicDto(row) });
   } catch (err) {
     uploadedFilesOf(req).forEach((f) => {
@@ -1432,6 +1540,11 @@ async function importComicByIsbn(req, res, next) {
       console.warn(`[serie] Refus d'inscrire la couverture du tome dans series_image (${seriesImage}) lors de l'ISBN ${values.isbn}.`);
       seriesImage = null;
     }
+
+    // TOTAL D'ALBUMS de la série : plus AUCUN comptage automatique (Open
+    // Library / Google Books) — la valeur est saisie MANUELLEMENT dans le
+    // formulaire « Ajouter / modifier une BD » (menu 1–99). L'import par ISBN
+    // ne touche donc jamais series.total_albums.
 
     // ----- 5) Insertion SQL : mêmes colonnes que createComic.
     const { rows } = await query(

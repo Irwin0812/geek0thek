@@ -201,6 +201,33 @@ async function autoFetchSeriesImage(seriesName) {
 }
 
 // ------------------------------------------------------------
+// TOTAL D'ALBUMS d'une série (series.total_albums) — SAISI MANUELLEMENT dans
+// le formulaire « Ajouter / modifier une BD » (menu 1–99, vide = null) : plus
+// aucun comptage automatique via Open Library / Google Books. Lecture seule,
+// jamais bloquante.
+// ------------------------------------------------------------
+
+/**
+ * Lit le nombre d'albums de la série stocké sur l'ENTITÉ Série (null si jamais
+ * saisi ou base non migrée). Lecture seule, jamais bloquante.
+ */
+async function getSeriesTotalAlbums(seriesName, seriesId = null) {
+  try {
+    let id = seriesId != null ? Number(seriesId) : null;
+    if (id == null) {
+      const ent = await findSeries(seriesName);
+      id = ent ? ent.seriesId : null;
+    }
+    if (id == null) return null;
+    const { rows } = await query('SELECT total_albums FROM series WHERE id = $1', [id]);
+    const v = rows[0] && rows[0].total_albums != null ? Number(rows[0].total_albums) : null;
+    return v;
+  } catch {
+    return null;
+  }
+}
+
+// ------------------------------------------------------------
 // Lecture / écriture de l'entité Série (table `series`)
 // ------------------------------------------------------------
 
@@ -362,4 +389,7 @@ module.exports = {
   ensureSeries,
   autoFetchSeriesImage,
   removeSeriesImageGlobally,
+  // TOTAL D'ALBUMS de la série (total_albums) — saisi manuellement dans le
+  // formulaire BD ; lecture seule pour l'enrichissement des DTO.
+  getSeriesTotalAlbums,
 };

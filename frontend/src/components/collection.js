@@ -131,6 +131,11 @@ export function groupComicsBySeries(comics) {
     const sorted = [...tomes, ...sansTome]
 
     const withCover = sorted.find((i) => i.coverUrl)
+    // TOTAL D'ALBUMS de la série (series.total_albums porté par le backend —
+    // saisi MANUELLEMENT dans le formulaire « Ajouter / modifier une BD »,
+    // menu 1–99) : null si jamais renseigné -> l'affichage retombe sur le
+    // simple compteur « X albums » possédés.
+    const totalAlbums = key === NO_SERIES_KEY ? null : (sorted[0]?.totalAlbums ?? null)
     groups.push({
       key,
       name: items.find((i) => i.series)?.series.trim() || NO_SERIES_LABEL,
@@ -144,6 +149,10 @@ export function groupComicsBySeries(comics) {
       // Le repli propre img/no_title.jpg est traité comme une absence.
       seriesImage: key === NO_SERIES_KEY ? null : seriesImageOf(sorted),
       isUnlabeled: key === NO_SERIES_KEY,
+      // Total publié (null = jamais compté) + tomes possédés dans cette
+      // collection — sous-titre « X albums sur Y albums » de la série.
+      totalAlbums,
+      ownedCount: sorted.length,
     })
   }
 

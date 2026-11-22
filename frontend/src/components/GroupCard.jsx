@@ -54,6 +54,7 @@ function GroupCard({
   showTitle = true,
   showAddedDate = false,
   isUnlabeled = false,
+  totalAlbums = null,
   onClick = null,
   actions = null,
 }) {
@@ -152,7 +153,16 @@ function GroupCard({
             )}
             {count != null && (
               <p className={`mt-0.5 font-semibold text-gold-300 ${size === 'sm' ? 'text-[10px]' : 'text-xs'}`}>
-                {t(isVinyl ? 'collection.vinylsCount' : 'collection.albumsCount', { count })}
+                {/* BD : « X albums sur Y albums » quand le TOTAL D'ALBUMS de la
+                    série est renseigné (totalAlbums > 0, saisi MANUELLEMENT
+                    dans le formulaire — menu 1–99) ; sinon repli sur le simple
+                    compteur « X albums » possédés. Disques : inchangé.
+                    Composition albumsCount(owned) + seriesTotalOf +
+                    albumsCount(total) : le singulier/pluriel de CHAQUE nombre
+                    est géré par la clé albumsCount existante (par langue). */}
+                {isVinyl || !totalAlbums
+                  ? t(isVinyl ? 'collection.vinylsCount' : 'collection.albumsCount', { count })
+                  : `${t('collection.albumsCount', { count })} ${t('collection.seriesTotalOf')} ${t('collection.albumsCount', { count: totalAlbums })}`}
               </p>
             )}
           </div>
