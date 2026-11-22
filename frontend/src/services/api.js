@@ -25,6 +25,19 @@ export const clearSession = () => {
   localStorage.removeItem(USER_KEY)
 }
 
+/**
+ * Construit l'Error levée par `request` : le message est celui du backend
+ * (data.error) et le champ `code` porte le CODE D'ERREUR stable renvoyé par
+ * le backend (ex. 'barcode-not-found', 'isbn-not-found', 'search-unavailable')
+ * — les composants frontend le MAPPENT sur des clés i18n (6 langues) au lieu
+ * d'afficher un message codé en français tel quel.
+ */
+function toApiError(data, status) {
+  const err = new Error((data && data.error) || `Erreur serveur (${status})`)
+  if (data && data.code) err.code = data.code
+  return err
+}
+
 async function request(path, { method = 'GET', body, isForm = false } = {}) {
   const headers = {}
   const token = getToken()
@@ -65,9 +78,9 @@ async function request(path, { method = 'GET', body, isForm = false } = {}) {
       if (!window.location.pathname.startsWith('/onboarding')) {
         window.location.assign('/onboarding')
       }
-      throw new Error(data.error || `Erreur serveur (${response.status})`)
+      throw toApiError(data, response.status)
     }
-    throw new Error(data.error || `Erreur serveur (${response.status})`)
+    throw toApiError(data, response.status)
   }
   return data
 }
@@ -246,7 +259,7 @@ export const api = {
       })
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
-        throw new Error(data.error || `Erreur serveur (${response.status})`)
+        throw toApiError(data, response.status)
       }
       return response.text()
     },

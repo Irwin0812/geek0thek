@@ -208,7 +208,7 @@ function startRemoteServer() {
     fd.append('genre', 'Progressive Rock');
     fd.append('label', 'Harvest');
     fd.append('release_date', '1973-03-01');
-    fd.append('barcode', '0190295958361');
+    fd.append('barcode', '0724384960612');
     fd.append('mbid', '');
     fd.append('discogs_release_id', '');
     fd.append('discogs_url', '');

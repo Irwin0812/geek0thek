@@ -692,7 +692,7 @@ export default function AddVinyl() {
               className="input font-mono"
               value={form.barcode}
               onChange={(e) => setForm((f) => ({ ...f, barcode: e.target.value.replace(/\D/g, '') }))}
-              placeholder="0190295958361"
+              placeholder="0724384960612"
             />
           </Field>
           <Field label={t('vinylForm.addedDateField')}>

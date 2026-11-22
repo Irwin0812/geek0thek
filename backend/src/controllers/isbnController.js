@@ -84,7 +84,7 @@ async function lookupIsbn(req, res, next) {
       // Les logs des deux fournisseurs ci-dessus viennent d'indiquer le verdict
       // exact (quota, HTTP X, « aucun document »…) : ici on confirme la décision.
       console.log(`[lookupIsbn] Résultat final : aucun des fournisseurs ne propose de fiche pour « ${isbn} ». (Voir les lignes [googleBooks] / [ISBN] précédentes pour le diagnostic fourni par chaque API.)`);
-      return res.status(404).json({ error: 'Aucune BD trouvée pour cet ISBN.' });
+      return res.status(404).json({ code: 'isbn-not-found', error: 'Aucune BD trouvée pour cet ISBN.' });
     }
     if (!comicData.title) {
       console.log(`[lookupIsbn] Résultat final : fiche récupérée mais SANS titre (source=${comicData.source}) — rejet 422.`);

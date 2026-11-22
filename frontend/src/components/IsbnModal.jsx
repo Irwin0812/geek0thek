@@ -81,6 +81,45 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
   const digits = isbn.replace(/\D/g, '')
   const validIsbn = digits.length === 13 || /^\d{9}[\dXx]$/.test(digits)
 
+  /**
+   * MAPPE les erreurs du backend (ISBN / BD) vers des CLÉS i18n (6 langues) :
+   * le backend renvoie des messages codés en français — le frontend ne doit
+   * JAMAIS les afficher tels quels. Les CODES D'ERREUR stables du backend
+   * (portés par api.js depuis la réponse JSON) sont PRIORITAIRES ; sinon
+   * repli sur l'analyse du message :
+   *  - 'isbn-not-found' / « Aucune BD trouvée pour cet ISBN » -> isbnNotFound ;
+   *  - 'isbn-import-not-found' / « Aucun livre n'a été trouvé pour cet ISBN »
+   *    (import direct) -> isbnImportNotFound ;
+   *  - 'search-unavailable' / Google Books / Open Library inaccessibles ->
+   *    searchUnavailable ;
+   *  - tout autre message -> affiché tel quel (repli).
+   */
+  const mapIsbnError = (err, isbnValue) => {
+    // CODES D'ERREUR stables du backend (prioritaires) : 'isbn-not-found',
+    // 'isbn-import-not-found', 'search-unavailable' — sinon repli sur l'analyse
+    // du message.
+    if (err?.code === 'isbn-not-found') {
+      return t('isbnModal.isbnNotFound', { isbn: isbnValue })
+    }
+    if (err?.code === 'isbn-import-not-found') {
+      return t('isbnModal.isbnImportNotFound')
+    }
+    if (err?.code === 'search-unavailable') {
+      return t('isbnModal.searchUnavailable')
+    }
+    const msg = String(err?.message || '')
+    if (/^Aucune BD trouvée pour cet ISBN/.test(msg)) {
+      return t('isbnModal.isbnNotFound', { isbn: isbnValue })
+    }
+    if (/^Aucun livre n'a été trouvé pour cet ISBN/.test(msg)) {
+      return t('isbnModal.isbnImportNotFound')
+    }
+    if (/indisponible|inaccessibles/i.test(msg)) {
+      return t('isbnModal.searchUnavailable')
+    }
+    return msg
+  }
+
   // Changement d'onglet : on réinitialise l'erreur et la fiche sélectionnée
   // (les résultats mots-clés sont conservés : basculer ne refait pas l'appel).
   const switchTab = (next) => {
@@ -108,7 +147,9 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
       setActiveIsbn(value)
       setResult(data)
     } catch (err) {
-      setError(err.message)
+      // 404 = ISBN inconnu des sources, 429/502 = incident d'infrastructure :
+      // MAPPÉ sur une clé i18n (cf. mapIsbnError).
+      setError(mapIsbnError(err, value))
     } finally {
       setBusy(false)
     }
@@ -129,7 +170,9 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
       close()
       onImport?.(comic)
     } catch (err) {
-      setError(err.message)
+      // 404 = ISBN inconnu, 409 = doublon, 429/502 = incident : MAPPÉ sur une
+      // clé i18n quand le message est connu (cf. mapIsbnError).
+      setError(mapIsbnError(err, digits))
     } finally {
       setImporting(false)
     }
@@ -154,7 +197,19 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
       setResults(Array.isArray(data) ? data : [])
       setHasSearched(true)
     } catch (err) {
-      setError(err.message)
+      // 429/502 = Google Books / Open Library inaccessibles : MAPPÉ sur une
+      // clé i18n ; tout autre message est affiché tel quel.
+      // CODE D'ERREUR stable du backend (prioritaire) : 'search-unavailable'.
+      if (err?.code === 'search-unavailable') {
+        setError(t('isbnModal.searchUnavailable'))
+      } else {
+        const msg = String(err?.message || '')
+        if (/indisponible|inaccessibles/i.test(msg)) {
+          setError(t('isbnModal.searchUnavailable'))
+        } else {
+          setError(msg)
+        }
+      }
       setResults([])
     } finally {
       setSearching(false)

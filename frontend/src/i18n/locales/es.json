@@ -282,7 +282,7 @@
     "searchModeLabel": "Modo de búsqueda",
     "tabBarcode": "⌗ Código de barras (EAN/UPC)",
     "tabQuery": "🔎 Palabras clave",
-    "barcodePlaceholder": "P. ej. 0190295958361",
+    "barcodePlaceholder": "P. ej. 0724384960612",
     "importBtn": "Importar",
     "errorInvalidBarcode": "El código de barras debe contener entre 8 y 14 dígitos (EAN/UPC).",
     "queryPlaceholder": "P. ej. Pink Floyd — The Dark Side of the Moon (o un n.º EAN)…",
@@ -290,6 +290,9 @@
     "maxLenError": "Solicitud demasiado larga (300 caracteres máximo).",
     "queryHint": "Útil cuando el código de barras falla: título del álbum, « artista título » o n.º EAN — orden de búsqueda impuesto: primero Last.fm (carátulas), luego Discogs y por último MusicBrainz.",
     "noResults": "Ningún disco encontrado para esta búsqueda — intente ampliar la solicitud (solo el título, « artista título », o el n.º EAN exacto del álbum).",
+    "barcodeNotFound": "Ningún disco encontrado para el código de barras {{code}} (fuentes activas: {{sources}}). Complete la ficha manualmente (artista + título).",
+    "keywordNotFound": "Ningún disco encontrado para « {{q}} » en las fuentes activas. Compruebe la entrada (n.º EAN exacto, nombre del artista + título del álbum) o complete la ficha manualmente.",
+    "searchUnavailable": "Búsqueda no disponible: las fuentes activas no son accesibles (conexión a internet del servidor).",
     "warningsLabel": "Avisos:",
     "sleevePreview": "Vista previa de la carátula",
     "tracksDetected_one": "{{count}} tema detectado",
@@ -323,6 +326,9 @@
     "drawingsBy": "dibujos {{names}}",
     "isbnField": "ISBN {{isbn}}",
     "coverPreview": "Vista previa de la portada",
+    "isbnNotFound": "Ningún cómic encontrado para este ISBN ({{isbn}}). Guarde la BD manualmente.",
+    "isbnImportNotFound": "Ningún libro encontrado para este ISBN: guarde la BD manualmente.",
+    "searchUnavailable": "Búsqueda no disponible (Google Books / Open Library). Compruebe la conexión a internet del servidor.",
     "noResults": "Ningún libro encontrado para esta búsqueda — intente ampliar la solicitud (solo el título, solo el autor, o el título « sin » el subtítulo)."
   },
   "adminUsers": {

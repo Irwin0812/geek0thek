@@ -125,6 +125,37 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
   // ----- ONGLET CODE-BARRES ---------------------------------------------------
   const valid = /^[0-9]{8,14}$/.test(code.trim())
 
+  /**
+   * MAPPE les erreurs du backend vers des CLÉS i18n (6 langues) : le backend
+   * renvoie des messages codés en français — le frontend ne doit JAMAIS les
+   * afficher tels quels. Le champ `code` de l'erreur (porté par api.js depuis
+   * la réponse JSON du backend) est PRIORITAIRE ; sinon repli sur l'analyse
+   * du message :
+   *  - 'barcode-not-found' / « Aucun disque trouvé pour le code-barres » ->
+   *    barcodeNotFound ;
+   *  - 'search-unavailable' / sources inaccessibles (429/502) ->
+   *    searchUnavailable ;
+   *  - tout autre message -> affiché tel quel (repli).
+   */
+  const mapBarcodeError = (err, codeValue) => {
+    // CODE D'ERREUR stable du backend (prioritaire) : 'barcode-not-found',
+    // 'search-unavailable' — sinon repli sur l'analyse du message.
+    if (err?.code === 'barcode-not-found') {
+      return t('barcodeModal.barcodeNotFound', { code: codeValue, sources: activeNames.join(', ') })
+    }
+    if (err?.code === 'search-unavailable') {
+      return t('barcodeModal.searchUnavailable')
+    }
+    const msg = String(err?.message || '')
+    if (/^Aucun disque trouvé pour le code-barres/.test(msg)) {
+      return t('barcodeModal.barcodeNotFound', { code: codeValue, sources: activeNames.join(', ') })
+    }
+    if (/indisponible|inaccessibles/i.test(msg)) {
+      return t('barcodeModal.searchUnavailable')
+    }
+    return msg
+  }
+
   const lookup = async (e) => {
     e?.preventDefault()
     if (!valid) {
@@ -144,8 +175,8 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
       if (p) setProviders(p)
     } catch (err) {
       // 404 = disque inconnu des sources, 429/502 = incident d'infrastructure :
-      // tous deux s'affichent tels quels.
-      setError(err.message)
+      // les deux sont MAPPÉS sur des clés i18n (cf. mapBarcodeError).
+      setError(mapBarcodeError(err, code.trim()))
     } finally {
       setBusy(false)
     }
@@ -178,8 +209,23 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
       setHasSearched(true)
     } catch (err) {
       // 404 = aucune source ne connaît la parution, 429/502 = incident
-      // d'infrastructure sur les sources actives : affichage tel quel.
-      setError(err.message)
+      // d'infrastructure sur les sources actives : MAPPÉ sur une clé i18n.
+      // CODE D'ERREUR stable du backend (prioritaire) : 'keyword-not-found',
+      // 'search-unavailable' — sinon repli sur l'analyse du message.
+      if (err?.code === 'keyword-not-found') {
+        setError(t('barcodeModal.keywordNotFound', { q: value }))
+      } else if (err?.code === 'search-unavailable') {
+        setError(t('barcodeModal.searchUnavailable'))
+      } else {
+        const msg = String(err?.message || '')
+        if (/^Aucun disque trouvé pour «/.test(msg)) {
+          setError(t('barcodeModal.keywordNotFound', { q: value }))
+        } else if (/indisponible|inaccessibles/i.test(msg)) {
+          setError(t('barcodeModal.searchUnavailable'))
+        } else {
+          setError(msg)
+        }
+      }
       setHasSearched(false)
     } finally {
       setSearching(false)

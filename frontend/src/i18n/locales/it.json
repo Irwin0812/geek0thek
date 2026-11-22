@@ -282,7 +282,7 @@
     "searchModeLabel": "Modalità di ricerca",
     "tabBarcode": "⌗ Codice a barre (EAN/UPC)",
     "tabQuery": "🔎 Parole chiave",
-    "barcodePlaceholder": "Es. 0190295958361",
+    "barcodePlaceholder": "Es. 0724384960612",
     "importBtn": "Importa",
     "errorInvalidBarcode": "Il codice a barre deve contenere da 8 a 14 cifre (EAN/UPC).",
     "queryPlaceholder": "Es. Pink Floyd — The Dark Side of the Moon (o un n° EAN)…",
@@ -290,6 +290,9 @@
     "maxLenError": "Richiesta troppo lunga (300 caratteri massimo).",
     "queryHint": "Utilizzabile quando il codice a barre fallisce: titolo dell'album, « artista titolo » o n° EAN — ordine di ricerca imposto: Last.fm prima (copertine), poi Discogs, poi MusicBrainz.",
     "noResults": "Nessun disco trovato per questa ricerca — prova ad allargare la richiesta (solo il titolo, « artista titolo » o il n° EAN esatto dell'album).",
+    "barcodeNotFound": "Nessun disco trovato per il codice a barre {{code}} (sorgenti attive: {{sources}}). Compila la scheda manualmente (artista + titolo).",
+    "keywordNotFound": "Nessun disco trovato per « {{q}} » sulle sorgenti attive. Controlla l'input (n° EAN esatto, nome dell'artista + titolo dell'album) o compila la scheda manualmente.",
+    "searchUnavailable": "Ricerca non disponibile: le sorgenti attive non sono accessibili (connessione internet del server).",
     "warningsLabel": "Avvisi :",
     "sleevePreview": "Anteprima copertina",
     "tracksDetected_one": "{{count}} traccia rilevata",
@@ -323,6 +326,9 @@
     "drawingsBy": "disegni {{names}}",
     "isbnField": "ISBN {{isbn}}",
     "coverPreview": "Anteprima copertina",
+    "isbnNotFound": "Nessun fumetto trovato per questo ISBN ({{isbn}}). Salva la BD manualmente.",
+    "isbnImportNotFound": "Nessun libro trovato per questo ISBN: salva la BD manualmente.",
+    "searchUnavailable": "Ricerca non disponibile (Google Books / Open Library). Controlla la connessione internet del server.",
     "noResults": "Nessun libro trovato per questa ricerca — prova ad allargare la richiesta (solo il titolo, solo l'autore, o il titolo « senza » il sottotitolo)."
   },
   "adminUsers": {

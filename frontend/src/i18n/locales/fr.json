@@ -282,7 +282,7 @@
     "searchModeLabel": "Mode de recherche",
     "tabBarcode": "⌗ Code-barres (EAN/UPC)",
     "tabQuery": "🔎 Mots-clés",
-    "barcodePlaceholder": "Ex. 0190295958361",
+    "barcodePlaceholder": "Ex. 0724384960612",
     "importBtn": "Importer",
     "errorInvalidBarcode": "Le code-barres doit contenir entre 8 et 14 chiffres (EAN/UPC).",
     "queryPlaceholder": "Ex. Pink Floyd — The Dark Side of the Moon (ou un n° EAN)…",
@@ -290,6 +290,9 @@
     "maxLenError": "Requête trop longue (300 caractères maximum).",
     "queryHint": "Utilisable quand le code-barres échoue : titre de l’album, « artiste titre » ou n° EAN — ordre de recherche imposé : Last.fm d’abord (jaquettes), puis Discogs, puis MusicBrainz.",
     "noResults": "Aucun disque trouvé pour cette recherche — essayez d’élargir la requête (titre seul, « artiste titre », ou le n° EAN exact de l’album).",
+    "barcodeNotFound": "Aucun disque trouvé pour le code-barres {{code}} (sources actives : {{sources}}). Saisissez la fiche manuellement (artiste + titre).",
+    "keywordNotFound": "Aucun disque trouvé pour « {{q}} » sur les sources actives. Vérifiez la saisie (n° EAN exact, nom de l'artiste + titre de l'album) ou saisissez la fiche manuellement.",
+    "searchUnavailable": "Recherche indisponible : les sources actives sont inaccessibles (connexion internet du serveur).",
     "warningsLabel": "Avertissements :",
     "sleevePreview": "Aperçu jaquette",
     "tracksDetected_one": "{{count}} titre détecté",
@@ -323,6 +326,9 @@
     "drawingsBy": "dessin {{names}}",
     "isbnField": "ISBN {{isbn}}",
     "coverPreview": "Aperçu couverture",
+    "isbnNotFound": "Aucune BD trouvée pour cet ISBN ({{isbn}}). Enregistrez la BD manuellement.",
+    "isbnImportNotFound": "Aucun livre trouvé pour cet ISBN : enregistrez la BD manuellement.",
+    "searchUnavailable": "Recherche indisponible (Google Books / Open Library). Vérifiez la connexion internet du serveur.",
     "noResults": "Aucun livre trouvé pour cette recherche — essayez d'élargir la requête (titre seul, auteur seul, ou titre « sans » le sous-titre)."
   },
   "adminUsers": {

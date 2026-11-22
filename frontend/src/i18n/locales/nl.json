@@ -282,7 +282,7 @@
     "searchModeLabel": "Zoekmodus",
     "tabBarcode": "⌗ Streepjescode (EAN/UPC)",
     "tabQuery": "🔎 Trefwoorden",
-    "barcodePlaceholder": "Bv. 0190295958361",
+    "barcodePlaceholder": "Bv. 0724384960612",
     "importBtn": "Importeren",
     "errorInvalidBarcode": "De streepjescode moet 8 tot 14 cijfers bevatten (EAN/UPC).",
     "queryPlaceholder": "Bv. Pink Floyd — The Dark Side of the Moon (of een EAN-nr.)…",
@@ -290,6 +290,9 @@
     "maxLenError": "Zoekopdracht te lang (maximaal 300 tekens).",
     "queryHint": "Gebruikbaar wanneer de streepjescode mislukt : titel van het album, « artiest titel » of EAN-nr. — opgelegde volgorde: eerst Last.fm (hoesafbeeldingen), dan Discogs, dan MusicBrainz.",
     "noResults": "Geen plaat gevonden voor deze zoekopdracht — probeer de zoekopdracht te verbreden (alleen titel, « artiest titel », of het exacte EAN-nr. van het album).",
+    "barcodeNotFound": "Geen plaat gevonden voor de streepjescode {{code}} (actieve bronnen : {{sources}}). Vul de fiche handmatig in (artiest + titel).",
+    "keywordNotFound": "Geen plaat gevonden voor « {{q}} » op de actieve bronnen. Controleer de invoer (exact EAN-nr., artiestnaam + albumtitel) of vul de fiche handmatig in.",
+    "searchUnavailable": "Zoeken niet beschikbaar : de actieve bronnen zijn onbereikbaar (internetverbinding van de server).",
     "warningsLabel": "Waarschuwingen :",
     "sleevePreview": "Voorbeeld hoes",
     "tracksDetected_one": "{{count}} nummer gedetecteerd",
@@ -323,6 +326,9 @@
     "drawingsBy": "getekend door {{names}}",
     "isbnField": "ISBN {{isbn}}",
     "coverPreview": "Voorbeeld omslag",
+    "isbnNotFound": "Geen stripalbum gevonden voor dit ISBN ({{isbn}}). Sla de BD handmatig op.",
+    "isbnImportNotFound": "Geen boek gevonden voor dit ISBN : sla de BD handmatig op.",
+    "searchUnavailable": "Zoeken niet beschikbaar (Google Books / Open Library). Controleer de internetverbinding van de server.",
     "noResults": "Geen boek gevonden voor deze zoekopdracht — probeer de zoekopdracht te verbreden (alleen titel, alleen auteur, of titel « zonder » ondertitel)."
   },
   "adminUsers": {

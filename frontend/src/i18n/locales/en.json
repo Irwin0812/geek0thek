@@ -282,7 +282,7 @@
     "searchModeLabel": "Search mode",
     "tabBarcode": "⌗ Barcode (EAN/UPC)",
     "tabQuery": "🔎 Keywords",
-    "barcodePlaceholder": "E.g. 0190295958361",
+    "barcodePlaceholder": "E.g. 0724384960612",
     "importBtn": "Import",
     "errorInvalidBarcode": "The barcode must contain between 8 and 14 digits (EAN/UPC).",
     "queryPlaceholder": "E.g. Pink Floyd — The Dark Side of the Moon (or an EAN number)…",
@@ -290,6 +290,9 @@
     "maxLenError": "Request too long (maximum 300 characters).",
     "queryHint": "Usable when the barcode fails: album title, “artist title” or EAN number — forced search order: Last.fm first (sleeves), then Discogs, then MusicBrainz.",
     "noResults": "No record found for this search — try broadening your request (title only, “artist title”, or the exact EAN number of the album).",
+    "barcodeNotFound": "No record found for barcode {{code}} (active sources: {{sources}}). Enter the sheet manually (artist + title).",
+    "keywordNotFound": "No record found for “{{q}}” on the active sources. Check your input (exact EAN number, artist name + album title) or enter the sheet manually.",
+    "searchUnavailable": "Search unavailable: the active sources are inaccessible (server internet connection).",
     "warningsLabel": "Warnings:",
     "sleevePreview": "Sleeve preview",
     "tracksDetected_one": "{{count}} track detected",
@@ -323,6 +326,9 @@
     "drawingsBy": "art by {{names}}",
     "isbnField": "ISBN {{isbn}}",
     "coverPreview": "Cover preview",
+    "isbnNotFound": "No comic found for this ISBN ({{isbn}}). Save the comic manually.",
+    "isbnImportNotFound": "No book found for this ISBN: save the comic manually.",
+    "searchUnavailable": "Search unavailable (Google Books / Open Library). Check the server internet connection.",
     "noResults": "No book found for this search — try broadening your request (title only, author only, or the title “without” the subtitle)."
   },
   "adminUsers": {

@@ -282,7 +282,7 @@
     "searchModeLabel": "Suchmodus",
     "tabBarcode": "⌗ Strichcode (EAN/UPC)",
     "tabQuery": "🔎 Suchbegriffe",
-    "barcodePlaceholder": "Z. B. 0190295958361",
+    "barcodePlaceholder": "Z. B. 0724384960612",
     "importBtn": "Importieren",
     "errorInvalidBarcode": "Der Strichcode muss zwischen 8 und 14 Ziffern enthalten (EAN/UPC).",
     "queryPlaceholder": "Z. B. Pink Floyd — The Dark Side of the Moon (oder eine EAN-Nummer)…",
@@ -290,6 +290,9 @@
     "maxLenError": "Suchanfrage zu lang (maximal 300 Zeichen).",
     "queryHint": "Bei Barcode-Fehlschlag nutzbar: Albumtitel, „Künstler Titel“ oder EAN — vorgegebene Suchreihenfolge: zuerst Last.fm (Schutzplatten), dann Discogs, dann MusicBrainz.",
     "noResults": "Keine Platte für diese Suche gefunden — erweitern Sie die Anfrage (nur Titel, „Künstler Titel“ oder die exakte EAN-Nummer des Albums).",
+    "barcodeNotFound": "Keine Platte für den Strichcode {{code}} gefunden (aktive Quellen: {{sources}}). Erfassen Sie die Karte manuell (Künstler + Titel).",
+    "keywordNotFound": "Keine Platte für „{{q}}“ auf den aktiven Quellen gefunden. Prüfen Sie die Eingabe (exakte EAN-Nummer, Künstlername + Albumtitel) oder erfassen Sie die Karte manuell.",
+    "searchUnavailable": "Suche nicht verfügbar: die aktiven Quellen sind nicht erreichbar (Internetverbindung des Servers).",
     "warningsLabel": "Warnungen:",
     "sleevePreview": "Vorschau Schutzplatte",
     "tracksDetected_one": "{{count}} Titel erkannt",
@@ -323,6 +326,9 @@
     "drawingsBy": "Zeichnungen {{names}}",
     "isbnField": "ISBN {{isbn}}",
     "coverPreview": "Vorschau Cover",
+    "isbnNotFound": "Kein Comic für diese ISBN ({{isbn}}) gefunden. Speichern Sie die BD manuell ab.",
+    "isbnImportNotFound": "Kein Buch für diese ISBN gefunden: speichern Sie die BD manuell ab.",
+    "searchUnavailable": "Suche nicht verfügbar (Google Books / Open Library). Prüfen Sie die Internetverbindung des Servers.",
     "noResults": "Kein Buch für diese Suche gefunden — erweitern Sie die Anfrage (nur Titel, nur Autor oder Titel „ohne“ den Untertitel)."
   },
   "adminUsers": {

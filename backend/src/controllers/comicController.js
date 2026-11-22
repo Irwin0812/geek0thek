@@ -1335,6 +1335,7 @@ async function importComicByIsbn(req, res, next) {
     const comicData = await searchByIsbn(req.params.isbn);
     if (!comicData || !comicData.title) {
       return res.status(404).json({
+        code: 'isbn-import-not-found',
         error: "Aucun livre n'a été trouvé pour cet ISBN : enregistrez la BD manuellement.",
       });
     }

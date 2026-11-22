@@ -399,12 +399,14 @@ async function lookupBarcode(req, res, next) {
         const primary = states.lfError || states.mbError || states.dgError;
         const status = primary && primary.status === 429 ? 429 : 502;
         return res.status(status).json({
+          code: 'search-unavailable',
           error:
             (primary && primary.message) ||
             'Recherche indisponible : MusicBrainz, Last.fm et Discogs sont inaccessibles (connexion internet du serveur).',
         });
       }
       return res.status(404).json({
+        code: 'barcode-not-found',
         error: `Aucun disque trouvé pour le code-barres ${code} (${activeSourcesList()}). Saisissez la fiche manuellement (artiste + titre).`,
       });
     }
@@ -553,6 +555,7 @@ async function searchRelease(req, res, next) {
         });
       }
       return res.status(404).json({
+        code: 'release-not-found',
         error: `Aucun album « ${title} » de ${artist} trouvé sur ${states.available.join(' ni ')}. Vérifiez la saisie (nom exact de l'artiste, titre de l'album).`,
       });
     }
@@ -702,11 +705,13 @@ async function searchKeyword(req, res) {
         const primary = errors[0];
         const httpStatus = primary.err.status === 429 ? 429 : 502;
         return res.status(httpStatus).json({
+          code: 'search-unavailable',
           error: primary.err.message ||
             `Recherche indisponible (${errors.map((e) => e.name).join(', ')} inaccessibles). Vérifiez la connexion internet du serveur.`,
         });
       }
       return res.status(404).json({
+        code: 'keyword-not-found',
         error: `Aucun disque trouvé pour « ${rawQ} » sur Last.fm${discogsActive ? ' / Discogs' : ''} / MusicBrainz. Vérifiez la saisie (n° EAN exact, nom de l'artiste + titre de l'album) ou saisissez la fiche manuellement.`,
       });
     }
