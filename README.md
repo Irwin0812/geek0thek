@@ -4,7 +4,7 @@
 
 ## Project description
 
-A containerized full-stack web application for managing collections of Records, Comics (BD / Manga / Comics), and (coming soon) Role-playing Games, Video Games, Books/Magazines.
+A containerized full-stack web application for managing collections of **Records (vinyl / CD)** and **Comics (BD / Manga / Comics)** — both fully supported today. **Video games, role-playing games, books/magazines** and other collections are on the roadmap (*coming soon*) and are not yet active.
 
 ---
 
@@ -36,11 +36,11 @@ Thank you for your support! 🙏
 
 ## Key features
 
-**Geek0thek** is a modern full-stack web application built from scratch to centralize, organize and showcase your complete collection of physical media and cultural items (vinyl records, comics, video games, role-playing games, books and magazines). Designed for a smooth, immersive and highly customizable experience, the platform combines rigorous data management with a polished visual aesthetic.
+**Geek0thek** is a modern full-stack web application built from scratch to centralize, organize and showcase your collection of physical media: **vinyl records / CDs** and **comics (BD / manga)** are fully supported today, while **video games, role-playing games, books and magazines** are on the roadmap (*coming soon*). Designed for a smooth, immersive and highly customizable experience, the platform combines rigorous data management with a polished visual aesthetic.
 
 ### 1. Multi-library & collection management
 
-- **Media diversity:** Native support for multiple physical collections (Vinyl, Comics, Video games, RPGs, Books) with descriptive record sheets tailored to each cultural domain.
+- **Media diversity:** Native support for the active collections — **Records (vinyl / CD)** and **Comics** — with descriptive record sheets tailored to each cultural domain. Video games, RPGs, books and other collections are on the roadmap (*coming soon*).
 - **Imports & metadata:** Integration of external APIs (such as Discogs and Google Books) plus barcode scanning (via smartphone) to simplify adding items.
 - **Data consistency:** Smart normalization mechanisms — for example, the musical genre of the first record added for an artist is automatically replicated for subsequent additions by the same group.
 
