@@ -11,7 +11,10 @@
   }
 
   body {
-    @apply bg-night-950 text-slate-200 antialiased max-w-full overflow-x-hidden;
+    /* Verrou anti-débordement conservé UNIQUEMENT sur <html> (cf. ci-dessus) —
+       JAMAIS sur <body> : un body qui déborre crée une boîte de défilement
+       intermédiaire qui casse le positionnement sticky top-0 de la Navbar. */
+    @apply bg-night-950 text-slate-200 antialiased max-w-full;
     background-image:
       radial-gradient(1200px 600px at 80% -10%, rgba(212, 162, 78, 0.08), transparent 60%),
       radial-gradient(900px 500px at -10% 110%, rgba(80, 120, 220, 0.07), transparent 60%);

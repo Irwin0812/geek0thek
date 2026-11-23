@@ -168,7 +168,10 @@ export default function App() {
   return (
     <AuthContext.Provider value={auth}>
       <DisplayProvider>
-      <div className="min-h-screen flex flex-col max-w-full overflow-x-hidden">
+      {/* max-w-full : verrou du débordement horizontal au niveau de la racine
+          du layout — SANS overflow-x-hidden : toute boîte qui déborre devient
+          un conteneur de défilement et désactive le sticky top-0 de la Navbar. */}
+      <div className="min-h-screen flex flex-col max-w-full">
         {user && <Navbar />}
         {/* pb-20 : marge compensatoire du pied de page FIXÉ (Footer.jsx —
             fixed bottom-0) : le contenu ne passe jamais sous la barre. */}
