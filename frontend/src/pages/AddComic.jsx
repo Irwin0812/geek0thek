@@ -12,6 +12,7 @@ import i18n from '../i18n/i18n.js'
 import { api } from '../services/api.js'
 import { toDisplayImageUrl } from '../services/imageUrl.js'
 import IsbnModal from '../components/IsbnModal.jsx'
+import { ChevronDown } from 'lucide-react'
 
 // « DATE D'AJOUT » du jour (temps local), format AAAA-MM-JJ strict :
 // sert de valeur par défaut au champ lors de la création d'une nouvelle BD.
@@ -481,6 +482,23 @@ export default function AddComic() {
     return () => { cancelled = true }
   }, [id, isEdit])
 
+  // Menu déroulant CUSTOM du champ « SÉRIE » (remplace le <datalist> natif —
+  // bulle flottante décalée + triangle plein blanc) : affiché UNIQUEMENT quand
+  // le champ est vide ; s'ouvre au focus / clic, se ferme à la sélection, à la
+  // saisie d'un nouveau texte ou au clic extérieur.
+  const [seriesMenuOpen, setSeriesMenuOpen] = useState(false)
+  const seriesFieldRef = useRef(null)
+  useEffect(() => {
+    if (!seriesMenuOpen) return undefined
+    const onDocMouseDown = (e) => {
+      if (seriesFieldRef.current && !seriesFieldRef.current.contains(e.target)) {
+        setSeriesMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onDocMouseDown)
+    return () => document.removeEventListener('mousedown', onDocMouseDown)
+  }, [seriesMenuOpen])
+
   const submit = async (e) => {
     e.preventDefault()
     setError('')
@@ -857,27 +875,70 @@ export default function AddComic() {
           </Field>
           <Field label={t('comicForm.seriesField')}>
             {/* Suggestions = séries déjà présentes dans ma collection :
-                le <datalist> est branché UNIQUEMENT quand le champ SÉRIE est
-                VIDE (ajout, ou import automatique sans série) — la liste se
-                propose alors au focus / à la saisie. Dès qu'une valeur est
-                présente (import ISBN pré-rempli, saisie…), l'attribut `list`
-                est retiré : pas de menu déroulant forcé, le champ reste un
-                input normal modifiable librement. La classe .input-no-list-arrow
-                neutralise la flèche « ▾ » native du datalist au survol/focus. */}
-            <input
-              className="input input-no-list-arrow"
-              value={form.series}
-              onChange={set('series')}
-              placeholder="Corto Maltese"
-              {...(!form.series.trim() && seriesSuggestions.length > 0 ? { list: 'comic-series-suggestions' } : {})}
-            />
-            {!form.series.trim() && seriesSuggestions.length > 0 && (
-              <datalist id="comic-series-suggestions">
-                {seriesSuggestions.map((name) => (
-                  <option key={name} value={name} />
-                ))}
-              </datalist>
-            )}
+                menu déroulant CUSTOM (remplace le <datalist> natif — bulle
+                flottante décalée + triangle plein blanc), calqué sur le style
+                des <select> du formulaire. Affiché UNIQUEMENT lorsque le champ
+                SÉRIE est VIDE (état initial, ou import qui ne fournit pas de
+                série) : dès qu'une valeur est présente (import automatique,
+                édition), aucun chevron ni menu — champ texte standard pur.
+                La saisie / modification manuelle reste toujours possible. */}
+            <div ref={seriesFieldRef} className="relative">
+              <input
+                className="input"
+                value={form.series}
+                onChange={(e) => {
+                  set('series')(e)
+                  // Commencer à taper une nouvelle série ferme immédiatement
+                  // le menu et laisse la saisie libre fonctionner normalement.
+                  if (seriesMenuOpen) setSeriesMenuOpen(false)
+                }}
+                onFocus={() => {
+                  if (!form.series.trim()) setSeriesMenuOpen(true)
+                }}
+                placeholder="Corto Maltese"
+              />
+              {/* Chevron fin « v » — même allure que les <select> GENRE /
+                  FORMAT / COLLECTION (lucide ChevronDown, w-4 h-4). */}
+              {!form.series.trim() && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label="Choisir une série"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                  onClick={() => setSeriesMenuOpen((o) => !o)}
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              )}
+              {seriesMenuOpen && (
+                <div
+                  role="listbox"
+                  className="series-dropdown absolute left-0 top-full z-50 mt-0 max-h-60 w-full overflow-y-auto rounded-b-md border"
+                >
+                  {seriesSuggestions.length === 0 ? (
+                    <div className="px-3 py-1.5 text-sm text-slate-500">
+                      {t('comicForm.selectPlaceholder')}
+                    </div>
+                  ) : (
+                    seriesSuggestions.map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        role="option"
+                        aria-selected={false}
+                        className="series-dropdown-item block w-full px-3 py-1.5 text-left text-sm transition-colors"
+                        onClick={() => {
+                          setForm((f) => ({ ...f, series: name }))
+                          setSeriesMenuOpen(false)
+                        }}
+                      >
+                        {name}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </Field>
           {/* « TOME / NUMÉRO » (rétréci) + TOTAL D'ALBUMS de la série : menu
               déroulant 1–99 placé à sa droite, option vide par défaut (aucune
