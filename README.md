@@ -169,7 +169,7 @@ The application runs under **Docker Compose** with **3 containers**: PostgreSQL 
 
 | Software | Version | Role |
 | --- | --- | --- |
-| **Operating system** | Debian 12 (target) — any Docker-compatible Linux works | Native Windows without Docker |
+| **Operating system** | Debian 12 (target) — any Docker-compatible Linux works, or Windows 10/11 with Docker Desktop (WSL 2) | A native Windows mode (without Docker) is also available |
 | **Docker Engine** | ≥ 24.x (latest stable) | Container execution |
 | **Docker Compose** | v2 (`docker compose` plugin) | Orchestration of db + backend + frontend |
 | **Git** | recent | Deployment (`git clone`) and updates (`git pull`) |
@@ -322,7 +322,143 @@ docker compose ps
 - **Database:** On the very first creation, PostgreSQL automatically runs the initialization script (`database/init.sql`) to create the tables and the default administrator account.
 - **Access:** The application is now accessible on the network at **`http://your_ip_address_here`**.
 
-### B. Windows — native mode (without Docker)
+### B. Windows — Docker Desktop (WSL 2)
+
+This section describes how to run the full Docker Compose stack on a Windows machine using **Docker Desktop** with the **WSL 2** backend. The same `docker-compose.yml` and `.env` files as on Linux are used; only the preparation steps differ.
+
+#### 1. System preparation (Docker Desktop + Git)
+
+On Windows, do not use `apt` or the `get.docker.com` script: install **Docker Desktop** (which includes Docker Engine, Docker Compose and the WSL 2 backend) as well as **Git for Windows**.
+
+Install both via `winget` in an **elevated PowerShell** terminal:
+
+```powershell
+winget install -e --id Docker.DockerDesktop
+winget install -e --id Git.Git
+```
+
+- Launch Docker Desktop and let it start completely (make sure **Use the WSL 2 based engine** is enabled in *Settings > General*).
+- Verify Docker and Compose in PowerShell (or Git Bash):
+
+```powershell
+docker --version
+docker compose version
+```
+
+- Check the local IP address of your Windows machine on the network (`ipconfig` → locate the IPv4 address of your active Wi-Fi or Ethernet adapter, e.g. `192.168.1.50` or `172.16.x.x`).
+
+#### 2. Fetching the project files (Git)
+
+Create a dedicated folder (e.g. `C:\geek0thek` or `C:\Users\YourName\geek0thek`) and clone the repository:
+
+```powershell
+mkdir C:\geek0thek
+cd C:\geek0thek
+git clone <url-of-git-repo> .
+```
+
+- Verification: `dir` (or `ls` in Git Bash) displays `docker-compose.yml` and `.env.example` at the root of `C:\geek0thek`.
+
+#### 3. Configuring the `.env` file
+
+Duplicate the configuration template:
+
+```powershell
+copy .env.example .env
+```
+
+*(In Git Bash, use `cp .env.example .env`.)*
+
+- Open `.env` with Notepad or VS Code (`notepad .env`) and fill in your settings:
+  - **JWT secret (required):** Generate a random 64-byte hex string via PowerShell:
+
+    ```powershell
+    -join ((1..64) | ForEach-Object { '{0:x2}' -f (Get-Random -Maximum 256) })
+    ```
+
+    *(If OpenSSL is installed, `openssl rand -hex 64` also works.)* Paste the result into `JWT_SECRET=...`.
+
+  - **Network and database:** Adapt the IP address to the one found with `ipconfig` (or `localhost` if accessing only from this PC):
+
+    ```env
+    APP_HOST_IP=your_local_ip
+    APP_PORT=80
+    POSTGRES_PASSWORD=your_db_password
+    CORS_ORIGIN=http://your_local_ip
+    APP_URL=http://your_local_ip
+    ```
+
+    > **Note:** If port `80` is already in use on Windows (by IIS, Skype, another web server or a local service), set `APP_PORT=8080` and update `CORS_ORIGIN` / `APP_URL` accordingly (`http://your_local_ip:8080`).
+
+  - **Optional API keys:** Fill in Discogs, Google Books, Last.fm or GitHub tokens if needed, or leave them empty for now.
+
+#### 4. Preparing storage folders
+
+On Windows there is no `chown` or POSIX permissions (`chmod 775`): WSL 2 / Docker Desktop automatically handles host-to-container volume mounts.
+
+Create the local folders:
+
+```powershell
+mkdir uploads\vinyls
+mkdir uploads\comics
+```
+
+- Verification: `C:\geek0thek\uploads\vinyls` and `C:\geek0thek\uploads\comics` exist. If the backend container encounters a write error on `uploads`, verify that Docker Desktop has access to the `C:` drive in *Settings > Resources > File sharing*.
+
+#### 5. Authenticating to the GHCR registry (if packages are private)
+
+If the images on `ghcr.io` are private, authenticate with your GitHub Personal Access Token (PAT with `read:packages` scope):
+
+In PowerShell:
+
+```powershell
+"YOUR_GITHUB_TOKEN" | docker login ghcr.io -u Irwin0812 --password-stdin
+```
+
+In Git Bash:
+
+```bash
+echo "$CR_PAT" | docker login ghcr.io -u Irwin0812 --password-stdin
+```
+
+- If the images are public, you can skip this step.
+
+#### 6. Starting with Docker Compose
+
+Pull the images and start the stack in the background:
+
+```powershell
+docker compose pull
+docker compose up -d
+```
+
+- Verification: Docker pulls the `db`, `backend` and `frontend` images and starts the services without blocking errors.
+
+#### 7. Verifying the deployment
+
+Follow the startup logs to check PostgreSQL initialization (`database/init.sql`) and the services:
+
+```powershell
+docker compose logs -f
+```
+
+*(Press `Ctrl + C` to exit the logs.)*
+
+Check the container status:
+
+```powershell
+docker compose ps
+```
+
+- Verification: the containers (`db`, `backend`, `frontend`) appear as started (`Up` / `running`). Open `http://your_local_ip` (or `http://localhost` if `APP_HOST_IP=localhost`) in your browser.
+
+#### Key differences compared to Linux
+
+- **No `sudo`, `chown` or `chmod`:** file permissions are handled on the Windows / WSL 2 side.
+- **Paths and shell commands:** use `\` or `/` in paths, and adapt `cp` / `mkdir -p` when working in PowerShell (`copy` / `mkdir`).
+- **Port 80 and Windows Firewall:** Windows sometimes blocks or occupies port 80, or prompts for firewall network authorization on first access from another device on the local network.
+
+### C. Windows — native mode (without Docker)
 
 This section describes the **native** installation of the application on a Windows machine: Node.js and PostgreSQL run directly on the machine, without containers. The project is structured into two distinct folders (`backend/` and `frontend/`), each with its own `package.json`.
 
