@@ -29,6 +29,11 @@ const EMPTY = {
   trackCount: 1,
   tracklist: '',
   genre: '',
+  // PROPAGATION DU GENRE (checkbox « Appliquer ce genre à tous les albums de
+  // cet artiste/groupe ») : action PONCTUELLE de mise à jour groupée — sans
+  // verrouillage ni règle permanente (chaque album reste modifiable
+  // individuellement par la suite). Activée par défaut après un import.
+  propagateGenre: false,
   label: '',
   releaseDate: '',
   barcode: '',
@@ -247,6 +252,10 @@ export default function AddVinyl() {
       trackCount: applyPrefillTrackCount(params.get('trackCount'), f.trackCount),
       tracklist: fill('tracklist') || f.tracklist,
       genre: fill('genre') || f.genre,
+      // Édition rapide du style/genre APRÈS IMPORT : la propagation à tous les
+      // albums de l'artiste/groupe est PROPOSÉE par défaut (action ponctuelle —
+      // l'utilisateur peut la décocher pour n'affecter que ce disque).
+      propagateGenre: true,
       label: fill('label') || f.label,
       releaseDate: fill('releaseDate') || f.releaseDate,
       barcode: fill('barcode') || f.barcode,
@@ -452,6 +461,10 @@ export default function AddVinyl() {
           is_picture_disc: String(isPictureDisc),
           discs_count: String(discsCount),
           color: discColor,
+          // PROPAGATION DU GENRE (checkbox) : drapeau de mise à jour groupée —
+          // le backend applique le genre à TOUS les albums de l'artiste/groupe
+          // (action ponctuelle, sans verrouillage ni règle permanente).
+          propagate_genre: String(Boolean(form.propagateGenre)),
         }).forEach(([k, v]) => fd.append(k, v))
         result = isEdit ? await api.vinyls.update(id, fd) : await api.vinyls.create(fd)
       } else {
@@ -474,6 +487,10 @@ export default function AddVinyl() {
           is_picture_disc: isPictureDisc,
           discs_count: discsCount,
           color: discColor,
+          // PROPAGATION DU GENRE (checkbox) : drapeau de mise à jour groupée —
+          // le backend applique le genre à TOUS les albums de l'artiste/groupe
+          // (action ponctuelle, sans verrouillage ni règle permanente).
+          propagate_genre: Boolean(form.propagateGenre),
           // SUPPRESSION EXPLICITE de la jaquette (bouton « Retirer le fichier ») :
           // drapeau de purge — le backend ÉCRASE cover_url par NULL. Jamais de
           // repli sur un chemin ci-dessous quand la suppression est armée.
@@ -681,6 +698,23 @@ export default function AddVinyl() {
           <Field label={t('vinylForm.genreField')}>
             <input className="input" value={form.genre} onChange={set('genre')} placeholder="Progressive Rock" />
           </Field>
+          {/* PROPAGATION DU GENRE — « Appliquer ce genre à tous les albums de
+              cet artiste/groupe » : action PONCTUELLE de mise à jour groupée
+              (batch update) demandée au backend (drapeau propagate_genre) —
+              PAS un verrouillage ni une règle automatique permanente : chaque
+              album reste modifiable individuellement par la suite. Activée par
+              défaut après un import ; proposée explicitement à la sauvegarde. */}
+          <div className="sm:col-span-2">
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg px-1 text-sm text-slate-300 select-none">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-gold-500"
+                checked={Boolean(form.propagateGenre)}
+                onChange={(e) => setForm((f) => ({ ...f, propagateGenre: e.target.checked }))}
+              />
+              {t('vinylForm.propagateGenre')}
+            </label>
+          </div>
           <Field label={t('vinylForm.labelField')}>
             <input className="input" value={form.label} onChange={set('label')} placeholder="Harvest" />
           </Field>
