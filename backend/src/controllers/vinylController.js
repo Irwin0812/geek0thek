@@ -1566,11 +1566,13 @@ async function updateVinyl(req, res, next) {
      // propagation ENTITÉ + autres disques a déjà eu lieu dans la branche
      // ci-dessus (syncArtistEntity) — plus aucun « saut » possible.
 
-    // JOIN entité Artiste dans le RETURNING : genre de référence (artists.
-    // genre) exposé au frontend pour l'édition rapide du style/genre +
-    // propagation à tous les albums de l'artiste/groupe.
+    // SANS JOIN dans le RETURNING : une clause « FROM artists a WHERE ... »
+    // après RETURNING est invalide en PostgreSQL (« syntax error at or near
+    // "FROM" ») et bloquait TOUTE sauvegarde du disque. Le genre de référence
+    // (artists.genre) n'est pas lu par le frontend dans la réponse du PUT —
+    // la liste est rechargée après sauvegarde (cf. Collection.jsx).
     const updated = await query(
-      `UPDATE vinyls v SET artist=$1, title=$2, track_count=$3, tracklist=$4, genre=$5,
+      `UPDATE vinyls SET artist=$1, title=$2, track_count=$3, tracklist=$4, genre=$5,
                          label=$6, release_date=$7, barcode=$8, mbid=$9,
                          discogs_release_id=$10, discogs_url=$11, lastfm_url=$12,
                          acquired_date=COALESCE($13, acquired_date),
@@ -1579,9 +1581,7 @@ async function updateVinyl(req, res, next) {
                          is_picture_disc=$18, discs_count=$19, color=$20,
                           artist_id=COALESCE($21, artist_id),
                           artist_image=COALESCE($22, artist_image)
-        WHERE v.id=$23
-         RETURNING v.*, a.genre AS artist_genre
-         FROM artists a WHERE a.id = v.artist_id`,
+        WHERE id=$23 RETURNING *`,
       [
         values.artist,
         values.title,
