@@ -190,6 +190,12 @@ Without egress, the application works normally (local collections, authenticatio
 
 ## 🚀 Step-by-step installation
 
+> ### ⚡ Quick jump to your platform
+>
+> | 🐧 Linux (VM) | 🪟 Windows + Docker | 🪟 Windows native |
+> | --- | --- | --- |
+> | [**A. Linux — Docker Compose**](#a-linux--docker-compose) | [**B. Windows — Docker Desktop (WSL 2)**](#b-windows--docker-desktop-wsl-2) | [**C. Windows — native mode (without Docker)**](#c-windows--native-mode-without-docker) |
+
 ### A. Linux — Docker Compose
 
 #### 1. System preparation (Docker Engine + Docker Compose)
