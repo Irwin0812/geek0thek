@@ -5,7 +5,7 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License.
  */
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
 import { toDisplayImageUrl } from '../services/imageUrl.js'
@@ -58,6 +58,10 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
   // ---- ONGLET RECHERCHE PAR MOTS-CLÉS -----------------------------------
   const [query, setQuery] = useState('')
   const [searching, setSearching] = useState(false)
+  // Input de la requête mots-clés : au déclenchement de la recherche on lui
+  // retire le focus (blur) — le curseur texte ne reste pas clignoter dans le
+  // champ pendant l'appel API ni après un recliquage sur la zone.
+  const queryInputRef = useRef(null)
   const [hasSearched, setHasSearched] = useState(false) // une recherche mots-clés a eu lieu
   const [results, setResults] = useState([]) // fiches normalisées (200 + [] si vide)
 
@@ -188,6 +192,11 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
       setError(t('isbnModal.minCharsError'))
       return
     }
+    // Recherche réellement déclenchée : focus retiré de l'input — le curseur
+    // texte ne reste pas clignoter dans le champ pendant l'appel API ni après
+    // un recliquage sur la zone (l'utilisateur peut toujours recliquer pour
+    // modifier la requête).
+    if (queryInputRef.current) queryInputRef.current.blur()
     setError('')
     setResult(null)
     setSearching(true)
@@ -303,6 +312,7 @@ export default function IsbnModal({ open, onClose, onPrefill, onImport }) {
           <div>
             <form onSubmit={searchQuery} className="flex flex-wrap gap-2">
               <input
+                ref={queryInputRef}
                 className="input min-w-0"
                 placeholder={t('isbnModal.queryPlaceholder')}
                 value={query}

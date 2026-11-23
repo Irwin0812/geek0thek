@@ -44,6 +44,16 @@
       focus:border-gold-500/60 focus:ring-2 focus:ring-gold-500/20;
   }
 
+  /* Champ « Série » (et tout input lié à un <datalist>) : neutralise la flèche
+     « ▾ » native que certains navigateurs dessinent au survol / focus d'un
+     input porteur de l'attribut `list` — le champ garde un rendu d'input
+     propre, sans indicateur de menu déroulant parasite. */
+  .input-no-list-arrow {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: none !important;
+  }
+
   .label {
     @apply block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5;
   }

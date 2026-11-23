@@ -5,7 +5,7 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../services/api.js'
 import { toDisplayImageUrl } from '../services/imageUrl.js'
@@ -69,6 +69,10 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
   const [query, setQuery] = useState('')
   const [searching, setSearching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  // Input de la requête mots-clés : au déclenchement de la recherche on lui
+  // retire le focus (blur) — le curseur texte ne reste pas clignoter dans le
+  // champ pendant l'appel API ni après un recliquage sur la zone.
+  const queryInputRef = useRef(null)
 
   // ---- état partagé ----------------------------------------------------------
   const [error, setError] = useState('')
@@ -195,6 +199,11 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
       setError(t('barcodeModal.maxLenError'))
       return
     }
+    // Recherche réellement déclenchée : focus retiré de l'input — le curseur
+    // texte ne reste pas clignoter dans le champ pendant l'appel API ni après
+    // un recliquage sur la zone (l'utilisateur peut toujours recliquer pour
+    // modifier la requête).
+    if (queryInputRef.current) queryInputRef.current.blur()
     setError('')
     setResult(null)
     setSearching(true)
@@ -330,6 +339,7 @@ export default function BarcodeModal({ open, onClose, onPrefill }) {
           <div>
             <form onSubmit={searchQuery} className="flex flex-wrap gap-2">
               <input
+                ref={queryInputRef}
                 className="input min-w-0"
                 placeholder={t('barcodeModal.queryPlaceholder')}
                 value={query}

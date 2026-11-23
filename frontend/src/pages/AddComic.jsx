@@ -857,20 +857,27 @@ export default function AddComic() {
           </Field>
           <Field label={t('comicForm.seriesField')}>
             {/* Suggestions = séries déjà présentes dans ma collection :
-                sélectionner/saisir une série existante pré-remplit
-                automatiquement le synopsis si le champ est vide. */}
+                le <datalist> est branché UNIQUEMENT quand le champ SÉRIE est
+                VIDE (ajout, ou import automatique sans série) — la liste se
+                propose alors au focus / à la saisie. Dès qu'une valeur est
+                présente (import ISBN pré-rempli, saisie…), l'attribut `list`
+                est retiré : pas de menu déroulant forcé, le champ reste un
+                input normal modifiable librement. La classe .input-no-list-arrow
+                neutralise la flèche « ▾ » native du datalist au survol/focus. */}
             <input
-              className="input"
+              className="input input-no-list-arrow"
               value={form.series}
               onChange={set('series')}
               placeholder="Corto Maltese"
-              list="comic-series-suggestions"
+              {...(!form.series.trim() && seriesSuggestions.length > 0 ? { list: 'comic-series-suggestions' } : {})}
             />
-            <datalist id="comic-series-suggestions">
-              {seriesSuggestions.map((name) => (
-                <option key={name} value={name} />
-              ))}
-            </datalist>
+            {!form.series.trim() && seriesSuggestions.length > 0 && (
+              <datalist id="comic-series-suggestions">
+                {seriesSuggestions.map((name) => (
+                  <option key={name} value={name} />
+                ))}
+              </datalist>
+            )}
           </Field>
           {/* « TOME / NUMÉRO » (rétréci) + TOTAL D'ALBUMS de la série : menu
               déroulant 1–99 placé à sa droite, option vide par défaut (aucune
