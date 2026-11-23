@@ -161,7 +161,6 @@
     "titleField": "Título del álbum *",
     "trackCountField": "Número de canciones",
     "genreField": "Estilo / género musical",
-    "propagateGenre": "Aplicar este género a todos los álbumes de este artista/grupo",
     "labelField": "Discográfica (Label)",
     "releaseDateField": "Fecha de salida",
     "barcodeField": "Código de barras (EAN/UPC)",

@@ -51,12 +51,6 @@ function toVinylDto(row) {
     // (contamination legacy) -> null EXPLICITE ; c'est le frontend qui retombe
     // alors sur l'image par défaut img/no_group.jpg (repli propre).
     artistImage: artistImageUrlOf(row),
-    // ENTITÉ ARTISTE : id de l'entité (table `artists`) + genre de référence
-    // porté par l'entité — transmis au frontend pour l'édition rapide du
-    // style/genre après import et la propagation à tous les albums de
-    // l'artiste/groupe (null si base non migrée « artists »).
-    artistId: row.artist_id != null ? Number(row.artist_id) : null,
-    artistGenre: row.artist_genre || null,
     title: row.title,
     trackCount: Number(row.track_count),
     tracklist: row.tracklist,
@@ -687,51 +681,6 @@ async function firstDiscGenreOfArtist(artistName) {
 }
 
 /**
- * PROPAGATION PONCTUELLE du genre musical à TOUS les disques d'un artiste —
- * action de mise à jour explicite demandée par le formulaire (« Appliquer ce
- * genre à tous les albums de cet artiste/groupe ») : UPDATE en base du champ
- * `genre` de toutes les lignes rattachées au même artiste (entité `artist_id`
- * + lignes legacy sans entité par nom strict — mêmes cibles que
- * syncArtistEntity / firstDiscGenreOfArtist), tous users.
- *  - C'EST une action ponctuelle : elle n'installe AUCUN verrouillage ni règle
- *    automatique permanente — chaque disque reste modifiable individuellement
- *    par la suite (aucun ré-écrasement automatique des éditions ultérieures) ;
- *  - l'ENTITÉ Artiste reçoit aussi le genre (référence des futurs albums, cf.
- *    syncArtistGenre) ;
- *  - le disque courant est inclus dans l'UPDATE (idempotent : il porte déjà la
- *    valeur écrite par l'UPDATE principal de createVinyl / updateVinyl).
- * Non bloquant : toute panne (base non migrée « artists »…) ne doit JAMAIS
- * empêcher la création / la modification du disque — le genre reste écrit sur
- * la ligne courante par l'INSERT / UPDATE principal.
- * @param {string} artistName nom d'affichage tel qu'enregistré sur le disque
- * @param {string|null} genre genre musical à propager — null : aucune écriture
- * @returns {Promise<number>} nombre de lignes mises à jour (0 si inconnu).
- */
-async function propagateGenreToArtist(artistName, genre = null) {
-  const name = String(artistName || '').trim();
-  const g = String(genre || '').trim() || null;
-  if (!name || !g) return 0;
-  try {
-    const artistId = await findArtistId(name);
-    const { rowCount } = await query(
-      `UPDATE vinyls SET genre = $1, updated_at = now()
-       WHERE (artist_id IS NOT NULL AND artist_id = $2)
-          OR (artist_id IS NULL AND btrim(artist) = $3)`,
-      [g, artistId, name]
-    );
-    // Référence de l'ENTITÉ Artiste (pré-remplissage des futurs albums).
-    await syncArtistGenre(name, g);
-    return rowCount || 0;
-  } catch (err) {
-    console.warn(
-      `[genre] Propagation du genre « ${g} » à tous les disques de « ${name} » impossible :`,
-      err.message
-    );
-    return 0;
-  }
-}
-
-/**
  * Sanitize une valeur numérique entrante (JSON, FormData ou query string).
  * null, undefined, chaîne vide, "NaN" ou texte non numérique → `fallback`.
  * Retourne toujours un entier fini (ou le fallback) : jamais NaN, jamais une
@@ -878,16 +827,14 @@ function cleanVinyl(body) {
 async function listMyVinyls(req, res, next) {
   try {
     const q = String(req.query.q || '').trim();
-    // JOIN entité Artiste : genre de référence (artists.genre) exposé au
-    // frontend pour l'édition rapide du style/genre + propagation.
-    let sql = 'SELECT v.*, a.genre AS artist_genre FROM vinyls v LEFT JOIN artists a ON a.id = v.artist_id WHERE v.user_id = $1';
+    let sql = 'SELECT * FROM vinyls WHERE user_id = $1';
     const params = [req.user.id];
     if (q) {
       params.push(`%${q}%`);
-      sql += ` AND (v.artist ILIKE $2 OR v.title ILIKE $2 OR v.genre ILIKE $2
-                    OR v.label ILIKE $2 OR v.barcode ILIKE $2)`;
+      sql += ` AND (artist ILIKE $2 OR title ILIKE $2 OR genre ILIKE $2
+                    OR label ILIKE $2 OR barcode ILIKE $2)`;
     }
-    sql += ' ORDER BY v.release_date DESC NULLS LAST, v.created_at DESC';
+    sql += ' ORDER BY release_date DESC NULLS LAST, created_at DESC';
     const { rows } = await query(sql, params);
     return res.json({ vinyls: rows.map(toVinylDto), total: rows.length });
   } catch (err) {
@@ -908,16 +855,14 @@ async function listVinylsByUser(req, res, next) {
       return res.status(403).json({ error: 'Accès réservé au propriétaire, à un administrateur ou à un utilisateur autorisé en consultation.' });
     }
     const q = String(req.query.q || '').trim();
-    // JOIN entité Artiste : genre de référence (artists.genre) exposé au
-    // frontend pour l'édition rapide du style/genre + propagation.
-    let sql = 'SELECT v.*, a.genre AS artist_genre FROM vinyls v LEFT JOIN artists a ON a.id = v.artist_id WHERE v.user_id = $1';
+    let sql = 'SELECT * FROM vinyls WHERE user_id = $1';
     const params = [userId];
     if (q) {
       params.push(`%${q}%`);
-      sql += ` AND (v.artist ILIKE $2 OR v.title ILIKE $2 OR v.genre ILIKE $2
-                    OR v.label ILIKE $2 OR v.barcode ILIKE $2)`;
+      sql += ` AND (artist ILIKE $2 OR title ILIKE $2 OR genre ILIKE $2
+                    OR label ILIKE $2 OR barcode ILIKE $2)`;
     }
-    sql += ' ORDER BY v.release_date DESC NULLS LAST, v.created_at DESC';
+    sql += ' ORDER BY release_date DESC NULLS LAST, created_at DESC';
     const { rows } = await query(sql, params);
     const { rows: ownerRows } = await query(
       'SELECT id, login, first_name, last_name FROM users WHERE id = $1',
@@ -966,10 +911,9 @@ async function listPublicVinyls(req, res, next) {
       clauses.push(`(v.label ILIKE $${params.length})`);
     }
     const sql = `
-      SELECT v.*, a.genre AS artist_genre, u.first_name AS owner_first_name, u.last_name AS owner_last_name
+      SELECT v.*, u.first_name AS owner_first_name, u.last_name AS owner_last_name
       FROM vinyls v
       JOIN users u ON u.id = v.user_id
-      LEFT JOIN artists a ON a.id = v.artist_id
       WHERE ${clauses.join(' AND ')}
       ORDER BY v.release_date DESC NULLS LAST, v.created_at DESC`;
     const { rows } = await query(sql, params);
@@ -1017,17 +961,8 @@ async function createVinyl(req, res, next) {
     //   propagation s'applique uniquement EN CASCADE DESCENDANTE vers les
     //   nouveaux ajouts (aucun UPDATE de genre sur les lignes existantes).
     // --------------------------------------------------------------
-    // DRAPEAU DE PROPAGATION EXPLICITE (checkbox du formulaire « Appliquer ce
-    // genre à tous les albums de cet artiste/groupe ») : le genre saisi est
-    // conservé tel quel (jamais remplacé par la référence du premier disque)
-    // et, APRÈS l'INSERT, propagé à TOUS les autres disques de l'artiste —
-    // action PONCTUELLE sans verrouillage ni règle permanente (chaque disque
-    // reste modifiable individuellement par la suite).
-    const propagateGenre = asBoolean(
-      req.body.propagate_genre ?? req.body.propagateGenre ?? false
-    );
     const existingGenre = await firstDiscGenreOfArtist(values.artist);
-    if (!propagateGenre && existingGenre) {
+    if (existingGenre) {
       // CAS B : artiste déjà référencé -> le genre du formulaire / de l'API
       // est ignoré, celui du tout premier disque est imposé au nouveau disque.
       values.genre = existingGenre;
@@ -1240,12 +1175,6 @@ async function createVinyl(req, res, next) {
         );
       }
     }
-    // PROPAGATION EXPLICITE demandée par le formulaire : le genre saisi est
-    // appliqué à TOUS les disques de l'artiste (tous users) — mise à jour
-    // PONCTUELLE, sans verrouillage ni règle automatique permanente.
-    if (propagateGenre && values.genre) {
-      await propagateGenreToArtist(values.artist, values.genre);
-    }
     return res.status(201).json({ vinyl: toVinylDto(rows[0]) });
   } catch (err) {
     if (err instanceof MusicBrainzError) {
@@ -1355,19 +1284,8 @@ async function updateVinyl(req, res, next) {
     //   propagation s'applique uniquement EN CASCADE DESCENDANTE vers les
     //   nouveaux ajouts (aucun UPDATE de genre sur les lignes existantes).
     // --------------------------------------------------------------
-    // DRAPEAU DE PROPAGATION EXPLICITE (checkbox du formulaire « Appliquer ce
-    // genre à tous les albums de cet artiste/groupe ») : le genre saisi est
-    // conservé tel quel (jamais remplacé par la référence du premier disque)
-    // et, APRÈS l'UPDATE, propagé à TOUS les autres disques de l'artiste —
-    // action PONCTUELLE sans verrouillage ni règle permanente (chaque disque
-    // reste modifiable individuellement par la suite). Sans le drapeau : mise
-    // à jour UNIQUEMENT du disque ciblé (WHERE id = $1) — modification
-    // ponctuelle ultérieure garantie, jamais ré-écrasée automatiquement.
-    const propagateGenre = asBoolean(
-      req.body.propagate_genre ?? req.body.propagateGenre ?? false
-    );
     const existingGenre = await firstDiscGenreOfArtist(values.artist);
-    if (!propagateGenre && existingGenre) {
+    if (existingGenre) {
       // CAS B : artiste déjà référencé -> le genre du formulaire / de l'API
       // est ignoré, celui du tout premier disque est imposé au disque édité.
       values.genre = existingGenre;
@@ -1618,11 +1536,8 @@ async function updateVinyl(req, res, next) {
      // propagation ENTITÉ + autres disques a déjà eu lieu dans la branche
      // ci-dessus (syncArtistEntity) — plus aucun « saut » possible.
 
-    // JOIN entité Artiste dans le RETURNING : genre de référence (artists.
-    // genre) exposé au frontend pour l'édition rapide du style/genre +
-    // propagation à tous les albums de l'artiste/groupe.
     const updated = await query(
-      `UPDATE vinyls v SET artist=$1, title=$2, track_count=$3, tracklist=$4, genre=$5,
+      `UPDATE vinyls SET artist=$1, title=$2, track_count=$3, tracklist=$4, genre=$5,
                          label=$6, release_date=$7, barcode=$8, mbid=$9,
                          discogs_release_id=$10, discogs_url=$11, lastfm_url=$12,
                          acquired_date=COALESCE($13, acquired_date),
@@ -1631,9 +1546,7 @@ async function updateVinyl(req, res, next) {
                          is_picture_disc=$18, discs_count=$19, color=$20,
                           artist_id=COALESCE($21, artist_id),
                           artist_image=COALESCE($22, artist_image)
-        WHERE v.id=$23
-         RETURNING v.*, a.genre AS artist_genre
-         FROM artists a WHERE a.id = v.artist_id`,
+        WHERE id=$23 RETURNING *`,
       [
         values.artist,
         values.title,
@@ -1761,12 +1674,6 @@ async function updateVinyl(req, res, next) {
         );
       }
     }
-    // PROPAGATION EXPLICITE demandée par le formulaire : le genre saisi est
-    // appliqué à TOUS les disques de l'artiste (tous users) — mise à jour
-    // PONCTUELLE, sans verrouillage ni règle automatique permanente.
-    if (propagateGenre && values.genre) {
-      await propagateGenreToArtist(values.artist, values.genre);
-    }
 
     return res.json({ vinyl: toVinylDto(finalRow) });
   } catch (err) {
@@ -1803,12 +1710,7 @@ async function updateVinyl(req, res, next) {
 async function getVinyl(req, res, next) {
   try {
     const id = Number(req.params.id);
-    // JOIN entité Artiste : genre de référence (artists.genre) exposé au
-    // frontend pour l'édition rapide du style/genre + propagation.
-    const { rows } = await query(
-      'SELECT v.*, a.genre AS artist_genre FROM vinyls v LEFT JOIN artists a ON a.id = v.artist_id WHERE v.id = $1',
-      [id]
-    );
+    const { rows } = await query('SELECT * FROM vinyls WHERE id = $1', [id]);
     const vinyl = rows[0];
     if (!vinyl) return res.status(404).json({ error: 'Disque introuvable.' });
     // Lecture : propriétaire / admin OU destinataire d'un partage « vinyls »
