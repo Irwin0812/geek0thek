@@ -180,6 +180,12 @@ export const api = {
       return request(`/vinyls/public${str ? `?${str}` : ''}`)
     },
     get: (id) => request(`/vinyls/${id}`),
+    // SUGGESTIONS du formulaire d'ajout / édition : listes dédupliquées et
+    // triées des artistes/groupes et styles/genres déjà présents dans la
+    // collection courante — alimentent les menus déroulants adossés aux champs
+    // texte « Artiste / groupe » et « Style / genre musical » (saisie manuelle
+    // toujours libre, import automatique non affecté).
+    suggestions: () => request('/vinyls/suggestions'),
     // body : FormData (multipart, jaquette en fichier) ou objet JSON (jaquette en URL distante)
     create: (data) => request('/vinyls', { method: 'POST', body: data, isForm: data instanceof FormData }),
     update: (id, data) =>

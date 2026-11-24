@@ -11,6 +11,7 @@ const {
   listVinylsByUser,
   listPublicVinyls,
   getVinyl,
+  listVinylSuggestions,
   createVinyl,
   updateVinyl,
   deleteVinyl,
@@ -29,6 +30,11 @@ router.use(requirePasswordChanged);
 
 router.get('/', listMyVinyls);
 router.get('/user/:userId', listVinylsByUser);
+// SUGGESTIONS (menus déroulants du formulaire d'ajout / édition) : valeurs
+// dédupliquées + triées des artistes/groupes et styles/genres déjà présents
+// dans la collection courante. DOIT rester avant '/:id' — sinon « suggestions »
+// serait capturé comme identifiant de disque.
+router.get('/suggestions', listVinylSuggestions);
 // POST/PUT : DEUX champs fichiers possibles — jaquette d'album (champ
 // "cover", 1 fichier, dans <upload>/vinyls) + photo/logo d'ARTISTE (champ
 // "artistImage", 0 ou 1 fichier, dans <upload>/artists ; cf. middlewares/

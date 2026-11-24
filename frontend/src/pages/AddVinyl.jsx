@@ -12,6 +12,7 @@ import { api } from '../services/api.js'
 import BarcodeModal from '../components/BarcodeModal.jsx'
 import { CheckIcon } from '../components/icons.jsx'
 import { useDismiss } from '../components/hooks.js'
+import { ChevronDown } from 'lucide-react'
 import { toDisplayImageUrl } from '../services/imageUrl.js'
 import { COLOR_NA, sortedDiscColors, toColorList, colorDot, colorLabel } from '../services/discColors.jsx'
 
@@ -177,6 +178,37 @@ export default function AddVinyl() {
   // Genre initial (chargement / pré-remplissage import) : sert de référence
   // pour détecter la modification du champ et proposer la propagation.
   const originalGenreRef = useRef('')
+
+  // SUGGESTIONS EXISTANTES (menus déroulants adossés aux champs texte
+  // « Artiste / groupe » et « Style / genre musical ») : listes dédupliquées
+  // et triées des valeurs déjà présentes dans la collection courante, via
+  // l'endpoint léger GET /api/vinyls/suggestions. Saisie manuelle toujours
+  // libre (le champ reste un <input type="text">) ; un import (code-barres,
+  // mots-clés, pré-remplissage) renseigne le champ normalement — le menu ne
+  // l'écrase ni ne le vide jamais.
+  const [artistSuggestions, setArtistSuggestions] = useState([])
+  const [genreSuggestions, setGenreSuggestions] = useState([])
+  useEffect(() => {
+    let cancelled = false
+    api.vinyls
+      .suggestions()
+      .then((data) => {
+        if (cancelled) return
+        setArtistSuggestions(data.artists || [])
+        setGenreSuggestions(data.genres || [])
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  // Menus déroulants custom des deux champs (même allure que le menu « Couleur »
+  // du formulaire : panneau sombre sous le champ, fermeture au clic extérieur
+  // ou sur Échap via useDismiss). Sélection d'une valeur -> remplit le champ
+  // correspondant sans bloquer la modification manuelle ultérieure.
+  const [artistMenuOpen, setArtistMenuOpen] = useState(false)
+  const artistMenuRef = useDismiss(artistMenuOpen, () => setArtistMenuOpen(false))
+  const [genreMenuOpen, setGenreMenuOpen] = useState(false)
+  const genreMenuRef = useDismiss(genreMenuOpen, () => setGenreMenuOpen(false))
 
   // Chargement en mode édition
   useEffect(() => {
@@ -704,7 +736,66 @@ export default function AddVinyl() {
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Field label={t('vinylForm.artistField')}>
-            <input className="input" value={form.artist} onChange={set('artist')} placeholder="Pink Floyd" required />
+            {/* Champ texte LIBRE + menu déroulant des artistes/groupes déjà
+                présents dans la collection (endpoint /api/vinyls/suggestions) :
+                la sélection remplit le champ sans bloquer la saisie manuelle
+                ultérieure ; un import (code-barres / mots-clés) renseigne le
+                champ normalement — le menu ne l'écrase ni ne le vide jamais. */}
+            <div ref={artistMenuRef} className="relative">
+              <input
+                className="input pr-9"
+                value={form.artist}
+                onChange={(e) => {
+                  set('artist')(e)
+                  if (artistMenuOpen) setArtistMenuOpen(false)
+                }}
+                placeholder="Pink Floyd"
+                required
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                aria-label={t('vinylForm.artistField')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                onClick={() => setArtistMenuOpen((o) => !o)}
+              >
+                <ChevronDown className={`h-4 w-4 transition-transform ${artistMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {artistMenuOpen && (
+                <ul
+                  role="listbox"
+                  tabIndex={-1}
+                  onBlur={(e) => {
+                    if (artistMenuRef.current && !artistMenuRef.current.contains(e.relatedTarget)) {
+                      setArtistMenuOpen(false)
+                    }
+                  }}
+                  className="absolute left-0 right-0 z-20 mt-1 max-h-64 overflow-y-auto rounded-lg border border-night-500 bg-night-800 py-1 shadow-xl shadow-black/50"
+                >
+                  {artistSuggestions.length === 0 ? (
+                    <li className="px-3 py-1.5 text-sm text-slate-500">{t('vinylForm.noExistingValues')}</li>
+                  ) : (
+                    artistSuggestions.map((name) => (
+                      <li key={name} role="option" aria-selected={form.artist === name}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setForm((f) => ({ ...f, artist: name }))
+                            setArtistMenuOpen(false)
+                          }}
+                          className={`flex w-full items-center gap-2 px-3 py-1.5 text-sm transition ${
+                            form.artist === name ? 'bg-gold-500/15 text-gold-300' : 'text-slate-300 hover:bg-night-700/60'
+                          }`}
+                        >
+                          <span className="flex-1 truncate text-left">{name}</span>
+                          {form.artist === name && <CheckIcon size={14} className="shrink-0 text-gold-400" />}
+                        </button>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+            </div>
           </Field>
           <Field label={t('vinylForm.titleField')}>
             <input className="input" value={form.title} onChange={set('title')} placeholder="The Dark Side of the Moon" required />
@@ -719,7 +810,66 @@ export default function AddVinyl() {
             />
           </Field>
           <Field label={t('vinylForm.genreField')}>
-            <input className="input" value={form.genre} onChange={handleGenreChange} placeholder="Progressive Rock" />
+            {/* Champ texte LIBRE + menu déroulant des styles/genres déjà
+                présents dans la collection (endpoint /api/vinyls/suggestions) :
+                la sélection remplit le champ (et déclenche la détection de
+                modification pour la propagation ponctuelle, comme la saisie
+                manuelle) sans bloquer l'édition ultérieure ; un import
+                renseigne le champ normalement — jamais écrasé ni vidé. */}
+            <div ref={genreMenuRef} className="relative">
+              <input
+                className="input pr-9"
+                value={form.genre}
+                onChange={(e) => {
+                  handleGenreChange(e)
+                  if (genreMenuOpen) setGenreMenuOpen(false)
+                }}
+                placeholder="Progressive Rock"
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                aria-label={t('vinylForm.genreField')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                onClick={() => setGenreMenuOpen((o) => !o)}
+              >
+                <ChevronDown className={`h-4 w-4 transition-transform ${genreMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {genreMenuOpen && (
+                <ul
+                  role="listbox"
+                  tabIndex={-1}
+                  onBlur={(e) => {
+                    if (genreMenuRef.current && !genreMenuRef.current.contains(e.relatedTarget)) {
+                      setGenreMenuOpen(false)
+                    }
+                  }}
+                  className="absolute left-0 right-0 z-20 mt-1 max-h-64 overflow-y-auto rounded-lg border border-night-500 bg-night-800 py-1 shadow-xl shadow-black/50"
+                >
+                  {genreSuggestions.length === 0 ? (
+                    <li className="px-3 py-1.5 text-sm text-slate-500">{t('vinylForm.noExistingValues')}</li>
+                  ) : (
+                    genreSuggestions.map((name) => (
+                      <li key={name} role="option" aria-selected={form.genre === name}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleGenreChange({ target: { value: name } })
+                            setGenreMenuOpen(false)
+                          }}
+                          className={`flex w-full items-center gap-2 px-3 py-1.5 text-sm transition ${
+                            form.genre === name ? 'bg-gold-500/15 text-gold-300' : 'text-slate-300 hover:bg-night-700/60'
+                          }`}
+                        >
+                          <span className="flex-1 truncate text-left">{name}</span>
+                          {form.genre === name && <CheckIcon size={14} className="shrink-0 text-gold-400" />}
+                        </button>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+            </div>
             {/* PROPAGATION PONCTUELLE du genre (mode édition uniquement) :
                 proposée ACTIVÉE dès que le champ est modifié par rapport à sa
                 valeur initiale — action de batch UPDATE demandée à la

@@ -953,6 +953,33 @@ async function listPublicVinyls(req, res, next) {
 }
 
 /**
+ * GET /api/vinyls/suggestions — valeurs EXISTANTES de la collection courante :
+ * listes dédupliquées et triées des artistes/groupes et des styles/genres
+ * musicaux déjà présents dans `vinyls` (utilisateur courant uniquement).
+ * Endpoint léger dédié aux menus déroulants du formulaire d'ajout / édition
+ * de disque — suggestions uniquement, la saisie manuelle reste toujours libre.
+ */
+async function listVinylSuggestions(req, res, next) {
+  try {
+    const { rows } = await query(
+      `SELECT DISTINCT btrim(artist) AS value FROM vinyls
+        WHERE user_id = $1 AND artist IS NOT NULL AND btrim(artist) <> ''`,
+      [req.user.id]
+    )
+    const artists = rows.map((r) => r.value).sort((a, b) => a.localeCompare(b, 'fr'))
+    const { rows: genreRows } = await query(
+      `SELECT DISTINCT btrim(genre) AS value FROM vinyls
+        WHERE user_id = $1 AND genre IS NOT NULL AND btrim(genre) <> ''`,
+      [req.user.id]
+    )
+    const genres = genreRows.map((r) => r.value).sort((a, b) => a.localeCompare(b, 'fr'))
+    return res.json({ artists, genres })
+  } catch (err) {
+    return next(err)
+  }
+}
+
+/**
  * POST /api/vinyls — création (jaquette téléversée en multipart ou URL distante).
  */
 async function createVinyl(req, res, next) {
@@ -1793,6 +1820,7 @@ module.exports = {
   listVinylsByUser,
   listPublicVinyls,
   getVinyl,
+  listVinylSuggestions,
   createVinyl,
   updateVinyl,
   deleteVinyl,

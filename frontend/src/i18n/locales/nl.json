@@ -162,6 +162,7 @@
     "titleField": "Titel van het album *",
     "trackCountField": "Aantal nummers",
     "genreField": "Muziekstijl / genre",
+    "noExistingValues": "Geen bestaande waarde in de collectie",
     "propagateGenre": "Dit genre toepassen op alle albums van deze artiest/groep",
     "labelField": "Platenmaatschappij (Label)",
     "releaseDateField": "Verschijningsdatum",

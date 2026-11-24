@@ -162,6 +162,7 @@
     "titleField": "Albumtitel *",
     "trackCountField": "Anzahl der Songs",
     "genreField": "Stil / musikalisches Genre",
+    "noExistingValues": "Kein vorhandener Wert in der Sammlung",
     "propagateGenre": "Dieses Genre auf alle Alben dieses Künstlers/dieser Band anwenden",
     "labelField": "Plattenlabel (Label)",
     "releaseDateField": "Erscheinungsdatum",
